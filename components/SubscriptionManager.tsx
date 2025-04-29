@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { clientSubscriptionService, type UsageMetric, type SubscriptionPlan } from '@/lib/services/client/subscription-service';
 import type { Subscription } from '@/types/database';
-import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 export function SubscriptionManager() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);

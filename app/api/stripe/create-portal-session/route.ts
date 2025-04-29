@@ -1,16 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import Stripe from 'stripe'
+import { NextResponse } from 'next/server'
+import { supabaseServer } from '@/lib/supabase/server'
 import { subscriptionService } from '@/lib/services/subscription-service'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-03-31.basil',
-})
 
 export async function POST() {
   try {
-    const supabase = createClient()
+    const supabase = supabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -18,7 +12,7 @@ export async function POST() {
     }
 
     const session = await subscriptionService.createPortalSession()
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json(session)
   } catch (error) {
     console.error('Error creating portal session:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

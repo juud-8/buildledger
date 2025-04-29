@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   FileText,
@@ -11,7 +13,7 @@ import {
 } from "lucide-react"
 import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
 import Link from "next/link"
-import { SubscriptionManager } from "@/components/SubscriptionManager"
+import DashboardSubscriptionManagerWrapper from "@/components/DashboardSubscriptionManagerWrapper"
 
 interface RevenueData {
   month: string
@@ -145,8 +147,8 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* Subscription Manager */}
-      <SubscriptionManager />
+      {/* Subscription Manager - Use the wrapper */}
+      <DashboardSubscriptionManagerWrapper />
 
       {/* Chart Containers */}
       <div className="grid gap-6 md:grid-cols-2">

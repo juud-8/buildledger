@@ -1,11 +1,11 @@
 import { stripe } from '../stripe'
-import { supabase } from '../supabase'
+import { supabaseServer } from '@/lib/supabase/server'
 import type { Subscription } from '@/types/database'
 import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
 export class SubscriptionService {
   private getSupabase() {
-    return supabase
+    return supabaseServer()
   }
 
   async createCustomer(userId: string, email: string) {
@@ -58,12 +58,12 @@ export class SubscriptionService {
     // Store the subscription in your database
     const { error } = await this.getSupabase()
       .from('subscriptions')
-      .update({
+      .update(({
         stripe_subscription_id: subscription.id,
         status: subscription.status,
         plan_name: planName,
         current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      })
+      }) as Partial<Subscription>)
       .eq('user_id', userId)
 
     if (error) throw error
@@ -76,10 +76,10 @@ export class SubscriptionService {
     // Update the subscription status in your database
     const { error } = await this.getSupabase()
       .from('subscriptions')
-      .update({
+      .update(({
         status: subscription.status,
         current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      })
+      }) as Partial<Subscription>)
       .eq('user_id', userId)
 
     if (error) throw error
