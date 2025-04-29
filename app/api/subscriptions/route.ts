@@ -1,7 +1,9 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { subscriptionService } from '@/lib/services/subscription-service'
+import { SubscriptionService } from '@/lib/services/subscription-service'
+
+const subscriptionService = new SubscriptionService()
 
 export async function POST(request: Request) {
   try {
