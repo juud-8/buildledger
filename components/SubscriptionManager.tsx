@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { clientSubscriptionService, type UsageMetric } from '@/lib/services/client/subscription-service';
+import { clientSubscriptionService, type UsageMetric, type SubscriptionPlan } from '@/lib/services/client/subscription-service';
 import type { Subscription } from '@/types/database';
 import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
 
@@ -13,23 +13,28 @@ export function SubscriptionManager() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usageMetrics, setUsageMetrics] = useState<UsageMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
 
   useEffect(() => {
-    async function loadSubscriptionData() {
+    const loadSubscriptionData = async () => {
+      setIsLoading(true);
       try {
         const sub = await clientSubscriptionService.getSubscription();
         setSubscription(sub);
         
-        if (sub?.id) {
-          const metrics = await clientSubscriptionService.getUsageMetrics(sub.id);
+        if (sub && sub.stripe_subscription_id) {
+          const metrics = await clientSubscriptionService.getUsageMetrics(sub.stripe_subscription_id);
           setUsageMetrics(metrics);
         }
+
+        const plans = await clientSubscriptionService.getSubscriptionPlans();
+        setSubscriptionPlans(plans);
       } catch (error) {
         console.error('Error loading subscription data:', error);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
     loadSubscriptionData();
   }, []);

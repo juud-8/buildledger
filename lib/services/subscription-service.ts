@@ -1,6 +1,7 @@
 import { stripe } from '../stripe'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../supabase'
 import type { Subscription } from '@/types/database'
+import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
 export class SubscriptionService {
   private getSupabase() {
@@ -86,14 +87,18 @@ export class SubscriptionService {
   }
 
   async getSubscription(userId: string): Promise<Subscription | null> {
-    const { data, error } = await this.getSupabase()
+    const response = await this.getSupabase()
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
       .single()
 
-    if (error) throw error
-    return data
+    if (response.error) {
+      console.error('Error fetching subscription:', response.error)
+      return null
+    }
+
+    return response.data as Subscription
   }
 
   async handleWebhookEvent(event: any) {
@@ -111,21 +116,31 @@ export class SubscriptionService {
   }
 
   private async handleCheckoutSessionCompleted(session: any) {
-    const { data: { user } } = await this.getSupabase().auth.getUser()
-    if (!user) throw new Error('User not authenticated')
-
-    const subscription = await stripe.subscriptions.retrieve(session.subscription)
-
-    await this.getSupabase()
+    const { data: subscription, error } = await this.getSupabase()
       .from('subscriptions')
-      .upsert({
-        user_id: user.id,
-        stripe_subscription_id: subscription.id,
-        status: subscription.status,
-        current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-        current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end
-      })
+      .select('*')
+      .eq('stripe_subscription_id', session.subscription)
+      .single()
+
+    if (error) {
+      console.error('Error fetching subscription:', error)
+      return
+    }
+
+    if (subscription) {
+      const { error: updateError } = await this.getSupabase()
+        .from('subscriptions')
+        .update({
+          status: 'active',
+          current_period_start: new Date(session.subscription.current_period_start * 1000).toISOString(),
+          current_period_end: new Date(session.subscription.current_period_end * 1000).toISOString(),
+        })
+        .eq('id', subscription.id)
+
+      if (updateError) {
+        console.error('Error updating subscription:', updateError)
+      }
+    }
   }
 
   private async handleSubscriptionUpdated(subscription: any) {
@@ -160,21 +175,19 @@ export class SubscriptionService {
     return data
   }
 
-  async getCurrentSubscription() {
-    const { data: { user } } = await this.getSupabase().auth.getUser()
-    if (!user) return null
-
-    const { data, error } = await this.getSupabase()
+  async getCurrentSubscription(): Promise<Subscription | null> {
+    const response = await this.getSupabase()
       .from('subscriptions')
-      .select(`
-        *,
-        subscription_plans (*)
-      `)
-      .eq('user_id', user.id)
+      .select('*')
+      .eq('status', 'active')
       .single()
 
-    if (error) return null
-    return data
+    if (response.error) {
+      console.error('Error fetching current subscription:', response.error)
+      return null
+    }
+
+    return response.data as Subscription
   }
 
   async getUsageMetrics(subscriptionId: string) {
