@@ -1,10 +1,10 @@
 import { stripe } from '../stripe'
-import { createClient } from '@/lib/supabase/server'
+import { supabase } from '@/lib/supabase'
 import type { Subscription } from '@/types/database'
 
 export class SubscriptionService {
   private getSupabase() {
-    return createClient()
+    return supabase
   }
 
   async createCustomer(userId: string, email: string) {
