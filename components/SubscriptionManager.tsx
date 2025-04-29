@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -22,32 +24,28 @@ import { SubscriptionService } from '@/lib/services/subscription-service'
 import { useRouter } from 'next/navigation'
 
 interface SubscriptionPlan {
-  id: string
-  name: string
-  description: string
-  price: number
-  interval: 'month' | 'year'
-  features: string[]
-  stripe_price_id: string
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  interval: 'month' | 'year';
+  features: string[];
+  stripe_price_id: string;
   usage_limits: {
-    invoices_limit: number
-    storage_limit_mb: number
-    team_members_limit: number
-    api_calls_per_month: number
-  }
+    invoices_limit: number;
+    storage_limit_mb: number;
+    team_members_limit: number;
+    api_calls_per_month: number;
+  };
 }
 
 interface Subscription {
-  id: string;  // Since we validate this in isValidSubscription
+  id: string;
   status: string;
   current_period_start: string;
   current_period_end: string;
   cancel_at_period_end: boolean;
-  plan: {
-    name: string;
-    price: number;
-    interval: string;
-  };
+  plan: SubscriptionPlan;
 }
 
 interface UsageMetric {
@@ -72,18 +70,15 @@ export function SubscriptionManager() {
   function isValidSubscription(sub: any): sub is Subscription {
     return sub && 
            typeof sub.id === 'string' && 
-           typeof sub.status === 'string';
-  }
-
-  function hasValidId(sub: Subscription): sub is Subscription & { id: string } {
-    return sub.id !== null;
+           typeof sub.status === 'string' &&
+           typeof sub.plan === 'object';
   }
 
   const loadSubscriptionData = async () => {
     try {
       const sub = await subscriptionService.getCurrentSubscription()
       
-      if (!sub) {
+      if (!sub || !isValidSubscription(sub)) {
         setSubscription(null)
         setUsageMetrics([])
         const plans = await subscriptionService.getSubscriptionPlans()
@@ -91,22 +86,7 @@ export function SubscriptionManager() {
         return
       }
 
-      if (!isValidSubscription(sub)) {
-        setSubscription(null)
-        setUsageMetrics([])
-        const plans = await subscriptionService.getSubscriptionPlans()
-        setAvailablePlans(plans)
-        return
-      }
-
-      if (!hasValidId(sub)) {
-        setSubscription(sub)
-        setUsageMetrics([])
-        const plans = await subscriptionService.getSubscriptionPlans()
-        setAvailablePlans(plans)
-        return
-      }
-
+      // At this point TypeScript knows sub is a valid Subscription
       const [usage, plans] = await Promise.all([
         subscriptionService.getUsageMetrics(sub.id),
         subscriptionService.getSubscriptionPlans()
