@@ -1,9 +1,11 @@
 import { stripe } from '../stripe'
-import { supabase } from '../supabase'
+import { createClient } from '@/lib/supabase/server'
 import type { Subscription } from '@/types/database'
 
 export class SubscriptionService {
-  private supabase = supabase
+  private getSupabase() {
+    return createClient()
+  }
 
   async createCustomer(userId: string, email: string) {
     const customer = await stripe.customers.create({
@@ -14,7 +16,7 @@ export class SubscriptionService {
     })
 
     // Store the customer ID in your database
-    const { error } = await supabase
+    const { error } = await this.getSupabase()
       .from('subscriptions')
       .insert({
         user_id: userId,
@@ -26,7 +28,7 @@ export class SubscriptionService {
   }
 
   async getCustomer(userId: string) {
-    const { data, error } = await supabase
+    const { data, error } = await this.getSupabase()
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', userId)
@@ -53,7 +55,7 @@ export class SubscriptionService {
     })
 
     // Store the subscription in your database
-    const { error } = await supabase
+    const { error } = await this.getSupabase()
       .from('subscriptions')
       .update({
         stripe_subscription_id: subscription.id,
@@ -71,7 +73,7 @@ export class SubscriptionService {
     const subscription = await stripe.subscriptions.cancel(subscriptionId)
 
     // Update the subscription status in your database
-    const { error } = await supabase
+    const { error } = await this.getSupabase()
       .from('subscriptions')
       .update({
         status: subscription.status,
@@ -84,7 +86,7 @@ export class SubscriptionService {
   }
 
   async getSubscription(userId: string): Promise<Subscription | null> {
-    const { data, error } = await supabase
+    const { data, error } = await this.getSupabase()
       .from('subscriptions')
       .select('*')
       .eq('user_id', userId)
@@ -109,12 +111,12 @@ export class SubscriptionService {
   }
 
   private async handleCheckoutSessionCompleted(session: any) {
-    const { data: { user } } = await this.supabase.auth.getUser()
+    const { data: { user } } = await this.getSupabase().auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
     const subscription = await stripe.subscriptions.retrieve(session.subscription)
 
-    await this.supabase
+    await this.getSupabase()
       .from('subscriptions')
       .upsert({
         user_id: user.id,
@@ -127,7 +129,7 @@ export class SubscriptionService {
   }
 
   private async handleSubscriptionUpdated(subscription: any) {
-    await this.supabase
+    await this.getSupabase()
       .from('subscriptions')
       .update({
         status: subscription.status,
@@ -139,7 +141,7 @@ export class SubscriptionService {
   }
 
   private async handleSubscriptionDeleted(subscription: any) {
-    await this.supabase
+    await this.getSupabase()
       .from('subscriptions')
       .update({
         status: 'canceled',
@@ -149,7 +151,7 @@ export class SubscriptionService {
   }
 
   async getSubscriptionPlans() {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('subscription_plans')
       .select('*')
       .order('price')
@@ -159,10 +161,10 @@ export class SubscriptionService {
   }
 
   async getCurrentSubscription() {
-    const { data: { user } } = await this.supabase.auth.getUser()
+    const { data: { user } } = await this.getSupabase().auth.getUser()
     if (!user) return null
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('subscriptions')
       .select(`
         *,
@@ -176,7 +178,7 @@ export class SubscriptionService {
   }
 
   async getUsageMetrics(subscriptionId: string) {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('subscription_usage')
       .select('*')
       .eq('subscription_id', subscriptionId)
@@ -186,7 +188,7 @@ export class SubscriptionService {
   }
 
   async updateUsage(subscriptionId: string, feature: string, increment: number = 1) {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('subscription_usage')
       .upsert({
         subscription_id: subscriptionId,
@@ -202,11 +204,12 @@ export class SubscriptionService {
   }
 
   async createCheckoutSession(priceId: string) {
-    const { data: { user } } = await this.supabase.auth.getUser()
+    const supabase = this.getSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
     // Get or create Stripe customer
-    const { data: subscription } = await this.supabase
+    const { data: subscription } = await supabase
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
@@ -224,7 +227,7 @@ export class SubscriptionService {
       customerId = customer.id
 
       // Store customer ID
-      await this.supabase
+      await supabase
         .from('subscriptions')
         .insert({
           user_id: user.id,
@@ -249,10 +252,11 @@ export class SubscriptionService {
   }
 
   async createPortalSession() {
-    const { data: { user } } = await this.supabase.auth.getUser()
+    const supabase = this.getSupabase()
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('User not authenticated')
 
-    const { data: subscription } = await this.supabase
+    const { data: subscription } = await supabase
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
@@ -269,4 +273,6 @@ export class SubscriptionService {
 
     return session
   }
-} 
+}
+
+export const subscriptionService = new SubscriptionService() 
