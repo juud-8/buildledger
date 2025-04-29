@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabase/server';
+import { supabaseServer } from '../../../../../lib/supabase/server';
 import { subscriptionService } from '@/lib/services/subscription-service';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: Request,

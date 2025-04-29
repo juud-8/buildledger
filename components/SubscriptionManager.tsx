@@ -1,4 +1,4 @@
-"use client";
+"use client"; // This directive must be at the top - do not remove
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';

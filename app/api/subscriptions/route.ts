@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-// Revert back to alias path
-import { supabaseServer } from '@/lib/supabase/server'
+// Use relative path instead of alias
+import { supabaseServer } from '../../../lib/supabase/server'
 import { subscriptionService } from '@/lib/services/subscription-service'
 
 export async function GET() {

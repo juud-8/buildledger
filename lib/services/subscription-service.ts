@@ -1,5 +1,5 @@
 import { stripe } from '../stripe'
-import { supabaseServer } from '@/lib/supabase/server'
+import { supabaseServer } from '../supabase/server'
 import type { Subscription } from '@/types/database'
 import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
