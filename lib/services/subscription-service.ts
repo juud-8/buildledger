@@ -1,11 +1,9 @@
 import { stripe } from '../stripe'
 import { supabase } from '../supabase'
 import type { Subscription } from '@/types/database'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
 
 export class SubscriptionService {
-  private supabase = createClient(cookies())
+  private supabase = supabase
 
   async createCustomer(userId: string, email: string) {
     const customer = await stripe.customers.create({
