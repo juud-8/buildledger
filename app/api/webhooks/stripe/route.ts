@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase/server'
 import { subscriptionService } from '@/lib/services/subscription-service'
 import { stripe } from '@/lib/stripe'
+import { env } from '@/lib/env'
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      env.STRIPE_WEBHOOK_SECRET
     )
 
     await subscriptionService.handleWebhookEvent(event)

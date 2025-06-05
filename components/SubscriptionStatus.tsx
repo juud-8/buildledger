@@ -2,6 +2,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { useState, useEffect } from 'react'
+import { env } from '@/lib/env'
 import { useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -37,8 +38,8 @@ export function SubscriptionStatus() {
   useEffect(() => {
     const fetchSubscription = async () => {
       const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        env.NEXT_PUBLIC_SUPABASE_URL,
+        env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       )
 
       const { data: { user } } = await supabase.auth.getUser()
