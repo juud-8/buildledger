@@ -1,5 +1,6 @@
 import { stripe } from '../stripe'
 import { supabaseServer } from '../supabase/server'
+import { env } from '../env'
 import type { Subscription } from '@/types/database'
 import type { PostgrestSingleResponse } from '@supabase/supabase-js'
 
@@ -254,8 +255,8 @@ export class SubscriptionService {
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+      success_url: `${env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
+      cancel_url: `${env.NEXT_PUBLIC_APP_URL}/pricing`,
       metadata: {
         user_id: user.id
       }
@@ -281,7 +282,7 @@ export class SubscriptionService {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
+      return_url: `${env.NEXT_PUBLIC_APP_URL}/dashboard`
     })
 
     return session
