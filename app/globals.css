@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import optimized animations */
+@import '../styles/animations.css';
+
 @layer base {
   :root {
     --background: 222 47% 11%;

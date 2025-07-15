@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "echo \"No tests configured\""
+    "test": "echo \"No tests configured\"",
+    "analyze": "ANALYZE=true next build",
+    "optimize-images": "node scripts/optimize-images.js",
+    "prebuild": "npm run optimize-images",
+    "build:production": "NODE_ENV=production next build",
+    "type-check": "tsc --noEmit",
+    "bundle-analyzer": "npx @next/bundle-analyzer",
+    "analyze-deps": "node lib/dependency-analyzer.js"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "^1.3.1",
@@ -67,10 +74,12 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.4.1",
     "@types/node": "^20.11.20",
     "@types/react": "^18.2.58",
     "@types/react-dom": "^18.2.19",
     "postcss": "^8.4.35",
+    "sharp": "^0.34.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
   }
