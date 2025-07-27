@@ -1,12 +1,55 @@
 {
   "name": "buildledger",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "Professional contractor financial management system built with Next.js and Supabase",
+  "author": "BuildLedger Team",
+  "license": "MIT",
+  "homepage": "https://github.com/buildledger/buildledger",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/buildledger/buildledger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/buildledger/buildledger/issues"
+  },
+  "keywords": [
+    "invoice",
+    "quote",
+    "contractor",
+    "financial-management",
+    "nextjs",
+    "supabase",
+    "react",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm run type-check && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint --fix",
+    "lint:check": "next lint",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "analyze": "ANALYZE=true npm run build",
+    "db:generate-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/lib/database.types.ts",
+    "db:reset": "supabase db reset",
+    "db:migrate": "supabase migration up",
+    "postinstall": "npm run type-check",
+    "clean": "rm -rf .next out node_modules/.cache",
+    "security:audit": "npm audit --audit-level high",
+    "security:fix": "npm audit fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "pre-commit": "npm run lint:check && npm run type-check && npm run test",
+    "prepare": "husky install || true"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -18,7 +61,13 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-intersection-observer": "^9.16.0",
-    "recharts": "^3.1.0"
+    "recharts": "^3.1.0",
+    "react-hot-toast": "^2.4.1",
+    "react-hook-form": "^7.48.2",
+    "@hookform/resolvers": "^3.3.2",
+    "zod": "^3.22.4",
+    "date-fns": "^3.0.6",
+    "clsx": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -29,6 +78,72 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/jest": "^29.5.8",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/user-event": "^14.5.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.1.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.1.0",
+    "@next/bundle-analyzer": "^15.0.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.3.1"
+  },
+  "optionalDependencies": {
+    "@sentry/nextjs": "^7.81.1",
+    "sharp": "^0.32.6"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ],
+    "moduleNameMapping": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/**/*.stories.{ts,tsx}",
+      "!src/**/__tests__/**",
+      "!src/**/node_modules/**"
+    ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
