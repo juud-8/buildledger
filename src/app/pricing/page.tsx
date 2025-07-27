@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@/components/ui/Switch";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 
@@ -96,13 +96,13 @@ const Pricing = () => {
             </p>
             <ul className="mt-8 space-y-4">
               {plan.features.map((feature) => (
-                <li key={feature.name || feature.name_linked.name} className="flex items-center">
+                <li key={feature.name || feature.name_linked?.name} className="flex items-center">
                   {feature.included ? (
                     <Check className="w-6 h-6 text-green-500" />
                   ) : (
                     <X className="w-6 h-6 text-red-500" />
                   )}
-                  <span className="ml-4">{feature.name || feature.name_linked.name}</span>
+                  <span className="ml-4">{feature.name || feature.name_linked?.name}</span>
                 </li>
               ))}
             </ul>

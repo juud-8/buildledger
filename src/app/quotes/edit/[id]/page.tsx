@@ -28,7 +28,7 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
       if (!user) return
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, user_id')
+        .select('*')
         .eq('user_id', user.id)
         .order('name')
 

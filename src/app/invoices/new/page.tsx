@@ -7,6 +7,13 @@ import { useAuth } from '@/components/AuthProvider'
 import { Navigation } from '@/components/Navigation'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { InvoiceItem, Client } from '@/lib/types'
+
+// Type for new line items (without database fields)
+interface NewInvoiceItem {
+  description: string
+  quantity: number
+  rate: number
+}
 import Link from 'next/link'
 
 export default function NewInvoice() {
@@ -18,7 +25,7 @@ export default function NewInvoice() {
   const [clients, setClients] = useState<Client[]>([])
   const [clientId, setClientId] = useState('')
   const [dueDate, setDueDate] = useState('')
-  const [lineItems, setLineItems] = useState<InvoiceItem[]>([])
+  const [lineItems, setLineItems] = useState<NewInvoiceItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [loadingClients, setLoadingClients] = useState(true)
@@ -38,7 +45,7 @@ export default function NewInvoice() {
 
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name, user_id')
+        .select('*')
         .eq('user_id', user.id)
         .order('name')
 
@@ -102,7 +109,7 @@ export default function NewInvoice() {
   }
 
   // Update line item
-  const updateLineItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
+  const updateLineItem = (index: number, field: keyof NewInvoiceItem, value: string | number) => {
     const updatedItems = [...lineItems]
     updatedItems[index] = { ...updatedItems[index], [field]: value }
     setLineItems(updatedItems)

@@ -7,7 +7,15 @@ export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
+  CRITICAL = 4
+}
+
+export enum ErrorCategory {
+  DATABASE = 'DATABASE',
+  API = 'API',
+  AUTH = 'AUTH',
+  GENERAL = 'GENERAL'
 }
 
 interface LogEntry {
@@ -21,10 +29,15 @@ interface LogEntry {
 class Logger {
   private level: LogLevel
   private isDevelopment: boolean
+  private userContext?: string
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development'
     this.level = this.isDevelopment ? LogLevel.DEBUG : LogLevel.INFO
+  }
+
+  setUserContext(userId: string) {
+    this.userContext = userId
   }
 
   private formatMessage(entry: LogEntry): string {
@@ -35,6 +48,10 @@ class Logger {
     
     if (context && Object.keys(context).length > 0) {
       formatted += ` | Context: ${JSON.stringify(context)}`
+    }
+
+    if (this.userContext) {
+      formatted += ` | User: ${this.userContext}`
     }
     
     if (error) {
@@ -73,6 +90,9 @@ class Logger {
       case LogLevel.ERROR:
         console.error(formattedMessage)
         break
+      case LogLevel.CRITICAL:
+        console.error(`🚨 CRITICAL: ${formattedMessage}`)
+        break
     }
   }
 
@@ -90,6 +110,10 @@ class Logger {
 
   error(message: string, context?: Record<string, unknown>, error?: Error) {
     this.log(LogLevel.ERROR, message, context, error)
+  }
+
+  critical(message: string, context?: Record<string, unknown>, error?: Error) {
+    this.log(LogLevel.CRITICAL, message, context, error)
   }
 
   // Convenience methods for common logging patterns
@@ -123,13 +147,49 @@ class Logger {
   }
 
   // Performance logging
-  logPerformance(operation: string, duration: number, context?: Record<string, unknown>) {
-    const level = duration > 1000 ? LogLevel.WARN : LogLevel.DEBUG
-    this.log(level, `Performance: ${operation} took ${duration}ms`, {
+  logPerformance(operation: string, durationOrContext?: number | Record<string, unknown>, maybeContext?: Record<string, unknown>) {
+    // Support two call signatures:
+    // 1. logPerformance('operation', duration, context?) – direct logging
+    // 2. const end = logPerformance('operation') – returns an end timer
+    if (typeof durationOrContext === 'number') {
+      const duration = durationOrContext
+      const context = maybeContext as Record<string, unknown> | undefined
+      const level = duration > 1000 ? LogLevel.WARN : LogLevel.DEBUG
+      this.log(level, `Performance: ${operation} took ${duration}ms`, {
+        operation,
+        duration,
+        ...context
+      })
+      return
+    }
+
+    // Called with only an operation (and optional context)
+    const getTime = () => (typeof performance !== 'undefined' && typeof performance.now === 'function') ? performance.now() : Date.now()
+    const startTime = getTime()
+    const context = durationOrContext as Record<string, unknown> | undefined
+
+    return () => {
+      const endTime = getTime()
+      const duration = Math.round(endTime - startTime)
+      const level = duration > 1000 ? LogLevel.WARN : LogLevel.DEBUG
+      this.log(level, `Performance: ${operation} took ${duration}ms`, {
+        operation,
+        duration,
+        ...context
+      })
+    }
+  }
+
+  logDatabaseOperation(operation: string, table: string, success: boolean, duration: number, error?: Error) {
+    const level = success ? LogLevel.INFO : LogLevel.ERROR
+    const status = success ? 'succeeded' : 'failed'
+    this.log(level, `Database ${operation} on ${table} ${status} in ${duration}ms`, {
       operation,
+      table,
       duration,
-      ...context
-    })
+      success,
+      error: error?.message
+    }, error)
   }
 }
 
@@ -141,10 +201,15 @@ export const debug = (message: string, context?: Record<string, unknown>) => log
 export const info = (message: string, context?: Record<string, unknown>) => logger.info(message, context)
 export const warn = (message: string, context?: Record<string, unknown>, error?: Error) => logger.warn(message, context, error)
 export const error = (message: string, context?: Record<string, unknown>, error?: Error) => logger.error(message, context, error)
+export const critical = (message: string, context?: Record<string, unknown>, error?: Error) => logger.critical(message, context, error)
 
 // Export convenience methods
 export const logApiCall = (method: string, url: string, status?: number, duration?: number) => logger.logApiCall(method, url, status, duration)
 export const logDatabaseQuery = (operation: string, table: string, duration?: number) => logger.logDatabaseQuery(operation, table, duration)
 export const logUserAction = (userId: string, action: string, details?: Record<string, unknown>) => logger.logUserAction(userId, action, details)
 export const logError = (error: Error, context?: Record<string, unknown>) => logger.logError(error, context)
-export const logPerformance = (operation: string, duration: number, context?: Record<string, unknown>) => logger.logPerformance(operation, duration, context) 
+export const logPerformance = (operation: string, durationOrContext?: number | Record<string, unknown>, maybeContext?: Record<string, unknown>) =>
+  logger.logPerformance(operation, durationOrContext as any, maybeContext as any)
+
+export const logDatabaseOperation = (operation: string, table: string, success: boolean, duration: number, error?: Error) =>
+  logger.logDatabaseOperation(operation, table, success, duration, error) 
