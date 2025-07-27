@@ -8,6 +8,7 @@ A modern web application built for contractors to manage quotes, invoices, and c
 
 - 🔐 **Secure Authentication** - Supabase Auth with email/password
 - 📊 **Advanced Dashboard** - Real-time revenue metrics, charts, and client insights
+- 🤖 **AI-Powered Intelligence** - MCP integration for business analysis and automation
 - 📝 **Quote Management** - Create, edit, and track project quotes
 - 🧾 **Invoice Generation** - Convert quotes to invoices seamlessly
 - 📧 **Email Integration** - Send invoices directly to clients with PDF attachments
@@ -65,6 +66,7 @@ Open [http://localhost:3000](http://localhost:3000) to see your application.
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: TailwindCSS v4
 - **Backend**: Supabase (PostgreSQL + Auth)
+- **AI/ML**: MCP (Model Context Protocol) for business intelligence
 - **Email**: EmailJS (transactional emails, no domain verification)
 - **PDF**: React-PDF (invoice generation)
 - **Charts**: Recharts (data visualization)
@@ -192,6 +194,7 @@ npm start
 
 ## 📈 Roadmap
 
+- [x] 🤖 **AI-Powered Business Intelligence** - MCP integration for financial analysis and automation
 - [ ] PDF export for quotes and invoices
 - [ ] Email integration for sending documents
 - [ ] Payment tracking and integration
@@ -218,6 +221,7 @@ If you encounter any issues:
 2. Ensure your Supabase database schema is set up correctly
 3. Verify environment variables are configured
 4. Check the browser console for error messages
+5. For AI features, see `MCP_INTEGRATION.md` for detailed documentation
 
 ---
 

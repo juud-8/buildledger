@@ -6,10 +6,9 @@ import {
   uploadLogo, 
   deleteLogo,
   getPlanFeatures,
-  canPerformAction,
-  getUserStats
+  canPerformAction
 } from './profileService'
-import { Profile, PlanFeatures } from './types'
+import { Profile } from './types'
 
 /**
  * Database Synchronization Test Suite
@@ -247,7 +246,7 @@ async function testStorageBucketConfig(): Promise<{ success: boolean; message: s
       return { 
         success: false, 
         message: `Storage bucket list error: ${error.message}`,
-        details: { error: error.message, code: error.code }
+        details: { error: error.message, statusCode: error.statusCode }
       }
     }
 
@@ -282,7 +281,7 @@ async function testStorageBucketConfig(): Promise<{ success: boolean; message: s
       return { 
         success: false, 
         message: `Storage upload test failed: ${uploadError.message}`,
-        details: { error: uploadError.message, code: uploadError.statusCode }
+        details: { error: uploadError.message, statusCode: uploadError.statusCode }
       }
     }
 
@@ -454,19 +453,19 @@ async function testLogoManagement(): Promise<{ success: boolean; message: string
 async function testRLSPolicies(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
   try {
     // Test profiles table RLS
-    const { data: profilesData, error: profilesError } = await supabase
+    const { error: profilesError } = await supabase
       .from('profiles')
       .select('*')
       .limit(1)
 
     // Test clients table RLS
-    const { data: clientsData, error: clientsError } = await supabase
+    const { error: clientsError } = await supabase
       .from('clients')
       .select('*')
       .limit(1)
 
     // Test invoices table RLS
-    const { data: invoicesData, error: invoicesError } = await supabase
+    const { error: invoicesError } = await supabase
       .from('invoices')
       .select('*')
       .limit(1)
@@ -558,7 +557,7 @@ async function testForeignKeyRelationships(): Promise<{ success: boolean; messag
 async function testDatabaseFunctions(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
   try {
     // Test the get_logo_url function
-    const { data: logoUrl, error: logoError } = await supabase
+    const { error: logoError } = await supabase
       .rpc('get_logo_url', { 
         user_id: '00000000-0000-0000-0000-000000000000', 
         filename: 'test.png' 

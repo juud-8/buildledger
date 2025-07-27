@@ -19,89 +19,17 @@ import {
   Globe,
   Brain,
   Crown,
-  Coffee
+  Coffee,
+  Star
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { fadeInUp, staggerContainer, staggerItem, scaleIn } from '@/lib/animations'
+import { PRICING_PLANS, PricingPlan } from '@/lib/pricing'
+import { loadStripe } from '@stripe/stripe-js'
 
-// Plan features data
-const plans = [
-  {
-    name: 'Free',
-    price: { monthly: 0, annual: 0 },
-    description: 'Perfect for getting started',
-    color: 'gray',
-    features: [
-      { text: '5 clients', included: true },
-      { text: '10 quotes per month', included: true },
-      { text: 'Manual invoicing only', included: true },
-      { text: 'Basic email support', included: true },
-      { text: 'PDF generation', included: false },
-      { text: 'Payment processing', included: false },
-      { text: 'Client portal', included: false },
-      { text: 'Analytics & insights', included: false },
-      { text: 'Custom branding', included: false },
-      { text: 'Team members', included: false },
-      { text: 'API access', included: false },
-      { text: 'Priority support', included: false },
-      { text: 'AI assistant', included: false }
-    ],
-    cta: 'Start Free',
-    popular: false
-  },
-  {
-    name: 'Pro',
-    price: { monthly: 19, annual: 17 },
-    description: 'Best value for growing contractors',
-    color: 'blue',
-    badge: 'MOST POPULAR',
-    features: [
-      { text: 'Unlimited clients', included: true },
-      { text: 'Unlimited quotes', included: true },
-      { text: 'Stripe payment processing', included: true },
-      { text: 'Professional PDF invoices', included: true },
-      { text: 'Automated payment reminders', included: true },
-      { text: 'Basic analytics dashboard', included: true },
-      { text: 'Logo & brand colors', included: true },
-      { text: 'Email support', included: true },
-      { text: 'Client portal', included: false },
-      { text: 'Advanced analytics', included: false },
-      { text: 'Team members', included: false },
-      { text: 'API access', included: false },
-      { text: 'Priority support', included: false },
-      { text: 'AI assistant', included: false }
-    ],
-    cta: 'Start Pro Trial',
-    popular: true,
-    savings: 'Save $24/year'
-  },
-  {
-    name: 'Business',
-    price: { monthly: 49, annual: 44 },
-    description: 'For established contractors at scale',
-    color: 'purple',
-    badge: 'BEST ROI',
-    features: [
-      { text: 'Everything in Pro, plus:', included: true, header: true },
-      { text: 'Stripe + ACH payments', included: true },
-      { text: 'Branded client portal', included: true },
-      { text: 'Advanced revenue analytics', included: true },
-      { text: 'AI-powered insights', included: true },
-      { text: 'Full white-label branding', included: true },
-      { text: 'Custom domain support', included: true },
-      { text: '3 team members', included: true },
-      { text: 'API access', included: true },
-      { text: 'Priority phone support', included: true },
-      { text: 'AI assistant ("Fix this quote")', included: true },
-      { text: 'Quarterly business reviews', included: true },
-      { text: '99.9% uptime SLA', included: true }
-    ],
-    cta: 'Start Business Trial',
-    popular: false,
-    savings: 'Save $60/year'
-  }
-]
+// Initialize Stripe
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 // ROI calculator component
 function ROICalculator() {
@@ -175,11 +103,53 @@ function ROICalculator() {
 }
 
 // Pricing card component
-function PricingCard({ plan, isAnnual, index }: any) {
+function PricingCard({ plan, isAnnual, index }: { 
+  plan: PricingPlan; 
+  isAnnual: boolean; 
+  index: number; 
+}) {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 })
+  const [isLoading, setIsLoading] = useState(false)
   
-  const price = isAnnual ? plan.price.annual : plan.price.monthly
+  const price = isAnnual ? plan.annualPrice : plan.monthlyPrice
+  const stripePriceId = isAnnual ? plan.stripePriceId.annual : plan.stripePriceId.monthly
   const isPopular = plan.popular
+  
+  const handleSubscribe = async () => {
+    if (plan.id === 'free') {
+      window.location.href = '/signup'
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const stripe = await stripePromise
+      if (!stripe) throw new Error('Stripe failed to load')
+
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId: stripePriceId,
+          successUrl: `${window.location.origin}/dashboard?success=true&plan=${plan.id}`,
+          cancelUrl: `${window.location.origin}/pricing?canceled=true`,
+        }),
+      })
+
+      const { sessionId, error } = await response.json()
+      if (error) throw new Error(error)
+
+      const result = await stripe.redirectToCheckout({ sessionId })
+      if (result.error) throw new Error(result.error.message)
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Something went wrong. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
   
   return (
     <motion.div
@@ -218,13 +188,13 @@ function PricingCard({ plan, isAnnual, index }: any) {
           {isAnnual && plan.savings && (
             <p className="text-sm text-green-600 font-medium mt-1">{plan.savings}</p>
           )}
-          {plan.name === 'Pro' && (
+          {plan.id === 'pro' && (
             <p className="text-sm text-gray-600 mt-2">
               <Coffee className="w-4 h-4 inline mr-1" />
               Less than a coffee per week
             </p>
           )}
-          {plan.name === 'Business' && (
+          {plan.id === 'business' && (
             <p className="text-sm text-gray-600 mt-2">
               <TrendingUp className="w-4 h-4 inline mr-1" />
               Pays for itself in 2 invoices
@@ -234,18 +204,19 @@ function PricingCard({ plan, isAnnual, index }: any) {
         
         {/* CTA Button */}
         <Button
-          href="/signup"
+          onClick={handleSubscribe}
           fullWidth
           variant={isPopular ? 'primary' : 'secondary'}
           size="lg"
           className="mb-6"
+          disabled={isLoading}
         >
-          {plan.cta}
+          {isLoading ? 'Processing...' : plan.cta}
         </Button>
         
         {/* Features */}
         <div className="space-y-3">
-          {plan.features.map((feature: any, i: number) => (
+          {plan.features.map((feature, i) => (
             <div key={i} className={`flex items-start gap-3 ${
               feature.header ? 'font-semibold text-gray-900 mb-2' : ''
             }`}>
@@ -357,9 +328,9 @@ export default function PricingPage() {
       <section className="pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-            {plans.map((plan, index) => (
+            {PRICING_PLANS.map((plan, index) => (
               <PricingCard
-                key={plan.name}
+                key={plan.id}
                 plan={plan}
                 isAnnual={isAnnual}
                 index={index}

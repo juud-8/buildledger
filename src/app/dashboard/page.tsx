@@ -3,6 +3,7 @@
 import { useAuth } from '@/components/AuthProvider'
 import { Navigation } from '@/components/Navigation'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+// import { McpAssistant } from '@/components/McpAssistant'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
@@ -412,6 +413,9 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      
+      {/* MCP AI Assistant */}
+              {/* {user && <McpAssistant userId={user.id} />} */}
     </div>
   )
 }

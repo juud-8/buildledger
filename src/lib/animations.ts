@@ -1,51 +1,54 @@
 /**
- * Animation utilities and variants for Framer Motion
- * Provides consistent, performant animations across the application
+ * Animation configurations for Framer Motion
+ * Centralized animation definitions for consistent motion across the app
  */
 
 export const fadeIn = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.3 }
+}
+
+export const slideUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -20 },
-  transition: { duration: 0.3, ease: "easeOut" }
+  transition: { duration: 0.3 }
 }
 
-export const fadeInUp = {
-  initial: { opacity: 0, y: 40 },
+export const slideDown = {
+  initial: { opacity: 0, y: -20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: "easeOut" }
+  exit: { opacity: 0, y: 20 },
+  transition: { duration: 0.3 }
 }
 
-export const fadeInDown = {
-  initial: { opacity: 0, y: -40 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: "easeOut" }
-}
-
-export const fadeInLeft = {
-  initial: { opacity: 0, x: -40 },
+export const slideLeft = {
+  initial: { opacity: 0, x: 20 },
   animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.5, ease: "easeOut" }
+  exit: { opacity: 0, x: -20 },
+  transition: { duration: 0.3 }
 }
 
-export const fadeInRight = {
-  initial: { opacity: 0, x: 40 },
+export const slideRight = {
+  initial: { opacity: 0, x: -20 },
   animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.5, ease: "easeOut" }
+  exit: { opacity: 0, x: 20 },
+  transition: { duration: 0.3 }
 }
 
 export const scaleIn = {
   initial: { opacity: 0, scale: 0.9 },
   animate: { opacity: 1, scale: 1 },
-  transition: { duration: 0.3, ease: "easeOut" }
+  exit: { opacity: 0, scale: 0.9 },
+  transition: { duration: 0.2 }
 }
 
 export const staggerContainer = {
-  initial: {},
   animate: {
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
+      staggerChildren: 0.1
     }
   }
 }
@@ -53,24 +56,22 @@ export const staggerContainer = {
 export const staggerItem = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: "easeOut" }
+  transition: { duration: 0.3 }
 }
 
-export const slideInFromRight = {
-  initial: { x: "100%", opacity: 0 },
-  animate: { x: 0, opacity: 1 },
-  exit: { x: "100%", opacity: 0 },
-  transition: { type: "spring", damping: 25, stiffness: 200 }
+export const bounce = {
+  initial: { scale: 0.8, opacity: 0 },
+  animate: { 
+    scale: [0.8, 1.1, 1],
+    opacity: [0, 1, 1]
+  },
+  transition: { 
+    duration: 0.5,
+    times: [0, 0.8, 1]
+  }
 }
 
-export const slideInFromLeft = {
-  initial: { x: "-100%", opacity: 0 },
-  animate: { x: 0, opacity: 1 },
-  exit: { x: "-100%", opacity: 0 },
-  transition: { type: "spring", damping: 25, stiffness: 200 }
-}
-
-export const pulseAnimation = {
+export const pulse = {
   animate: {
     scale: [1, 1.05, 1],
     transition: {
@@ -81,69 +82,60 @@ export const pulseAnimation = {
   }
 }
 
-export const floatAnimation = {
-  animate: {
-    y: [0, -10, 0],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
-  }
-}
-
-export const shimmer = {
-  initial: { x: "-100%" },
-  animate: { x: "100%" },
-  transition: {
-    repeat: Infinity,
-    duration: 1.5,
-    ease: "linear"
-  }
-}
-
-export const checkmarkAnimation = {
-  initial: { pathLength: 0, opacity: 0 },
-  animate: { 
-    pathLength: 1, 
-    opacity: 1,
-    transition: {
-      pathLength: { duration: 0.5, ease: "easeOut" },
-      opacity: { duration: 0.3 }
-    }
-  }
-}
-
-export const numberCountAnimation = (value: number) => ({
-  initial: { opacity: 0, scale: 0.5 },
-  animate: { 
-    opacity: 1, 
-    scale: 1,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut"
-    }
-  }
-})
-
-// Page transition variants
 export const pageTransition = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
+  initial: { opacity: 0, x: -20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: 20 },
   transition: { duration: 0.3 }
 }
 
-// Hover animations
-export const hoverScale = {
-  whileHover: { scale: 1.05 },
-  whileTap: { scale: 0.95 },
-  transition: { type: "spring", stiffness: 400, damping: 17 }
+export const modalBackdrop = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.2 }
 }
 
-export const hoverGlow = {
-  whileHover: {
-    boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
-    transition: { duration: 0.3 }
+export const modalContent = {
+  initial: { opacity: 0, scale: 0.9, y: 20 },
+  animate: { opacity: 1, scale: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.9, y: 20 },
+  transition: { duration: 0.3, ease: "easeOut" }
+}
+
+export const listItem = {
+  initial: { opacity: 0, x: -20 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: 20 },
+  transition: { duration: 0.2 }
+}
+
+export const cardHover = {
+  initial: { scale: 1 },
+  whileHover: { 
+    scale: 1.02,
+    transition: { duration: 0.2 }
+  },
+  whileTap: { 
+    scale: 0.98,
+    transition: { duration: 0.1 }
+  }
+}
+
+export const buttonTap = {
+  whileTap: { 
+    scale: 0.95,
+    transition: { duration: 0.1 }
+  }
+}
+
+export const loadingSpinner = {
+  animate: {
+    rotate: 360,
+    transition: {
+      duration: 1,
+      repeat: Infinity,
+      ease: "linear"
+    }
   }
 } 
