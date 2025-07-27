@@ -1,11 +1,11 @@
-import { Invoice, InvoiceItem, Quote, QuoteItem } from '@/lib/types'
+import { Invoice, InvoiceItem, Quote, QuoteItem, Client } from '@/lib/types'
 import { generateInvoiceNumber, formatCurrency, formatDate } from '@/lib/invoiceUtils'
 
 /**
  * Extended invoice interface for email operations
  */
 interface InvoiceWithDetails extends Invoice {
-  clients?: { name: string; email?: string; phone?: string; address?: string }
+  clients?: Pick<Client, 'id' | 'name' | 'email' | 'phone' | 'address'>
   invoice_items?: InvoiceItem[]
 }
 
@@ -13,7 +13,7 @@ interface InvoiceWithDetails extends Invoice {
  * Extended quote interface for email operations
  */
 interface QuoteWithDetails extends Quote {
-  clients?: { name: string; email?: string; phone?: string; address?: string }
+  clients?: Pick<Client, 'id' | 'name' | 'email' | 'phone' | 'address'>
   quote_items?: QuoteItem[]
 }
 

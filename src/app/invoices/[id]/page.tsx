@@ -6,14 +6,14 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
 import { Navigation } from '@/components/Navigation'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Invoice, InvoiceItem } from '@/lib/types'
+import { Invoice, InvoiceItem, Client } from '@/lib/types'
 import { downloadInvoicePDF, openInvoicePDFInNewTab, generateInvoicePDF } from '@/lib/pdfUtils'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import { sendInvoiceEmail, testEmailJSConfig } from '@/lib/emailService'
 import Link from 'next/link'
 
 interface InvoiceDetail extends Invoice {
-  clients?: { name: string; email?: string; phone?: string; address?: string }
+  clients?: Pick<Client, 'id' | 'name' | 'email' | 'phone' | 'address'>
   invoice_items?: InvoiceItem[]
 }
 
@@ -34,6 +34,7 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
         .select(`
           *,
           clients (
+            id,
             name,
             email,
             phone,

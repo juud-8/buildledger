@@ -1,19 +1,14 @@
 import React from 'react'
 import { pdf } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/components/InvoicePDF'
-import { Invoice, InvoiceItem } from '@/lib/types'
+import { Invoice, InvoiceItem, Client } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 
 /**
  * Extended invoice interface that includes related data for PDF generation
  */
 interface InvoiceWithDetails extends Invoice {
-  clients?: { 
-    name: string; 
-    email?: string; 
-    phone?: string; 
-    address?: string 
-  }
+  clients?: Pick<Client, 'id' | 'name' | 'email' | 'phone' | 'address'>
   invoice_items?: InvoiceItem[]
 }
 

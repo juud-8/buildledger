@@ -71,12 +71,12 @@ const nextConfig: NextConfig = {
     } : undefined,
     // WebAssembly optimization
     webVitalsAttribution: ['CLS', 'LCP'],
-    // Optimize server components
-    serverComponentsExternalPackages: ['sharp'],
   },
 
+  // Server external packages (moved from experimental)
+  serverExternalPackages: ['sharp'],
+
   // Performance optimizations
-  swcMinify: true,
   compress: true,
   poweredByHeader: false,
 
