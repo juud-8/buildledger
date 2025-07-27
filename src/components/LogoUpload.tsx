@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Image from 'next/image'
 import { useAuth } from './AuthProvider'
 import { uploadLogo, deleteLogo, LogoUploadResult } from '@/lib/profileService'
 
@@ -103,13 +104,17 @@ export function LogoUpload({ onUploadComplete, className = '' }: LogoUploadProps
       {profile?.logo_url && (
         <div className="mb-4 text-center">
           <div className="relative inline-block">
-            <img
+            <Image
               src={profile.logo_url}
               alt="Company Logo"
-              className="w-24 h-24 object-contain border-2 border-gray-200 rounded-lg"
+              width={96}
+              height={96}
+              className="object-contain border-2 border-gray-200 rounded-lg"
               onError={(e) => {
                 console.error('Logo failed to load:', profile.logo_url)
-                e.currentTarget.style.display = 'none'
+                // Hide the image on error
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
               }}
             />
             <button
