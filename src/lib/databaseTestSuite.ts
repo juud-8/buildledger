@@ -6,10 +6,8 @@ import {
   uploadLogo, 
   deleteLogo,
   getPlanFeatures,
-  canPerformAction,
-  getUserStats
+  canPerformAction
 } from './profileService'
-import { Profile, PlanFeatures } from './types'
 
 /**
  * Database Synchronization Test Suite
@@ -244,10 +242,11 @@ async function testStorageBucketConfig(): Promise<{ success: boolean; message: s
     const { data: buckets, error } = await supabase.storage.listBuckets()
 
     if (error) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         message: `Storage bucket list error: ${error.message}`,
-        details: { error: error.message, code: error.code }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        details: { error: error.message, code: (error as any).code }
       }
     }
 
@@ -279,10 +278,11 @@ async function testStorageBucketConfig(): Promise<{ success: boolean; message: s
       })
 
     if (uploadError) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         message: `Storage upload test failed: ${uploadError.message}`,
-        details: { error: uploadError.message, code: uploadError.statusCode }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        details: { error: uploadError.message, code: (uploadError as any).statusCode }
       }
     }
 
@@ -454,19 +454,19 @@ async function testLogoManagement(): Promise<{ success: boolean; message: string
 async function testRLSPolicies(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
   try {
     // Test profiles table RLS
-    const { data: profilesData, error: profilesError } = await supabase
+    const { error: profilesError } = await supabase
       .from('profiles')
       .select('*')
       .limit(1)
 
     // Test clients table RLS
-    const { data: clientsData, error: clientsError } = await supabase
+    const { error: clientsError } = await supabase
       .from('clients')
       .select('*')
       .limit(1)
 
     // Test invoices table RLS
-    const { data: invoicesData, error: invoicesError } = await supabase
+    const { error: invoicesError } = await supabase
       .from('invoices')
       .select('*')
       .limit(1)
@@ -558,10 +558,10 @@ async function testForeignKeyRelationships(): Promise<{ success: boolean; messag
 async function testDatabaseFunctions(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
   try {
     // Test the get_logo_url function
-    const { data: logoUrl, error: logoError } = await supabase
-      .rpc('get_logo_url', { 
-        user_id: '00000000-0000-0000-0000-000000000000', 
-        filename: 'test.png' 
+    const { error: logoError } = await supabase
+      .rpc('get_logo_url', {
+        user_id: '00000000-0000-0000-0000-000000000000',
+        filename: 'test.png'
       })
 
     // Test update_updated_at_column function (if it exists)
@@ -708,7 +708,15 @@ export async function runDatabaseTestSuite(): Promise<TestSuiteResult> {
 /**
  * Quick health check for production monitoring
  */
-export async function quickHealthCheck(): Promise<{ healthy: boolean; details: Record<string, unknown> }> {
+export async function quickHealthCheck(): Promise<{
+  healthy: boolean
+  details: {
+    checks: Record<string, boolean>
+    responseTime: number
+    timestamp: string
+    error?: string
+  }
+}> {
   const startTime = Date.now()
   const checks: Record<string, boolean> = {}
   
@@ -743,11 +751,13 @@ export async function quickHealthCheck(): Promise<{ healthy: boolean; details: R
       }
     }
   } catch (error) {
+    const duration = Date.now() - startTime
     return {
       healthy: false,
       details: {
         error: String(error),
         checks,
+        responseTime: duration,
         timestamp: new Date().toISOString()
       }
     }
@@ -764,23 +774,25 @@ export async function getSystemStatus(): Promise<{
   performance: { status: string; details: Record<string, unknown> }
 }> {
   const healthCheck = await quickHealthCheck()
-  
+  const checks = (healthCheck.details as { checks?: Record<string, boolean>; responseTime: number }).checks
+  const responseTime = (healthCheck.details as { checks?: Record<string, boolean>; responseTime: number }).responseTime
+
   return {
     database: {
-      status: healthCheck.details.checks?.database ? 'healthy' : 'unhealthy',
+      status: checks?.database ? 'healthy' : 'unhealthy',
       details: healthCheck.details
     },
     storage: {
-      status: healthCheck.details.checks?.storage ? 'healthy' : 'unhealthy',
+      status: checks?.storage ? 'healthy' : 'unhealthy',
       details: healthCheck.details
     },
     security: {
-      status: healthCheck.details.checks?.rls ? 'healthy' : 'unhealthy',
+      status: checks?.rls ? 'healthy' : 'unhealthy',
       details: healthCheck.details
     },
     performance: {
-      status: healthCheck.details.responseTime < 1000 ? 'good' : 'slow',
-      details: { responseTime: healthCheck.details.responseTime }
+      status: responseTime < 1000 ? 'good' : 'slow',
+      details: { responseTime }
     }
   }
-} 
+}

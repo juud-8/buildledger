@@ -1,7 +1,9 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
 import { Navigation } from '@/components/Navigation'
@@ -12,8 +14,7 @@ import Link from 'next/link'
 export default function NewInvoice() {
   const { user } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const quoteId = searchParams.get('quote_id')
+  const [quoteId, setQuoteId] = useState<string | null>(null)
 
   const [clients, setClients] = useState<Client[]>([])
   const [clientId, setClientId] = useState('')
@@ -23,6 +24,11 @@ export default function NewInvoice() {
   const [loading, setLoading] = useState(false)
   const [loadingClients, setLoadingClients] = useState(true)
   const [isFromQuote, setIsFromQuote] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setQuoteId(params.get('quote_id'))
+  }, [])
 
   // Set default due date on client side only to avoid hydration mismatch
   useEffect(() => {

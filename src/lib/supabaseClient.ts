@@ -1,5 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { Database } from './types'
+import { logger } from './logger'
 
 /**
  * Environment variable validation
@@ -54,7 +55,7 @@ const createSupabaseClient = (): SupabaseClient<Database> => {
       },
     })
   } catch (error) {
-    console.error('Failed to create Supabase client:', error)
+    logger.error('Failed to create Supabase client:', error)
     throw error
   }
 }

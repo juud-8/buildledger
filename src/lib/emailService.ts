@@ -1,15 +1,13 @@
 import emailjs from '@emailjs/browser'
 import { Invoice, Quote, ApiResponse } from '@/lib/types'
+import { logger } from './logger'
 import { generateInvoiceNumber, formatCurrency, formatDate } from '@/lib/invoiceUtils'
 import { 
   validateInvoiceForEmail, 
   validateQuoteForEmail,
   formatInvoiceEmailSubject,
   formatQuoteEmailSubject,
-  formatInvoiceEmailBody,
-  formatQuoteEmailBody,
-  formatInvoiceEmailText,
-  formatQuoteEmailText,
+  // Template helpers (kept for potential future use)
   sanitizeEmailContent,
   isValidEmail
 } from '@/lib/emailUtils'
@@ -120,7 +118,7 @@ export const sendInvoiceEmail = async (
       }
     })
 
-    console.log('Sending invoice email:', {
+    logger.info('Sending invoice email:', {
       to: emailData.to_email,
       invoiceNumber: emailData.invoice_number,
       total: emailData.invoice_total
@@ -133,7 +131,7 @@ export const sendInvoiceEmail = async (
       config.publicKey
     )
 
-    console.log('Invoice email sent successfully:', result)
+    logger.info('Invoice email sent successfully:', result)
     return { 
       success: true, 
       messageId: result.text || 'unknown'
@@ -197,7 +195,7 @@ export const sendQuoteEmail = async (
       }
     })
 
-    console.log('Sending quote email:', {
+    logger.info('Sending quote email:', {
       to: emailData.to_email,
       quoteTitle: emailData.quote_title,
       total: emailData.quote_total
@@ -210,7 +208,7 @@ export const sendQuoteEmail = async (
       config.publicKey
     )
 
-    console.log('Quote email sent successfully:', result)
+    logger.info('Quote email sent successfully:', result)
     return { 
       success: true, 
       messageId: result.text || 'unknown'
@@ -293,7 +291,7 @@ export const sendCustomEmail = async (
       message: sanitizeEmailContent(message)
     }
 
-    console.log('Sending custom email:', {
+    logger.info('Sending custom email:', {
       to: emailData.to_email,
       subject: emailData.subject
     })
@@ -305,7 +303,7 @@ export const sendCustomEmail = async (
       config.publicKey
     )
 
-    console.log('Custom email sent successfully:', result)
+    logger.info('Custom email sent successfully:', result)
     return { 
       success: true, 
       messageId: result.text || 'unknown'
@@ -334,11 +332,11 @@ export const sendCustomEmail = async (
  */
 export const testEmailJSConfig = async (): Promise<ApiResponse<{ config: EmailJSConfig }>> => {
   try {
-    console.log('Testing EmailJS configuration...')
+    logger.info('Testing EmailJS configuration...')
     
     const config = getEmailJSConfig()
     
-    console.log('EmailJS Config Test:', {
+    logger.info('EmailJS Config Test:', {
       serviceId: config.serviceId,
       templateId: config.templateId,
       publicKeyLength: config.publicKey.length,
@@ -363,7 +361,7 @@ export const testEmailJSConfig = async (): Promise<ApiResponse<{ config: EmailJS
       config.publicKey
     )
 
-    console.log('EmailJS test successful:', result)
+    logger.info('EmailJS test successful:', result)
     return { 
       success: true, 
       data: { config },
@@ -410,7 +408,7 @@ export const getEmailJSStatus = (): { configured: boolean; missing: string[] } =
  * @param maxRetries - Maximum number of retries (default: 3)
  * @returns Email result
  */
-export const retryEmailSending = async <T>(
+export const retryEmailSending = async (
   emailFunction: () => Promise<EmailResult>,
   maxRetries: number = 3
 ): Promise<EmailResult> => {

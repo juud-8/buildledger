@@ -1,5 +1,5 @@
 import React from 'react'
-import { pdf, Document, Page } from '@react-pdf/renderer'
+import { pdf } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/components/InvoicePDF'
 import { Invoice, InvoiceItem } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
@@ -26,7 +26,9 @@ interface InvoiceWithDetails extends Invoice {
 export const generateInvoicePDF = async (invoice: InvoiceWithDetails): Promise<Blob> => {
   try {
     // InvoicePDF already includes Document wrapper, so we can use it directly
-    const element = React.createElement(InvoicePDF, { invoice })
+    // Casting is safe as InvoicePDF renders a valid PDF Document
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const element = React.createElement(InvoicePDF, { invoice }) as any
     const blob = await pdf(element).toBlob()
     return blob
   } catch (error) {

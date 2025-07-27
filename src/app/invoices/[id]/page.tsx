@@ -10,6 +10,7 @@ import { Invoice, InvoiceItem } from '@/lib/types'
 import { downloadInvoicePDF, openInvoicePDFInNewTab, generateInvoicePDF } from '@/lib/pdfUtils'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import { sendInvoiceEmail, testEmailJSConfig } from '@/lib/emailService'
+import { logger } from '@/lib/logger'
 import Link from 'next/link'
 
 interface InvoiceDetail extends Invoice {
@@ -121,7 +122,7 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
 
     setUpdating(true)
     try {
-      console.log('Frontend: Sending invoice via EmailJS:', {
+      logger.info('Frontend: Sending invoice via EmailJS:', {
         invoiceId: invoice.id,
         clientEmail: invoice.clients?.email,
         clientName: invoice.clients?.name
