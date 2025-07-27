@@ -17,6 +17,13 @@ export const slideUp = {
   transition: { duration: 0.3 }
 }
 
+export const fadeInUp = {
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -30 },
+  transition: { duration: 0.4, ease: "easeOut" }
+}
+
 export const slideDown = {
   initial: { opacity: 0, y: -20 },
   animate: { opacity: 1, y: 0 },
@@ -136,6 +143,17 @@ export const loadingSpinner = {
       duration: 1,
       repeat: Infinity,
       ease: "linear"
+    }
+  }
+}
+
+export const floatAnimation = {
+  animate: {
+    y: [0, -10, 0],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: "easeInOut"
     }
   }
 } 
