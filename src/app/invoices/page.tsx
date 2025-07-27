@@ -43,8 +43,25 @@ export default function InvoicesList() {
         console.error('Error loading invoices:', error)
       } else {
         // Transform the data to match our interface
-        const transformedData = (data || []).map((invoice: { clients?: { name: string }[] }) => ({
-          ...invoice,
+        const transformedData: InvoiceListItem[] = (data || []).map((invoice: { 
+          id: string; 
+          user_id: string; 
+          client_id: string | null; 
+          quote_id: string | null; 
+          due_date: string | null; 
+          status: string; 
+          total: number; 
+          created_at: string; 
+          clients?: { name: string }[] 
+        }) => ({
+          id: invoice.id,
+          user_id: invoice.user_id,
+          client_id: invoice.client_id,
+          quote_id: invoice.quote_id,
+          due_date: invoice.due_date,
+          status: invoice.status,
+          total: invoice.total,
+          created_at: invoice.created_at,
           clients: invoice.clients?.[0] || null
         }))
         setInvoices(transformedData)
