@@ -9,7 +9,7 @@
  */
 
 import type { NextConfig } from "next"
-import { withSentryConfig } from "@sentry/nextjs"
+// import { withSentryConfig } from "@sentry/nextjs"
 
 // Bundle analyzer for performance optimization
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
@@ -269,24 +269,32 @@ const nextConfig: NextConfig = {
 // Apply bundle analyzer
 const configWithAnalyzer = withBundleAnalyzer(nextConfig)
 
-// Apply Sentry configuration in production
+// Apply Sentry configuration in production (if available)
 const finalConfig = isProduction && process.env.SENTRY_DSN 
-  ? withSentryConfig(
-      configWithAnalyzer,
-      {
-        // Sentry configuration options
-        silent: true,
-        org: process.env.SENTRY_ORG,
-        project: process.env.SENTRY_PROJECT,
-        authToken: process.env.SENTRY_AUTH_TOKEN,
-      },
-      {
-        // Upload source maps to Sentry
-        hideSourceMaps: true,
-        disableLogger: true,
-        widenClientFileUpload: true,
+  ? (() => {
+      try {
+        const { withSentryConfig } = require("@sentry/nextjs")
+        return withSentryConfig(
+          configWithAnalyzer,
+          {
+            // Sentry configuration options
+            silent: true,
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+          },
+          {
+            // Upload source maps to Sentry
+            hideSourceMaps: true,
+            disableLogger: true,
+            widenClientFileUpload: true,
+          }
+        )
+      } catch (error) {
+        console.warn('Sentry not available, skipping Sentry configuration')
+        return configWithAnalyzer
       }
-    )
+    })()
   : configWithAnalyzer
 
 export default finalConfig
