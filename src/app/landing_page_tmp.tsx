@@ -7,12 +7,24 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Users, DollarSign, Zap, Shield, Check, Star, ArrowRight, Clock, TrendingUp, Award, ChevronRight } from 'lucide-react';
-import { PRICING_PLANS } from '@/lib/pricing';
+import { 
+  FileText, 
+  Users, 
+  DollarSign, 
+  Zap, 
+  Shield, 
+  Check, 
+  Star,
+  ArrowRight,
+  Clock,
+  TrendingUp,
+  Award,
+  ChevronRight
+} from 'lucide-react';
 
-export default function Home() {
-  // Example: If testimonials or features are to be fetched from Supabase, replace these arrays with useEffect+fetch logic
-  // For now, use static data as in the extracted templates
+export default function LandingPage() {
+  const [videoLoaded, setVideoLoaded] = useState(false);
+
   const features = [
     {
       icon: FileText,
@@ -73,6 +85,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
+      
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 py-20 md:py-32 overflow-hidden">
         <div className="absolute inset-0 bg-grid-slate-100 opacity-40"></div>
@@ -84,14 +97,17 @@ export default function Home() {
                 <Award className="w-4 h-4" />
                 <span>Trusted by 10,000+ contractors</span>
               </div>
+
               <div className="space-y-6">
                 <h1 className="text-4xl md:text-6xl font-bold text-slate-900 leading-tight">
                   Get Paid <span className="text-blue-600">3x Faster</span> with Professional Invoicing
                 </h1>
                 <p className="text-xl text-slate-600 leading-relaxed">
-                  Stop chasing payments. BuildLedger automates your entire billing process, from quotes to payments, so you can focus on what you do best — building.
+                  Stop chasing payments. BuildLedger automates your entire billing process, from quotes to payments, 
+                  so you can focus on what you do best — building.
                 </p>
               </div>
+
               {/* Value Props */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex items-center space-x-2 text-green-600">
@@ -107,6 +123,7 @@ export default function Home() {
                   <span className="font-medium">Setup in 5 Minutes</span>
                 </div>
               </div>
+
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-4 h-auto transition-all hover:scale-105">
@@ -121,11 +138,13 @@ export default function Home() {
                   </Link>
                 </Button>
               </div>
+
               {/* Risk Reversal */}
               <p className="text-sm text-slate-500">
                 No credit card required • 30-day money-back guarantee • Cancel anytime
               </p>
             </div>
+
             {/* Hero Image/Demo */}
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 p-8 transform rotate-2 hover:rotate-0 transition-transform duration-300">
@@ -161,6 +180,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Stats Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -180,6 +200,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Features Section */}
       <section className="py-20 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -188,9 +209,11 @@ export default function Home() {
               Everything You Need to Get Paid Faster
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-              Stop losing money to late payments and manual processes. Our all-in-one platform handles everything from quotes to payment collection.
+              Stop losing money to late payments and manual processes. Our all-in-one platform handles 
+              everything from quotes to payment collection.
             </p>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
@@ -213,6 +236,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Testimonials Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -224,6 +248,7 @@ export default function Home() {
               Join thousands of contractors who have transformed their business with BuildLedger
             </p>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -257,6 +282,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Pricing Preview */}
       <section className="py-20 bg-gradient-to-br from-blue-50 to-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -268,35 +294,107 @@ export default function Home() {
               Start free, upgrade when you're ready. No hidden fees, ever.
             </p>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {PRICING_PLANS.map((plan, idx) => (
-              <Card key={plan.id} className={`border-2 ${plan.popular ? 'border-blue-500 scale-105 shadow-lg' : 'border-slate-200'} relative`}>
-                {plan.badge && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-blue-600 text-white px-4 py-1">{plan.badge}</Badge>
+            {/* Free Plan */}
+            <Card className="border-2 border-slate-200 relative">
+              <CardContent className="p-8 text-center space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900">Free</h3>
+                  <div className="text-4xl font-bold text-slate-900 mt-2">$0<span className="text-lg text-slate-600">/mo</span></div>
+                </div>
+                <ul className="space-y-3 text-left">
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>5 clients & 10 quotes</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>Manual invoices</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>Basic support</span>
+                  </li>
+                </ul>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/signup">Start Free</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Pro Plan - Most Popular */}
+            <Card className="border-2 border-blue-500 relative transform scale-105">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-blue-600 text-white px-4 py-1">Most Popular</Badge>
+              </div>
+              <CardContent className="p-8 text-center space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900">Pro</h3>
+                  <div className="text-4xl font-bold text-blue-600 mt-2">
+                    $19<span className="text-lg text-slate-600">/mo</span>
                   </div>
-                )}
-                <CardContent className="p-8 text-center space-y-6">
-                  <div>
-                    <h3 className="text-2xl font-bold text-slate-900">{plan.name}</h3>
-                    <div className={`text-4xl font-bold ${plan.popular ? 'text-blue-600' : 'text-slate-900'} mt-2`}>${plan.monthlyPrice}<span className="text-lg text-slate-600">/mo</span></div>
-                    {plan.savings && <p className="text-sm text-slate-500 mt-1">{plan.savings}</p>}
+                  <p className="text-sm text-slate-500 mt-1">Just $1 coffee per week</p>
+                </div>
+                <ul className="space-y-3 text-left">
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>Unlimited clients & quotes</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>Stripe payments</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>PDF generation</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>Priority support</span>
+                  </li>
+                </ul>
+                <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Link href="/signup?plan=pro">Try Pro Free</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Business Plan */}
+            <Card className="border-2 border-slate-200 relative">
+              <CardContent className="p-8 text-center space-y-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900">Business</h3>
+                  <div className="text-4xl font-bold text-slate-900 mt-2">
+                    $49<span className="text-lg text-slate-600">/mo</span>
                   </div>
-                  <ul className="space-y-3 text-left">
-                    {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-center space-x-2">
-                        <Check className="w-5 h-5 text-green-500" />
-                        <span>{feature.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button asChild className={`w-full ${plan.popular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-900 hover:bg-slate-800'}`}>
-                    <Link href="/signup">{plan.cta}</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  <p className="text-sm text-slate-500 mt-1">Real ROI for serious contractors</p>
+                </div>
+                <ul className="space-y-3 text-left">
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>Everything in Pro</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>Client portal</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>AI assistant</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <Check className="w-5 h-5 text-green-500" />
+                    <span>3 team members</span>
+                  </li>
+                </ul>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/signup?plan=business">Start Business</Link>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
+
           <div className="mt-8">
             <Link href="/pricing" className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors">
               View detailed pricing comparison
@@ -305,6 +403,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* Final CTA */}
       <section className="py-20 bg-blue-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -313,7 +412,8 @@ export default function Home() {
               Ready to Get Paid 3x Faster?
             </h2>
             <p className="text-xl text-blue-100 leading-relaxed">
-              Join 10,000+ contractors who trust BuildLedger to handle their invoicing. Start free, no credit card required.
+              Join 10,000+ contractors who trust BuildLedger to handle their invoicing. 
+              Start free, no credit card required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-slate-100 text-lg px-8 py-4 h-auto transition-all hover:scale-105">
@@ -345,7 +445,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       <Footer />
     </div>
   );
-} 
+}

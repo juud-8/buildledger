@@ -8,7 +8,7 @@
  * @version 1.0.0
  */
 
-import { logger } from './logger'
+// Removed logger import to avoid circular dependency
 
 // Environment types for better type safety
 export type Environment = 'development' | 'staging' | 'production' | 'test'
@@ -463,7 +463,8 @@ function initializeConfig(): AppConfig {
   const envValidation = ConfigValidator.validateEnvironment()
   if (!envValidation.isValid) {
     const errorMessage = `Missing required environment variables: ${envValidation.missingVars.join(', ')}`
-    logger.critical(errorMessage, {
+    // Use console.error to avoid circular dependency with logger
+    console.error(`[ConfigManager] ${errorMessage}`, {
       component: 'ConfigManager',
       function: 'initializeConfig',
       metadata: { missingVars: envValidation.missingVars }
@@ -478,7 +479,8 @@ function initializeConfig(): AppConfig {
   const configValidation = ConfigValidator.validateConfig(config)
   if (!configValidation.isValid) {
     const errorMessage = `Invalid configuration: ${configValidation.errors.join(', ')}`
-    logger.error(errorMessage, {
+    // Use console.error to avoid circular dependency with logger
+    console.error(`[ConfigManager] ${errorMessage}`, {
       component: 'ConfigManager',
       function: 'initializeConfig',
       metadata: { errors: configValidation.errors }
@@ -487,7 +489,7 @@ function initializeConfig(): AppConfig {
   }
 
   // Log successful initialization
-  logger.info('Configuration initialized successfully', {
+  console.info(`[ConfigManager] Configuration initialized successfully`, {
     component: 'ConfigManager',
     function: 'initializeConfig',
     metadata: {

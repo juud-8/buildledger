@@ -323,7 +323,7 @@ function CreateClientModal({ isOpen, onClose, onClientCreated }: {
               </Button>
               <Button
                 type="submit"
-                variant="primary"
+                variant="default"
                 fullWidth
                 disabled={isSubmitting}
               >
@@ -470,7 +470,7 @@ export default function ClientsPage() {
             </div>
             <Button
               onClick={() => setShowCreateModal(true)}
-              variant="primary"
+              variant="default"
               size="lg"
               className="flex items-center gap-2"
             >
@@ -601,7 +601,7 @@ export default function ClientsPage() {
             {!searchQuery && (
               <Button
                 onClick={() => setShowCreateModal(true)}
-                variant="primary"
+                variant="default"
                 className="flex items-center gap-2"
               >
                 <UserPlus className="w-5 h-5" />

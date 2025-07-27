@@ -103,15 +103,19 @@ export default function LandingPage() {
                 <Link href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</Link>
                 <Link href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors">Testimonials</Link>
                 <Link href="/login" className="text-gray-600 hover:text-gray-900 transition-colors">Login</Link>
-                <Button href="/signup" size="sm">
-                  Start Free <ArrowRight className="w-4 h-4" />
-                </Button>
+                <Link href="/signup">
+                  <Button size="sm">
+                    Start Free <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
               </div>
               
               <div className="md:hidden">
-                <Button href="/signup" size="sm">
-                  Get Started
-                </Button>
+                <Link href="/signup">
+                  <Button size="sm">
+                    Get Started
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -169,11 +173,13 @@ export default function LandingPage() {
                 transition={{ delay: 0.5 }}
                 className="flex flex-col sm:flex-row gap-4 justify-center mb-8"
               >
-                <Button href="/signup" size="xl" icon={<ArrowRight className="w-5 h-5" />} iconPosition="right">
-                  Start Free Trial
-                </Button>
-                <Button variant="secondary" size="xl" icon={<Play className="w-5 h-5" />}>
-                  Watch Demo (2 min)
+                <Link href="/signup">
+                  <Button size="lg" className="flex items-center gap-2">
+                    Start Free Trial <ArrowRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Button variant="secondary" size="lg" className="flex items-center gap-2">
+                  Watch Demo (2 min) <Play className="w-5 h-5" />
                 </Button>
               </motion.div>
               
@@ -329,9 +335,11 @@ export default function LandingPage() {
                   <div className="text-lg opacity-90">Saved per month</div>
                 </div>
               </div>
-              <Button href="/signup" size="xl" variant="secondary">
-                Calculate Your ROI <ArrowRight className="w-5 h-5" />
-              </Button>
+              <Link href="/signup">
+                <Button size="lg" variant="secondary" className="flex items-center gap-2">
+                  Calculate Your ROI <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -384,12 +392,16 @@ export default function LandingPage() {
               Join 10,000+ contractors who trust BuildLedger. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button href="/signup" size="xl" icon={<ArrowRight className="w-5 h-5" />} iconPosition="right">
-                Start 14-Day Free Trial
-              </Button>
-              <Button variant="ghost" size="xl" href="/pricing">
-                View Pricing
-              </Button>
+              <Link href="/signup">
+                <Button size="lg" className="flex items-center gap-2">
+                  Start 14-Day Free Trial <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link href="/pricing">
+                <Button variant="ghost" size="lg">
+                  View Pricing
+                </Button>
+              </Link>
             </div>
             <p className="mt-6 text-sm text-gray-500">
               <CheckCircle2 className="w-4 h-4 inline mr-1 text-green-600" />
