@@ -49,7 +49,7 @@ export default function InvoicesList() {
           client_id: string | null; 
           quote_id: string | null; 
           due_date: string | null; 
-          status: string; 
+          status: 'draft' | 'sent' | 'paid' | 'overdue'; 
           total: number; 
           created_at: string; 
           clients?: { name: string }[] 
