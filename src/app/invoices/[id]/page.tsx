@@ -127,16 +127,15 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
         clientName: invoice.clients?.name
       })
 
-      // Generate PDF for attachment (optional)
-      let pdfBlob: Blob | undefined
+      // (Optional) Generate PDF locally (not sent via EmailJS free tier)
       try {
-        pdfBlob = await generateInvoicePDF(invoice)
+        await generateInvoicePDF(invoice)
       } catch (pdfError) {
-        console.warn('Could not generate PDF for attachment:', pdfError)
+        console.warn('Could not generate PDF locally:', pdfError)
       }
 
       // Send email using EmailJS
-      const result = await sendInvoiceEmail(invoice, pdfBlob)
+      const result = await sendInvoiceEmail(invoice)
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to send invoice')
