@@ -12,18 +12,7 @@ import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import { sendInvoiceEmail, testEmailJSConfig } from '@/lib/emailService'
 import Link from 'next/link'
 
-interface InvoiceDetail {
-  id: string
-  user_id: string
-  client_id: string
-  invoice_number: string
-  issue_date: string
-  due_date: string
-  status: string
-  total_amount: number
-  notes?: string
-  created_at: string
-  updated_at: string
+interface InvoiceDetail extends Invoice {
   clients?: { name: string; email?: string; phone?: string; address?: string }
   invoice_items?: InvoiceItem[]
 }
