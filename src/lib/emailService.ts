@@ -21,6 +21,7 @@ export interface EmailData {
   invoice_total: string
   invoice_due_date: string
   pdf_url?: string
+  [key: string]: unknown
 }
 
 export const sendInvoiceEmail = async (invoice: Invoice): Promise<{ success: boolean; error?: string }> => {

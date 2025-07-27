@@ -9,8 +9,9 @@ import { Invoice } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import Link from 'next/link'
 
-interface InvoiceListItem extends Omit<Invoice, 'clients'> {
+interface InvoiceListItem extends Omit<Invoice, 'clients' | 'due_date'> {
   clients?: { name: string } | null
+  due_date: string | null
 }
 
 export default function InvoicesList() {
@@ -89,8 +90,8 @@ export default function InvoicesList() {
   }
 
   // Check if invoice is overdue
-  const isOverdue = (dueDate: string, status: string) => {
-    if (status === 'paid') return false
+  const isOverdue = (dueDate: string | null, status: string) => {
+    if (status === 'paid' || !dueDate) return false
     return new Date(dueDate) < new Date()
   }
 

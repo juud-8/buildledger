@@ -8,6 +8,11 @@ export interface Client {
   id: string
   name: string
   user_id: string
+  email?: string
+  phone?: string
+  address?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface QuoteItem {
@@ -16,6 +21,7 @@ export interface QuoteItem {
   description: string
   quantity: number
   rate: number
+  created_at?: string
 }
 
 export interface Quote {
@@ -26,6 +32,8 @@ export interface Quote {
   status: 'draft' | 'sent' | 'accepted' | 'rejected'
   total: number
   created_at: string
+  notes?: string
+  updated_at?: string
   clients?: { name: string }
   quote_items?: QuoteItem[]
 }
@@ -36,17 +44,21 @@ export interface InvoiceItem {
   description: string
   quantity: number
   rate: number
+  created_at?: string
 }
 
 export interface Invoice {
   id: string
   user_id: string
-  client_id: string
+  client_id: string | null
   quote_id: string | null
-  due_date: string
+  invoice_number?: string
+  due_date: string | null
   status: 'draft' | 'sent' | 'paid' | 'overdue'
   total: number
+  notes?: string
   created_at: string
+  updated_at?: string
   clients?: { name: string; email?: string; phone?: string; address?: string }
   invoice_items?: InvoiceItem[]
 } 

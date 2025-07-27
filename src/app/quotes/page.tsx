@@ -8,9 +8,13 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Quote } from '@/lib/types'
 import Link from 'next/link'
 
+interface QuoteListItem extends Omit<Quote, 'clients'> {
+  clients?: { name: string } | null
+}
+
 export default function QuotesList() {
   const { user } = useAuth()
-  const [quotes, setQuotes] = useState<Quote[]>([])
+  const [quotes, setQuotes] = useState<QuoteListItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,6 +26,8 @@ export default function QuotesList() {
         .from('quotes')
         .select(`
           id,
+          user_id,
+          client_id,
           title,
           status,
           total,
@@ -34,7 +40,27 @@ export default function QuotesList() {
       if (error) {
         console.error('Error loading quotes:', error)
       } else {
-        setQuotes(data || [])
+        // Transform the data to match our interface
+        const transformedData: QuoteListItem[] = (data || []).map((quote: { 
+          id: string; 
+          user_id: string; 
+          client_id: string | null; 
+          title: string; 
+          status: 'draft' | 'sent' | 'accepted' | 'rejected'; 
+          total: number; 
+          created_at: string; 
+          clients?: { name: string }[] 
+        }) => ({
+          id: quote.id,
+          user_id: quote.user_id,
+          client_id: quote.client_id,
+          title: quote.title,
+          status: quote.status,
+          total: quote.total,
+          created_at: quote.created_at,
+          clients: quote.clients?.[0] || null
+        }))
+        setQuotes(transformedData)
       }
       setLoading(false)
     }
