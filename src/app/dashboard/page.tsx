@@ -279,6 +279,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip 
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         formatter={(value: number, name: string, props: any) => [
                           `${value} invoices (${formatCurrency(props?.payload?.amount || 0)})`,
                           name
