@@ -4,6 +4,15 @@ export interface User {
   email: string
 }
 
+export interface Profile {
+  id: string
+  name?: string
+  company_name?: string
+  logo_url?: string
+  plan_tier: 'free' | 'pro' | 'business'
+  created_at?: string
+}
+
 export interface Client {
   id: string
   name: string
@@ -11,6 +20,7 @@ export interface Client {
   email?: string
   phone?: string
   address?: string
+  notes?: string
   created_at?: string
   updated_at?: string
 }
@@ -31,6 +41,7 @@ export interface Quote {
   title: string
   status: 'draft' | 'sent' | 'accepted' | 'rejected'
   total: number
+  pdf_url?: string
   created_at: string
   notes?: string
   updated_at?: string
@@ -56,6 +67,7 @@ export interface Invoice {
   due_date: string | null
   status: 'draft' | 'sent' | 'paid' | 'overdue'
   total: number
+  pdf_url?: string
   notes?: string
   created_at: string
   updated_at?: string
