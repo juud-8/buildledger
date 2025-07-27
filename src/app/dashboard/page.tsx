@@ -124,9 +124,20 @@ export default function Dashboard() {
         })
 
         // Transform recent invoices data
-        const transformedRecentInvoices = recentInvoicesData.map((invoice: { clients?: { name: string }[] }) => ({
-          ...invoice,
-          clients: invoice.clients?.[0] || null
+        const transformedRecentInvoices: RecentInvoice[] = recentInvoicesData.map((invoice: { 
+          id: string; 
+          created_at: string; 
+          due_date: string | null; 
+          total: number; 
+          status: string; 
+          clients?: { name: string }[] 
+        }) => ({
+          id: invoice.id,
+          created_at: invoice.created_at,
+          due_date: invoice.due_date,
+          total: invoice.total,
+          status: invoice.status,
+          clients: invoice.clients?.[0] || undefined
         }))
         setRecentInvoices(transformedRecentInvoices)
 
