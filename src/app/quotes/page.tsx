@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
+import { Navigation } from '@/components/Navigation'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Quote } from '@/lib/types'
 import Link from 'next/link'
 
 export default function QuotesList() {
   const { user } = useAuth()
-  const [quotes, setQuotes] = useState<any[]>([])
+  const [quotes, setQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -57,14 +60,17 @@ export default function QuotesList() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-gray-600">Loading quotes...</p>
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <LoadingSpinner text="Loading quotes..." />
       </div>
     )
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Quotes</h1>
         <Link href="/quotes/new">
@@ -106,6 +112,7 @@ export default function QuotesList() {
           ))}
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -3,13 +3,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
+import { Client, QuoteItem } from '@/lib/types'
 
 export default function NewQuote() {
   const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [clientId, setClientId] = useState('')
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
-  const [lineItems, setLineItems] = useState([{ description: '', quantity: 1, rate: 0 }])
+  const [clients, setClients] = useState<Client[]>([])
+  const [lineItems, setLineItems] = useState<QuoteItem[]>([{ description: '', quantity: 1, rate: 0 }])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -108,9 +109,9 @@ const handleSubmit = async (e: React.FormEvent) => {
     // Success!
     alert('✅ Quote and line items saved successfully!')
     console.log('New quote created with ID:', quoteId)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Unexpected error:', error)
-    alert('An unexpected error occurred: ' + error.message)
+    alert('An unexpected error occurred: ' + (error instanceof Error ? error.message : 'Unknown error'))
   }
 }
 

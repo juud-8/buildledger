@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { use } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
+import { InvoiceItem } from '@/lib/types'
 
 export default function NewInvoice() {
   const { user } = useAuth()
@@ -19,7 +19,7 @@ export default function NewInvoice() {
     date.setDate(date.getDate() + 30)
     return date.toISOString().split('T')[0]
   })
-  const [lineItems, setLineItems] = useState<{ description: string; quantity: number; rate: number }[]>([])
+  const [lineItems, setLineItems] = useState<InvoiceItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -113,7 +113,7 @@ export default function NewInvoice() {
 
       alert('✅ Invoice created successfully!')
       router.push(`/invoices/${invoiceId}`)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Unexpected error:', error)
       alert('An unexpected error occurred.')
     }

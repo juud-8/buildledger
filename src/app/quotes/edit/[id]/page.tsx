@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
+import { Client, QuoteItem } from '@/lib/types'
 import React from 'react'
 
 export default function EditQuote({ params }: { params: Promise<{ id: string }> }) {
@@ -11,8 +12,8 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
   const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [clientId, setClientId] = useState('')
-  const [clients, setClients] = useState<{ id: string; name: string }[]>([])
-  const [lineItems, setLineItems] = useState<{ id?: string; description: string; quantity: number; rate: number }[]>([])
+  const [clients, setClients] = useState<Client[]>([])
+  const [lineItems, setLineItems] = useState<QuoteItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -142,7 +143,7 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
 
       alert('✅ Quote updated successfully!')
       router.push(`/quotes/${quoteId}`)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Unexpected error:', error)
       alert('An unexpected error occurred.')
     }
