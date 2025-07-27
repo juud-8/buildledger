@@ -1,5 +1,5 @@
 import React from 'react'
-import { pdf, Document, Page } from '@react-pdf/renderer'
+import { pdf } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/components/InvoicePDF'
 import { Invoice, InvoiceItem } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
