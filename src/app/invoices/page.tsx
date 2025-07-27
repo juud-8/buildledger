@@ -43,7 +43,7 @@ export default function InvoicesList() {
         console.error('Error loading invoices:', error)
       } else {
         // Transform the data to match our interface
-        const transformedData = (data || []).map((invoice: any) => ({
+        const transformedData = (data || []).map((invoice: { clients?: { name: string }[] }) => ({
           ...invoice,
           clients: invoice.clients?.[0] || null
         }))

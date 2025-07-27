@@ -124,19 +124,19 @@ export default function Dashboard() {
         })
 
         // Transform recent invoices data
-        const transformedRecentInvoices = recentInvoicesData.map((invoice: any) => ({
+        const transformedRecentInvoices = recentInvoicesData.map((invoice: { clients?: { name: string }[] }) => ({
           ...invoice,
           clients: invoice.clients?.[0] || null
         }))
         setRecentInvoices(transformedRecentInvoices)
 
         // Process client history
-        const clientHistoryData: ClientHistory[] = clientsData.map((client: any) => {
+        const clientHistoryData: ClientHistory[] = clientsData.map((client: { id: string; name: string; invoices?: Array<{ status: string; total: number; created_at: string }> }) => {
           const clientInvoices = client.invoices || []
-          const paidClientInvoices = clientInvoices.filter((inv: any) => inv.status === 'paid')
-          const unpaidClientInvoices = clientInvoices.filter((inv: any) => inv.status !== 'paid')
+          const paidClientInvoices = clientInvoices.filter((inv: { status: string }) => inv.status === 'paid')
+          const unpaidClientInvoices = clientInvoices.filter((inv: { status: string }) => inv.status !== 'paid')
           
-          const lastInvoice = clientInvoices.sort((a: any, b: any) => 
+          const lastInvoice = clientInvoices.sort((a: { created_at: string }, b: { created_at: string }) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           )[0]
 
@@ -144,8 +144,8 @@ export default function Dashboard() {
             id: client.id,
             name: client.name,
             totalInvoices: clientInvoices.length,
-            totalPaid: paidClientInvoices.reduce((sum: number, inv: any) => sum + inv.total, 0),
-            totalUnpaid: unpaidClientInvoices.reduce((sum: number, inv: any) => sum + inv.total, 0),
+            totalPaid: paidClientInvoices.reduce((sum: number, inv: { total: number }) => sum + inv.total, 0),
+            totalUnpaid: unpaidClientInvoices.reduce((sum: number, inv: { total: number }) => sum + inv.total, 0),
             lastInvoiceDate: lastInvoice?.created_at || null
           }
         })
@@ -206,7 +206,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-2">
-            Welcome back! Here's your business overview.
+            Welcome back! Here&apos;s your business overview.
           </p>
         </div>
 
@@ -268,7 +268,7 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value: any, name: any, props: any) => [
+                        formatter={(value: number, name: string, props: { payload: { amount: number } }) => [
                           `${value} invoices (${formatCurrency(props.payload.amount)})`,
                           name
                         ]}

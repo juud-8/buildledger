@@ -265,7 +265,7 @@ export default function NewInvoice() {
 
               {lineItems.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">
-                  No items added yet. Click "Add Item" to get started.
+                  No items added yet. Click &quot;Add Item&quot; to get started.
                 </p>
               ) : (
                 <div className="space-y-3">

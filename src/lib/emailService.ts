@@ -23,7 +23,7 @@ export interface EmailData {
   pdf_url?: string
 }
 
-export const sendInvoiceEmail = async (invoice: Invoice, pdfBlob?: Blob): Promise<{ success: boolean; error?: string }> => {
+export const sendInvoiceEmail = async (invoice: Invoice): Promise<{ success: boolean; error?: string }> => {
   try {
     // Validate environment variables
     if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
