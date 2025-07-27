@@ -279,8 +279,8 @@ export default function Dashboard() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value: number, name: string, props: { payload: { amount: number } }) => [
-                          `${value} invoices (${formatCurrency(props.payload.amount)})`,
+                        formatter={(value: number, name: string, props: any) => [
+                          `${value} invoices (${formatCurrency(props?.payload?.amount || 0)})`,
                           name
                         ]}
                       />
