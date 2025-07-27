@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Invoice } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface InvoiceListItem extends Omit<Invoice, 'clients' | 'due_date'> {
   clients?: { name: string } | null
@@ -15,13 +16,23 @@ interface InvoiceListItem extends Omit<Invoice, 'clients' | 'due_date'> {
 }
 
 export default function InvoicesList() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
     const loadInvoices = async () => {
-      if (!user) return
+      if (!user) {
+        setLoading(false)
+        return
+      }
 
       // Fetch invoices with client names
       const { data, error } = await supabase
@@ -70,8 +81,10 @@ export default function InvoicesList() {
       setLoading(false)
     }
 
-    loadInvoices()
-  }, [user])
+    if (!authLoading) {
+      loadInvoices()
+    }
+  }, [user, authLoading])
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -95,7 +108,7 @@ export default function InvoicesList() {
     return new Date(dueDate) < new Date()
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />

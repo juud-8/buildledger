@@ -243,6 +243,7 @@ export default function NewInvoice() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 form-input"
                 required
               />
@@ -256,7 +257,7 @@ export default function NewInvoice() {
                   <button
                     type="button"
                     onClick={addLineItem}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm btn-success"
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm"
                   >
                     + Add Item
                   </button>
@@ -268,57 +269,76 @@ export default function NewInvoice() {
                   No items added yet. Click &quot;Add Item&quot; to get started.
                 </p>
               ) : (
-                <div className="space-y-3">
-                  {lineItems.map((item, index) => (
-                    <div key={index} className="flex space-x-2 items-center">
-                      <input
-                        type="text"
-                        placeholder="Description"
-                        value={item.description}
-                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                        disabled={isFromQuote}
-                        className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
-                        required
-                      />
-                      <input
-                        type="number"
-                        placeholder="Qty"
-                        value={item.quantity}
-                        onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                        disabled={isFromQuote}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                      <input
-                        type="number"
-                        placeholder="Rate"
-                        value={item.rate}
-                        onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                        disabled={isFromQuote}
-                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
-                        min="0"
-                        step="0.01"
-                        required
-                      />
-                      <div className="w-8 text-center">
-                        <span className="text-sm text-gray-600">
-                          ${(item.quantity * item.rate).toFixed(2)}
-                        </span>
-                      </div>
-                      {!isFromQuote && lineItems.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeLineItem(index)}
-                          className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
-                          title="Remove item"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium text-gray-600">Description</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-600 w-24">Qty</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-600 w-32">Rate</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-600 w-32">Amount</th>
+                        {!isFromQuote && <th className="w-10" />}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {lineItems.map((item, index) => (
+                        <tr key={index} className="align-top">
+                          <td className="px-3 py-2">
+                            <input
+                              type="text"
+                              placeholder="Description"
+                              value={item.description}
+                              onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                              disabled={isFromQuote}
+                              className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                              required
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                              disabled={isFromQuote}
+                              className="w-full text-right px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                              min="0"
+                              step="0.01"
+                              required
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <input
+                              type="number"
+                              value={item.rate}
+                              onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                              disabled={isFromQuote}
+                              className="w-full text-right px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                              min="0"
+                              step="0.01"
+                              required
+                            />
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono">
+                            ${(item.quantity * item.rate).toFixed(2)}
+                          </td>
+                          {!isFromQuote && (
+                            <td className="px-2 py-2 text-center">
+                              {lineItems.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeLineItem(index)}
+                                  className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
+                                  title="Remove item"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
@@ -327,8 +347,8 @@ export default function NewInvoice() {
             <div className="border-t pt-4">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-gray-900">Total:</span>
-                <span className="text-2xl font-bold text-gray-900">
-                  ${total.toFixed(2)}
+                <span className="text-2xl font-bold text-gray-900 font-mono">
+                  ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
