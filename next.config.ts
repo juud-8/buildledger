@@ -178,7 +178,7 @@ const nextConfig: NextConfig = {
 
   // Rewrites for API proxy and maintenance mode
   async rewrites() {
-    const rewrites = []
+    const rewrites: Array<{ source: string; destination: string }> = []
 
     // Maintenance mode (uncomment during maintenance)
     // if (process.env.MAINTENANCE_MODE === 'true') {
