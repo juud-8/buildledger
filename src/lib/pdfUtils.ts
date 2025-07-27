@@ -1,5 +1,5 @@
 import React from 'react'
-import { pdf, Document, Page } from '@react-pdf/renderer'
+import { pdf } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/components/InvoicePDF'
 import { Invoice, InvoiceItem } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
@@ -27,7 +27,7 @@ export const generateInvoicePDF = async (invoice: InvoiceWithDetails): Promise<B
   try {
     // InvoicePDF already includes Document wrapper, so we can use it directly
     const element = React.createElement(InvoicePDF, { invoice })
-    const blob = await pdf(element).toBlob()
+    const blob = await pdf(element as React.ReactElement).toBlob()
     return blob
   } catch (error) {
     console.error('PDF generation failed:', error)
