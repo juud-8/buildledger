@@ -7,7 +7,8 @@ export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
+  CRITICAL = 4
 }
 
 interface LogEntry {
@@ -71,6 +72,7 @@ class Logger {
         console.warn(formattedMessage)
         break
       case LogLevel.ERROR:
+      case LogLevel.CRITICAL:
         console.error(formattedMessage)
         break
     }
@@ -90,6 +92,10 @@ class Logger {
 
   error(message: string, context?: Record<string, unknown>, error?: Error) {
     this.log(LogLevel.ERROR, message, context, error)
+  }
+
+  critical(message: string, context?: Record<string, unknown>, error?: Error) {
+    this.log(LogLevel.CRITICAL, message, context, error)
   }
 
   // Convenience methods for common logging patterns

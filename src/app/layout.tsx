@@ -1,6 +1,6 @@
 import { AuthProvider } from '@/components/AuthProvider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import './globals.css'
+import '@/styles/globals.css'
 
 export const metadata = {
   title: 'BuildLedger - Contractor Financial Command Center',
