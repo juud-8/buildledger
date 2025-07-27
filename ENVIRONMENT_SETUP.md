@@ -20,6 +20,11 @@ NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 # Resend Configuration (Optional - Requires Domain Verification)
 # Get your API key from https://resend.com/api-keys
 RESEND_API_KEY=your_resend_api_key_here
+
+# MCP (Model Context Protocol) Configuration
+# Enable AI-powered business intelligence features
+MCP_ENABLED=true
+MCP_REDIS_URL=your_redis_url_optional
 ```
 
 ## How to Get Supabase Credentials

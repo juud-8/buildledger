@@ -17,6 +17,7 @@ export function Navigation() {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
+    { href: '/clients', label: 'Clients', icon: '👥' },
     { href: '/quotes', label: 'Quotes', icon: '📝' },
     { href: '/invoices', label: 'Invoices', icon: '🧾' },
   ]

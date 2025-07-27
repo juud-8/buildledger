@@ -164,7 +164,7 @@ export async function updateUserProfile(
 
     // Remove undefined values
     const cleanUpdates = Object.fromEntries(
-      Object.entries(updates).filter(([_, value]) => value !== undefined)
+      Object.entries(updates).filter(([, value]) => value !== undefined)
     )
 
     if (Object.keys(cleanUpdates).length === 0) {
@@ -239,7 +239,7 @@ export async function uploadLogo(
     await deleteLogo(userId)
 
     // Upload file to storage
-    const { data, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('logos')
       .upload(filePath, file, {
         cacheControl: '3600',

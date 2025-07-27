@@ -6,10 +6,6 @@ import {
   validateQuoteForEmail,
   formatInvoiceEmailSubject,
   formatQuoteEmailSubject,
-  formatInvoiceEmailBody,
-  formatQuoteEmailBody,
-  formatInvoiceEmailText,
-  formatQuoteEmailText,
   sanitizeEmailContent,
   isValidEmail
 } from '@/lib/emailUtils'

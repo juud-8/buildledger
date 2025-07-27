@@ -123,11 +123,18 @@ export default function InvoicesList() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-          <Link href="/invoices/new">
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-              + New Invoice
-            </button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/clients">
+              <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                + Add Client
+              </button>
+            </Link>
+            <Link href="/invoices/new">
+              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                + New Invoice
+              </button>
+            </Link>
+          </div>
         </div>
 
         {invoices.length === 0 ? (
