@@ -1,797 +1,695 @@
+/**
+ * Database Test Suite
+ * 
+ * Comprehensive testing suite for validating database synchronization
+ * between local codebase and live Supabase database.
+ * 
+ * @author BuildLedger Team
+ * @version 1.0.0
+ */
+
 import { supabase } from './supabaseClient'
+import { db } from './database'
 import { 
   getUserProfile, 
   updateUserProfile, 
-  createUserProfile, 
   uploadLogo, 
   deleteLogo,
-  getPlanFeatures,
-  canPerformAction,
-  getUserStats
+  createUserProfile,
+  getUserStats,
+  validateProfile
 } from './profileService'
-import { Profile, PlanFeatures } from './types'
+import { 
+  ClientService, 
+  InvoiceService, 
+  QuoteService 
+} from './database'
+import { 
+  Profile, 
+  Client, 
+  Invoice, 
+  Quote, 
+  PlanTier, 
+  SubscriptionStatus,
+  isProfile,
+  isClient,
+  isInvoice,
+  isQuote
+} from './types'
+import { logger } from './logger'
 
-/**
- * Database Synchronization Test Suite
- * 
- * Comprehensive testing for all aspects of the BuildLedger database:
- * - Database connectivity and configuration
- * - Table structures and relationships
- * - Row Level Security (RLS) policies
- * - Storage bucket configuration
- * - Profile management operations
- * - Logo upload/management
- * - Subscription plan features
- * - Performance and scalability
- */
+// Test configuration
+interface TestConfig {
+  testUserId: string
+  testClientId?: string
+  testInvoiceId?: string
+  testQuoteId?: string
+  cleanupAfterTests: boolean
+}
 
-export interface TestResult {
+// Test results
+interface TestResult {
   testName: string
-  success: boolean
-  message: string
+  passed: boolean
+  error?: string
   duration: number
   details?: Record<string, unknown>
 }
 
-export interface TestSuiteResult {
+interface TestSuiteResult {
   totalTests: number
   passedTests: number
   failedTests: number
+  totalDuration: number
   results: TestResult[]
-  duration: number
   summary: string
 }
 
 /**
- * Test categories for better organization
+ * Database Test Suite Class
  */
-export enum TestCategory {
-  CONNECTIVITY = 'Connectivity',
-  STRUCTURE = 'Database Structure',
-  SECURITY = 'Security & RLS',
-  STORAGE = 'File Storage',
-  FUNCTIONALITY = 'Core Functionality',
-  PERFORMANCE = 'Performance',
-  INTEGRATION = 'Integration'
-}
+export class DatabaseTestSuite {
+  private config: TestConfig
+  private results: TestResult[] = []
 
-/**
- * Detailed information returned from quickHealthCheck
- */
-interface QuickHealthCheckDetails extends Record<string, unknown> {
-  checks?: Record<string, boolean>
-  responseTime?: number
-  timestamp?: string
-}
-
-/**
- * Run a single test with comprehensive error handling and timing
- */
-async function runTest(
-  testName: string, 
-  testFunction: () => Promise<{ success: boolean; message: string; details?: Record<string, unknown> }>,
-  category: TestCategory = TestCategory.FUNCTIONALITY
-): Promise<TestResult> {
-  const startTime = Date.now()
-  
-  try {
-    const result = await testFunction()
-    const duration = Date.now() - startTime
-    
-    return {
-      testName: `[${category}] ${testName}`,
-      success: result.success,
-      message: result.message,
-      duration,
-      details: result.details
-    }
-  } catch (error) {
-    const duration = Date.now() - startTime
-    return {
-      testName: `[${category}] ${testName}`,
-      success: false,
-      message: error instanceof Error ? error.message : 'Unknown error occurred',
-      duration,
-      details: { error: error instanceof Error ? error.stack : String(error) }
-    }
+  constructor(config: TestConfig) {
+    this.config = config
   }
-}
 
-/**
- * Test database connectivity and basic operations
- */
-async function testDatabaseConnection(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
+  /**
+   * Run all tests
+   */
+  async runAllTests(): Promise<TestSuiteResult> {
     const startTime = Date.now()
-    
-    // Test basic connectivity
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('count(*)')
-      .limit(1)
+    this.results = []
 
-    const duration = Date.now() - startTime
+    logger.info('Starting database test suite', {
+      component: 'DatabaseTestSuite',
+      operation: 'runAllTests',
+      metadata: { testUserId: this.config.testUserId }
+    })
 
-    if (error) {
-      return { 
-        success: false, 
-        message: `Database connection failed: ${error.message}`,
-        details: { error: error.message }
+    // Run test categories
+    await this.runConnectionTests()
+    await this.runProfileTests()
+    await this.runClientTests()
+    await this.runInvoiceTests()
+    await this.runQuoteTests()
+    await this.runLogoTests()
+    await this.runUserManagementTests()
+    await this.runDataIntegrityTests()
+    await this.runPerformanceTests()
+
+    // Cleanup if requested
+    if (this.config.cleanupAfterTests) {
+      await this.runCleanupTests()
+    }
+
+    const totalDuration = Date.now() - startTime
+    const passedTests = this.results.filter(r => r.passed).length
+    const failedTests = this.results.filter(r => !r.passed).length
+
+    const summary = this.generateSummary(passedTests, failedTests, totalDuration)
+
+    logger.info('Database test suite completed', {
+      component: 'DatabaseTestSuite',
+      operation: 'runAllTests',
+      metadata: { 
+        totalTests: this.results.length,
+        passedTests,
+        failedTests,
+        totalDuration
       }
-    }
+    })
 
-    return { 
-      success: true, 
-      message: 'Database connection successful',
-      details: { responseTime: duration, data }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Database connection error: ${error}`,
-      details: { error: String(error) }
+    return {
+      totalTests: this.results.length,
+      passedTests,
+      failedTests,
+      totalDuration,
+      results: this.results,
+      summary
     }
   }
-}
 
-/**
- * Test profiles table structure and constraints
- */
-async function testProfilesTableStructure(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    const testUserId = '00000000-0000-0000-0000-000000000000'
-    
-    // Test inserting a profile with all fields
-    const testProfile = {
-      id: testUserId,
-      name: 'Test User',
-      company_name: 'Test Company',
-      plan_tier: 'free' as const,
-      logo_url: 'https://example.com/logo.png'
-    }
-    
-    const { error: insertError } = await supabase
-      .from('profiles')
-      .upsert(testProfile)
+  /**
+   * Test database connection and basic operations
+   */
+  private async runConnectionTests() {
+    await this.runTest('Database Connection', async () => {
+      const { error } = await supabase.from('profiles').select('count(*)').limit(1)
+      if (error) throw new Error(`Connection failed: ${error.message}`)
+      return { connected: true }
+    })
 
-    if (insertError) {
-      return { 
-        success: false, 
-        message: `Profile table structure error: ${insertError.message}`,
-        details: { error: insertError.message }
-      }
-    }
+    await this.runTest('Health Check', async () => {
+      const isHealthy = await db.healthCheck()
+      if (!isHealthy) throw new Error('Health check failed')
+      return { healthy: true }
+    })
 
-    // Test reading the profile
-    const { data: readData, error: readError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', testUserId)
-      .single()
-
-    if (readError || !readData) {
-      return { 
-        success: false, 
-        message: `Profile read error: ${readError?.message || 'No data returned'}`,
-        details: { error: readError?.message }
-      }
-    }
-
-    // Verify all fields are present
-    const requiredFields = ['id', 'name', 'company_name', 'plan_tier', 'created_at']
-    const missingFields = requiredFields.filter(field => !(field in readData))
-    
-    if (missingFields.length > 0) {
-      return { 
-        success: false, 
-        message: `Missing required fields: ${missingFields.join(', ')}`,
-        details: { missingFields, actualFields: Object.keys(readData) }
-      }
-    }
-
-    // Clean up test data
-    await supabase.from('profiles').delete().eq('id', testUserId)
-
-    return { 
-      success: true, 
-      message: 'Profiles table structure is correct',
-      details: { fields: Object.keys(readData), data: readData }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Profile table test error: ${error}`,
-      details: { error: String(error) }
-    }
-  }
-}
-
-/**
- * Test all table structures
- */
-async function testAllTableStructures(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    const tables = ['clients', 'quotes', 'quote_items', 'invoices', 'invoice_items']
-    const results: Record<string, boolean> = {}
-    
-    for (const table of tables) {
-      const { error } = await supabase
-        .from(table)
+    await this.runTest('RLS Policies Active', async () => {
+      const { data, error } = await supabase
+        .from('profiles')
         .select('*')
         .limit(1)
       
-      results[table] = !error
+      // Should not return data without authentication
+      if (!error && data && data.length > 0) {
+        throw new Error('RLS policies not working correctly')
+      }
+      return { rlsActive: true }
+    })
+  }
+
+  /**
+   * Test profile operations
+   */
+  private async runProfileTests() {
+    await this.runTest('Get User Profile', async () => {
+      const { profile, error } = await getUserProfile(this.config.testUserId)
+      if (error) throw new Error(`Failed to get profile: ${error}`)
+      if (!profile) throw new Error('Profile not found')
+      if (!isProfile(profile)) throw new Error('Invalid profile structure')
       
-      if (error) {
+      return { 
+        profileId: profile.id,
+        planTier: profile.plan_tier,
+        subscriptionStatus: profile.subscription_status
+      }
+    })
+
+    await this.runTest('Update User Profile', async () => {
+      const testData = {
+        name: 'Test User Updated',
+        company_name: 'Test Company Updated',
+        default_payment_terms: 45
+      }
+
+      const { success, error } = await updateUserProfile(this.config.testUserId, testData)
+      if (!success) throw new Error(`Failed to update profile: ${error}`)
+
+      // Verify update
+      const { profile } = await getUserProfile(this.config.testUserId, true)
+      if (!profile) throw new Error('Profile not found after update')
+      if (profile.name !== testData.name) throw new Error('Name not updated correctly')
+
+      return { updated: true, newName: profile.name }
+    })
+
+    await this.runTest('Profile Validation', async () => {
+      const validProfile = {
+        name: 'Valid Name',
+        company_name: 'Valid Company',
+        plan_tier: 'pro' as PlanTier
+      }
+
+      const invalidProfile = {
+        name: 'A'.repeat(101), // Too long
+        plan_tier: 'invalid' as PlanTier
+      }
+
+      const validResult = validateProfile(validProfile)
+      const invalidResult = validateProfile(invalidProfile)
+
+      if (!validResult.valid) throw new Error('Valid profile failed validation')
+      if (invalidResult.valid) throw new Error('Invalid profile passed validation')
+
+      return { 
+        validProfilePassed: validResult.valid,
+        invalidProfileFailed: !invalidResult.valid,
+        validationErrors: invalidResult.errors
+      }
+    })
+  }
+
+  /**
+   * Test client operations
+   */
+  private async runClientTests() {
+    await this.runTest('Create Client', async () => {
+      const clientData = {
+        user_id: this.config.testUserId,
+        name: 'Test Client',
+        email: 'test@client.com',
+        phone: '+1234567890',
+        address: '123 Test St, Test City, TC 12345',
+        notes: 'Test client for database validation',
+        tags: ['test', 'validation'],
+        contact_person: 'John Doe',
+        website: 'https://testclient.com',
+        industry: 'Technology',
+        payment_terms: 30,
+        tax_exempt: false
+      }
+
+      const result = await ClientService.create(clientData)
+      if (!result.success) throw new Error(`Failed to create client: ${result.error}`)
+      if (!result.data) throw new Error('No client data returned')
+
+      this.config.testClientId = result.data.id
+
+      return { 
+        clientId: result.data.id,
+        clientName: result.data.name
+      }
+    })
+
+    if (this.config.testClientId) {
+      await this.runTest('Get Client by ID', async () => {
+        const result = await ClientService.getById(this.config.testClientId!)
+        if (!result.success) throw new Error(`Failed to get client: ${result.error}`)
+        if (!result.data) throw new Error('No client data returned')
+        if (!isClient(result.data)) throw new Error('Invalid client structure')
+
         return { 
-          success: false, 
-          message: `Table ${table} structure error: ${error.message}`,
-          details: { table, error: error.message }
+          clientId: result.data.id,
+          clientName: result.data.name,
+          tags: result.data.tags
         }
-      }
-    }
-
-    return { 
-      success: true, 
-      message: 'All table structures are correct',
-      details: { tables: results }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Table structure test error: ${error}`,
-      details: { error: String(error) }
-    }
-  }
-}
-
-/**
- * Test storage bucket configuration and permissions
- */
-async function testStorageBucketConfig(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    const { data: buckets, error } = await supabase.storage.listBuckets()
-
-    if (error) {
-      return { 
-        success: false, 
-        message: `Storage bucket list error: ${error.message}`,
-        details: { error: error.message }
-      }
-    }
-
-    const logosBucket = buckets?.find(bucket => bucket.name === 'logos')
-    if (!logosBucket) {
-      return { 
-        success: false, 
-        message: 'Logos bucket not found',
-        details: { availableBuckets: buckets?.map(b => b.name) }
-      }
-    }
-
-    if (!logosBucket.public) {
-      return { 
-        success: false, 
-        message: 'Logos bucket is not public',
-        details: { bucket: logosBucket }
-      }
-    }
-
-    // Test bucket permissions
-    const testPath = 'test/test-file.txt'
-    const testContent = 'test content'
-    
-    const { error: uploadError } = await supabase.storage
-      .from('logos')
-      .upload(testPath, new Blob([testContent]), {
-        upsert: true
       })
 
-    if (uploadError) {
-      return { 
-        success: false, 
-        message: `Storage upload test failed: ${uploadError.message}`,
-        details: { error: uploadError.message }
-      }
-    }
+      await this.runTest('Update Client', async () => {
+        const updateData = {
+          name: 'Updated Test Client',
+          notes: 'Updated test notes',
+          tags: ['updated', 'test']
+        }
 
-    // Clean up test file
-    await supabase.storage.from('logos').remove([testPath])
+        const result = await ClientService.update(this.config.testClientId!, updateData)
+        if (!result.success) throw new Error(`Failed to update client: ${result.error}`)
 
-    return { 
-      success: true, 
-      message: 'Storage bucket configuration is correct',
-      details: { bucket: logosBucket, uploadTest: 'passed' }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Storage bucket test error: ${error}`,
-      details: { error: String(error) }
+        return { updated: true, newName: updateData.name }
+      })
     }
   }
-}
 
-/**
- * Test profile service functions comprehensively
- */
-async function testProfileServiceFunctions(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    const testUserId = '11111111-1111-1111-1111-111111111111'
-    const results: Record<string, boolean> = {}
+  /**
+   * Test invoice operations
+   */
+  private async runInvoiceTests() {
+    if (this.config.testClientId) {
+      await this.runTest('Create Invoice', async () => {
+        const invoiceData = {
+          user_id: this.config.testUserId,
+          client_id: this.config.testClientId,
+          status: 'draft' as const,
+          total: 1000.00,
+          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          notes: 'Test invoice for database validation',
+          invoice_number: 'INV-001'
+        }
 
-    // Test create profile
-    const createResult = await createUserProfile(testUserId, { 
-      name: 'Test Service User', 
-      email: 'test@example.com' 
-    })
-    results.create = createResult.success
+        const result = await InvoiceService.create(invoiceData)
+        if (!result.success) throw new Error(`Failed to create invoice: ${result.error}`)
+        if (!result.data) throw new Error('No invoice data returned')
 
-    if (!createResult.success) {
-      return { 
-        success: false, 
-        message: `Create profile failed: ${createResult.error}`,
-        details: { error: createResult.error }
-      }
-    }
+        this.config.testInvoiceId = result.data.id
 
-    // Test get profile
-    const getResult = await getUserProfile(testUserId)
-    results.get = !getResult.error && !!getResult.profile
-    
-    if (getResult.error || !getResult.profile) {
-      return { 
-        success: false, 
-        message: `Get profile failed: ${getResult.error}`,
-        details: { error: getResult.error }
-      }
-    }
+        return { 
+          invoiceId: result.data.id,
+          invoiceNumber: result.data.invoice_number,
+          total: result.data.total
+        }
+      })
 
-    // Test update profile
-    const updateResult = await updateUserProfile(testUserId, {
-      company_name: 'Updated Company',
-      plan_tier: 'pro'
-    })
-    results.update = updateResult.success
+      if (this.config.testInvoiceId) {
+        await this.runTest('Get Invoice by ID', async () => {
+          const result = await InvoiceService.getById(this.config.testInvoiceId!)
+          if (!result.success) throw new Error(`Failed to get invoice: ${result.error}`)
+          if (!result.data) throw new Error('No invoice data returned')
+          if (!isInvoice(result.data)) throw new Error('Invalid invoice structure')
 
-    if (!updateResult.success) {
-      return { 
-        success: false, 
-        message: `Update profile failed: ${updateResult.error}`,
-        details: { error: updateResult.error }
-      }
-    }
-
-    // Verify update
-    const verifyResult = await getUserProfile(testUserId)
-    results.verify = verifyResult.profile?.company_name === 'Updated Company' && 
-                    verifyResult.profile?.plan_tier === 'pro'
-
-    if (!results.verify) {
-      return { 
-        success: false, 
-        message: 'Profile update verification failed',
-        details: { 
-          expected: { company_name: 'Updated Company', plan_tier: 'pro' },
-          actual: { 
-            company_name: verifyResult.profile?.company_name, 
-            plan_tier: verifyResult.profile?.plan_tier 
+          return { 
+            invoiceId: result.data.id,
+            status: result.data.status,
+            total: result.data.total
           }
+        })
+
+        await this.runTest('Mark Invoice as Paid', async () => {
+          const result = await InvoiceService.markAsPaid(this.config.testInvoiceId!)
+          if (!result.success) throw new Error(`Failed to mark invoice as paid: ${result.error}`)
+
+          return { markedAsPaid: true }
+        })
+      }
+    }
+  }
+
+  /**
+   * Test quote operations
+   */
+  private async runQuoteTests() {
+    if (this.config.testClientId) {
+      await this.runTest('Create Quote', async () => {
+        const quoteData = {
+          user_id: this.config.testUserId,
+          client_id: this.config.testClientId,
+          title: 'Test Quote',
+          status: 'draft' as const,
+          total: 500.00,
+          notes: 'Test quote for database validation'
         }
-      }
-    }
 
-    // Test plan features
-    const features = getPlanFeatures('pro')
-    results.planFeatures = !!features
+        const result = await QuoteService.create(quoteData)
+        if (!result.success) throw new Error(`Failed to create quote: ${result.error}`)
+        if (!result.data) throw new Error('No quote data returned')
 
-    // Test action permissions
-    const canCreateClient = canPerformAction('pro', 'create_client', 0)
-    const canUploadLogo = canPerformAction('pro', 'upload_logo')
-    results.permissions = canCreateClient && canUploadLogo
+        this.config.testQuoteId = result.data.id
 
-    // Clean up
-    await supabase.from('profiles').delete().eq('id', testUserId)
-
-    return { 
-      success: true, 
-      message: 'Profile service functions work correctly',
-      details: { results, features, permissions: { canCreateClient, canUploadLogo } }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Profile service test error: ${error}`,
-      details: { error: String(error) }
-    }
-  }
-}
-
-/**
- * Test logo upload and management
- */
-async function testLogoManagement(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    const testUserId = '22222222-2222-2222-2222-222222222222'
-    
-    // Create test profile
-    await createUserProfile(testUserId, { name: 'Logo Test User' })
-
-    // Create test file
-    const testFile = new File(['test logo content'], 'test-logo.png', { type: 'image/png' })
-
-    // Test logo upload
-    const uploadResult = await uploadLogo(testUserId, testFile)
-    if (!uploadResult.success) {
-      return { 
-        success: false, 
-        message: `Logo upload failed: ${uploadResult.error}`,
-        details: { error: uploadResult.error }
-      }
-    }
-
-    // Test logo deletion
-    const deleteResult = await deleteLogo(testUserId)
-    if (!deleteResult.success) {
-      return { 
-        success: false, 
-        message: `Logo deletion failed: ${deleteResult.error}`,
-        details: { error: deleteResult.error }
-      }
-    }
-
-    // Clean up
-    await supabase.from('profiles').delete().eq('id', testUserId)
-
-    return { 
-      success: true, 
-      message: 'Logo management functions work correctly',
-      details: { uploadUrl: uploadResult.url, filename: uploadResult.filename }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Logo management test error: ${error}`,
-      details: { error: String(error) }
-    }
-  }
-}
-
-/**
- * Test RLS policies and security
- */
-async function testRLSPolicies(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    // Test profiles table RLS
-    const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')
-      .limit(1)
-
-    // Test clients table RLS
-    const { data: clientsData, error: clientsError } = await supabase
-      .from('clients')
-      .select('*')
-      .limit(1)
-
-    // Test invoices table RLS
-    const { data: invoicesData, error: invoicesError } = await supabase
-      .from('invoices')
-      .select('*')
-      .limit(1)
-
-    // RLS should either return data (if authenticated) or give an RLS error
-    const rlsTests = [
-      { table: 'profiles', error: profilesError },
-      { table: 'clients', error: clientsError },
-      { table: 'invoices', error: invoicesError }
-    ]
-
-    const results = rlsTests.map(test => ({
-      table: test.table,
-      hasRLS: test.error ? 
-        (test.error.message.includes('RLS') || test.error.message.includes('permission')) : 
-        true
-    }))
-
-    const allRLSConfigured = results.every(r => r.hasRLS)
-
-    return { 
-      success: allRLSConfigured, 
-      message: allRLSConfigured ? 'RLS policies are configured' : 'Some RLS policies may be missing',
-      details: { rlsTests: results }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `RLS test error: ${error}`,
-      details: { error: String(error) }
-    }
-  }
-}
-
-/**
- * Test foreign key relationships
- */
-async function testForeignKeyRelationships(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    const relationships = [
-      { table: 'clients', foreignKey: 'user_id', references: 'profiles.id' },
-      { table: 'quotes', foreignKey: 'user_id', references: 'profiles.id' },
-      { table: 'invoices', foreignKey: 'user_id', references: 'profiles.id' },
-      { table: 'quote_items', foreignKey: 'quote_id', references: 'quotes.id' },
-      { table: 'invoice_items', foreignKey: 'invoice_id', references: 'invoices.id' }
-    ]
-
-    const results = []
-
-    for (const rel of relationships) {
-      try {
-        const { error } = await supabase
-          .from(rel.table)
-          .select(`${rel.foreignKey}, ${rel.references.split('.')[0]}(*)`)
-          .limit(1)
-
-        results.push({
-          relationship: `${rel.table}.${rel.foreignKey} -> ${rel.references}`,
-          valid: !error || error.message.includes('relation') || error.message.includes('foreign')
-        })
-      } catch (error) {
-        results.push({
-          relationship: `${rel.table}.${rel.foreignKey} -> ${rel.references}`,
-          valid: false,
-          error: String(error)
-        })
-      }
-    }
-
-    const allValid = results.every(r => r.valid)
-
-    return { 
-      success: allValid, 
-      message: allValid ? 'Foreign key relationships are configured' : 'Some foreign key relationships may be missing',
-      details: { relationships: results }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Foreign key test error: ${error}`,
-      details: { error: String(error) }
-    }
-  }
-}
-
-/**
- * Test database functions
- */
-async function testDatabaseFunctions(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    // Test the get_logo_url function
-    const { data: logoUrl, error: logoError } = await supabase
-      .rpc('get_logo_url', { 
-        user_id: '00000000-0000-0000-0000-000000000000', 
-        filename: 'test.png' 
+        return { 
+          quoteId: result.data.id,
+          title: result.data.title,
+          total: result.data.total
+        }
       })
 
-    // Test update_updated_at_column function (if it exists)
-    const { error: functionError } = await supabase
-      .rpc('update_updated_at_column')
+      if (this.config.testQuoteId) {
+        await this.runTest('Get Quote by ID', async () => {
+          const result = await QuoteService.getById(this.config.testQuoteId!)
+          if (!result.success) throw new Error(`Failed to get quote: ${result.error}`)
+          if (!result.data) throw new Error('No quote data returned')
+          if (!isQuote(result.data)) throw new Error('Invalid quote structure')
 
-    const results = {
-      get_logo_url: !logoError || logoError.message.includes('not found'),
-      update_updated_at_column: !functionError
-    }
-
-    const allFunctionsWork = Object.values(results).every(Boolean)
-
-    return { 
-      success: allFunctionsWork, 
-      message: allFunctionsWork ? 'Database functions are working' : 'Some database functions may be missing',
-      details: { functions: results }
-    }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Database function test error: ${error}`,
-      details: { error: String(error) }
-    }
-  }
-}
-
-/**
- * Test performance and scalability
- */
-async function testPerformance(): Promise<{ success: boolean; message: string; details?: Record<string, unknown> }> {
-  try {
-    const startTime = Date.now()
-    
-    // Test concurrent profile reads
-    const promises = Array.from({ length: 10 }, () => 
-      supabase.from('profiles').select('count(*)').limit(1)
-    )
-    
-    const results = await Promise.all(promises)
-    const duration = Date.now() - startTime
-    
-    const allSuccessful = results.every(r => !r.error)
-    const avgResponseTime = duration / results.length
-
-    return { 
-      success: allSuccessful, 
-      message: allSuccessful ? 'Performance test passed' : 'Performance test failed',
-      details: { 
-        concurrentRequests: results.length,
-        totalDuration: duration,
-        avgResponseTime,
-        allSuccessful
+          return { 
+            quoteId: result.data.id,
+            status: result.data.status,
+            total: result.data.total
+          }
+        })
       }
     }
-  } catch (error) {
-    return { 
-      success: false, 
-      message: `Performance test error: ${error}`,
-      details: { error: String(error) }
+  }
+
+  /**
+   * Test logo operations
+   */
+  private async runLogoTests() {
+    await this.runTest('Logo Upload Validation', async () => {
+      // Create a mock file for testing
+      const mockFile = new File(['test'], 'test.txt', { type: 'text/plain' })
+      
+      const result = await uploadLogo(this.config.testUserId, mockFile)
+      if (result.success) throw new Error('Should have rejected invalid file type')
+
+      return { 
+        validationWorking: true,
+        rejectedInvalidType: !result.success
+      }
+    })
+
+    await this.runTest('Logo URL Retrieval', async () => {
+      const { profile } = await getUserProfile(this.config.testUserId)
+      if (!profile) throw new Error('Profile not found')
+
+      // Test with existing logo URL
+      if (profile.logo_url) {
+        const logoUrl = await supabase.rpc('get_logo_url', { 
+          user_id: this.config.testUserId 
+        })
+        
+        if (logoUrl.error) throw new Error(`Failed to get logo URL: ${logoUrl.error.message}`)
+        
+        return { 
+          logoUrlRetrieved: true,
+          logoUrl: logoUrl.data
+        }
+      }
+
+      return { noLogoToTest: true }
+    })
+  }
+
+  /**
+   * Test user management
+   */
+  private async runUserManagementTests() {
+    await this.runTest('User Profile Creation', async () => {
+      const testUserData = {
+        name: 'Test User Creation',
+        email: 'testcreation@example.com'
+      }
+
+      const result = await createUserProfile(this.config.testUserId, testUserData)
+      if (!result.success) throw new Error(`Failed to create user profile: ${result.error}`)
+
+      return { profileCreated: true }
+    })
+
+    await this.runTest('User Statistics', async () => {
+      const result = await getUserStats(this.config.testUserId)
+      if (!result.success) throw new Error(`Failed to get user stats: ${result.error}`)
+      if (!result.data) throw new Error('No user stats returned')
+
+      return { 
+        totalClients: result.data.totalClients,
+        totalInvoices: result.data.totalInvoices,
+        totalQuotes: result.data.totalQuotes,
+        totalRevenue: result.data.totalRevenue
+      }
+    })
+  }
+
+  /**
+   * Test data integrity
+   */
+  private async runDataIntegrityTests() {
+    await this.runTest('Foreign Key Constraints', async () => {
+      // Test that clients reference valid users
+      const { data: clients, error } = await supabase
+        .from('clients')
+        .select('user_id')
+        .eq('user_id', this.config.testUserId)
+
+      if (error) throw new Error(`Failed to query clients: ${error.message}`)
+
+      // Verify all clients belong to valid users
+      for (const client of clients || []) {
+        const { data: user } = await supabase.auth.admin.getUserById(client.user_id)
+        if (!user.user) throw new Error(`Client references invalid user: ${client.user_id}`)
+      }
+
+      return { 
+        foreignKeyIntegrity: true,
+        clientCount: clients?.length || 0
+      }
+    })
+
+    await this.runTest('Data Type Validation', async () => {
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', this.config.testUserId)
+        .single()
+
+      if (error) throw new Error(`Failed to query profile: ${error.message}`)
+      if (!profiles) throw new Error('Profile not found')
+
+      // Validate data types
+      if (typeof profiles.plan_tier !== 'string') throw new Error('plan_tier is not a string')
+      if (typeof profiles.subscription_status !== 'string') throw new Error('subscription_status is not a string')
+      if (profiles.default_payment_terms && typeof profiles.default_payment_terms !== 'number') {
+        throw new Error('default_payment_terms is not a number')
+      }
+
+      return { 
+        dataTypesValid: true,
+        planTier: profiles.plan_tier,
+        subscriptionStatus: profiles.subscription_status
+      }
+    })
+  }
+
+  /**
+   * Test performance
+   */
+  private async runPerformanceTests() {
+    await this.runTest('Query Performance', async () => {
+      const startTime = Date.now()
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', this.config.testUserId)
+        .single()
+
+      const duration = Date.now() - startTime
+
+      if (error) throw new Error(`Query failed: ${error.message}`)
+      if (duration > 1000) throw new Error(`Query too slow: ${duration}ms`)
+
+      return { 
+        queryDuration: duration,
+        performanceAcceptable: duration < 1000
+      }
+    })
+
+    await this.runTest('Batch Operations', async () => {
+      const testClients = Array.from({ length: 5 }, (_, i) => ({
+        user_id: this.config.testUserId,
+        name: `Batch Test Client ${i + 1}`,
+        email: `batch${i + 1}@test.com`,
+        notes: `Batch test client ${i + 1}`
+      }))
+
+      const startTime = Date.now()
+      const result = await db.batchInsert('clients', testClients)
+      const duration = Date.now() - startTime
+
+      if (!result.success) throw new Error(`Batch insert failed: ${result.error}`)
+      if (duration > 2000) throw new Error(`Batch operation too slow: ${duration}ms`)
+
+      return { 
+        batchDuration: duration,
+        insertedCount: result.data?.length || 0,
+        performanceAcceptable: duration < 2000
+      }
+    })
+  }
+
+  /**
+   * Cleanup test data
+   */
+  private async runCleanupTests() {
+    await this.runTest('Cleanup Test Data', async () => {
+      const cleanupPromises = []
+
+      // Cleanup invoices
+      if (this.config.testInvoiceId) {
+        cleanupPromises.push(InvoiceService.delete(this.config.testInvoiceId!))
+      }
+
+      // Cleanup quotes
+      if (this.config.testQuoteId) {
+        cleanupPromises.push(QuoteService.delete(this.config.testQuoteId!))
+      }
+
+      // Cleanup clients
+      if (this.config.testClientId) {
+        cleanupPromises.push(ClientService.delete(this.config.testClientId!))
+      }
+
+      // Wait for all cleanup operations
+      const results = await Promise.all(cleanupPromises)
+      const failedCleanups = results.filter(r => !r.success)
+
+      if (failedCleanups.length > 0) {
+        throw new Error(`Failed to cleanup: ${failedCleanups.map(r => r.error).join(', ')}`)
+      }
+
+      return { 
+        cleanupSuccessful: true,
+        cleanedItems: results.length
+      }
+    })
+  }
+
+  /**
+   * Run a single test
+   */
+  private async runTest(testName: string, testFn: () => Promise<Record<string, unknown>>): Promise<void> {
+    const startTime = Date.now()
+    let passed = false
+    let error: string | undefined
+    let details: Record<string, unknown> | undefined
+
+    try {
+      details = await testFn()
+      passed = true
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Unknown error'
+      logger.error(`Test failed: ${testName}`, {
+        component: 'DatabaseTestSuite',
+        operation: 'runTest',
+        metadata: { testName, error }
+      }, err as Error)
     }
+
+    const duration = Date.now() - startTime
+
+    this.results.push({
+      testName,
+      passed,
+      error,
+      duration,
+      details
+    })
+
+    logger.info(`Test ${passed ? 'passed' : 'failed'}: ${testName}`, {
+      component: 'DatabaseTestSuite',
+      operation: 'runTest',
+      metadata: { 
+        testName, 
+        passed, 
+        duration,
+        error: error || undefined
+      }
+    })
+  }
+
+  /**
+   * Generate test summary
+   */
+  private generateSummary(passedTests: number, failedTests: number, totalDuration: number): string {
+    const successRate = ((passedTests / this.results.length) * 100).toFixed(1)
+    
+    return `
+Database Test Suite Results
+===========================
+Total Tests: ${this.results.length}
+Passed: ${passedTests}
+Failed: ${failedTests}
+Success Rate: ${successRate}%
+Total Duration: ${totalDuration}ms
+
+${failedTests > 0 ? 'Failed Tests:' : 'All tests passed!'}
+${this.results
+  .filter(r => !r.passed)
+  .map(r => `- ${r.testName}: ${r.error}`)
+  .join('\n')}
+    `.trim()
+  }
+
+  /**
+   * Get detailed test results
+   */
+  getResults(): TestResult[] {
+    return this.results
+  }
+
+  /**
+   * Export results to JSON
+   */
+  exportResults(): string {
+    return JSON.stringify({
+      timestamp: new Date().toISOString(),
+      config: this.config,
+      results: this.results
+    }, null, 2)
   }
 }
 
 /**
- * Run the complete test suite with comprehensive reporting
+ * Convenience function to run the test suite
  */
-export async function runDatabaseTestSuite(): Promise<TestSuiteResult> {
-  const startTime = Date.now()
-  const results: TestResult[] = []
-
-  console.log('🧪 Starting BuildLedger Database Synchronization Test Suite...\n')
-
-  // Define all tests with categories
-  const tests = [
-    { name: 'Database Connection', fn: testDatabaseConnection, category: TestCategory.CONNECTIVITY },
-    { name: 'Profiles Table Structure', fn: testProfilesTableStructure, category: TestCategory.STRUCTURE },
-    { name: 'All Table Structures', fn: testAllTableStructures, category: TestCategory.STRUCTURE },
-    { name: 'Storage Bucket Configuration', fn: testStorageBucketConfig, category: TestCategory.STORAGE },
-    { name: 'Profile Service Functions', fn: testProfileServiceFunctions, category: TestCategory.FUNCTIONALITY },
-    { name: 'Logo Management', fn: testLogoManagement, category: TestCategory.FUNCTIONALITY },
-    { name: 'RLS Policies', fn: testRLSPolicies, category: TestCategory.SECURITY },
-    { name: 'Foreign Key Relationships', fn: testForeignKeyRelationships, category: TestCategory.STRUCTURE },
-    { name: 'Database Functions', fn: testDatabaseFunctions, category: TestCategory.FUNCTIONALITY },
-    { name: 'Performance Test', fn: testPerformance, category: TestCategory.PERFORMANCE },
-  ]
-
-  // Run all tests
-  for (const test of tests) {
-    console.log(`Running: ${test.name}...`)
-    const result = await runTest(test.name, test.fn, test.category)
-    results.push(result)
-    
-    const status = result.success ? '✅ PASS' : '❌ FAIL'
-    console.log(`${status} ${result.testName} (${result.duration}ms): ${result.message}`)
-    
-    if (result.details && Object.keys(result.details).length > 0) {
-      console.log(`   Details: ${JSON.stringify(result.details, null, 2)}`)
-    }
-    console.log('')
-  }
-
-  const duration = Date.now() - startTime
-  const passedTests = results.filter(r => r.success).length
-  const failedTests = results.filter(r => !r.success).length
-
-  // Generate summary
-  const failedTestNames = results.filter(r => !r.success).map(r => r.testName)
-  const summary = failedTests === 0 
-    ? '🎉 All tests passed! Database synchronization is working correctly.'
-    : `⚠️ ${failedTests} test(s) failed: ${failedTestNames.join(', ')}`
-
-  const testSuiteResult: TestSuiteResult = {
-    totalTests: tests.length,
-    passedTests,
-    failedTests,
-    results,
-    duration,
-    summary
-  }
-
-  // Print comprehensive summary
-  console.log('📊 Test Suite Summary:')
-  console.log(`Total Tests: ${testSuiteResult.totalTests}`)
-  console.log(`✅ Passed: ${testSuiteResult.passedTests}`)
-  console.log(`❌ Failed: ${testSuiteResult.failedTests}`)
-  console.log(`⏱️ Total Duration: ${testSuiteResult.duration}ms`)
-  console.log(`📈 Success Rate: ${((passedTests / tests.length) * 100).toFixed(1)}%`)
-  console.log(`\n${summary}`)
-
-  // Print category breakdown
-  const categoryBreakdown = Object.values(TestCategory).map(category => {
-    const categoryTests = results.filter(r => r.testName.includes(`[${category}]`))
-    const categoryPassed = categoryTests.filter(r => r.success).length
-    return `${category}: ${categoryPassed}/${categoryTests.length} passed`
+export async function runDatabaseTests(testUserId: string, cleanupAfterTests = true): Promise<TestSuiteResult> {
+  const testSuite = new DatabaseTestSuite({
+    testUserId,
+    cleanupAfterTests
   })
 
-  console.log('\n📋 Category Breakdown:')
-  categoryBreakdown.forEach(breakdown => console.log(`  ${breakdown}`))
-
-  return testSuiteResult
+  return await testSuite.runAllTests()
 }
 
 /**
- * Quick health check for production monitoring
+ * Quick health check function
  */
-export async function quickHealthCheck(): Promise<{ healthy: boolean; details: QuickHealthCheckDetails }> {
-  const startTime = Date.now()
-  const checks: Record<string, boolean> = {}
-  
+export async function quickHealthCheck(): Promise<boolean> {
   try {
-    // Test database connectivity
-    const { error: dbError } = await supabase
-      .from('profiles')
-      .select('count(*)')
-      .limit(1)
-    checks.database = !dbError
-
-    // Test storage
-    const { error: storageError } = await supabase.storage.listBuckets()
-    checks.storage = !storageError
-
-    // Test RLS
-    const { error: rlsError } = await supabase
-      .from('profiles')
-      .select('*')
-      .limit(1)
-    checks.rls = !rlsError || rlsError.message.includes('RLS') || rlsError.message.includes('permission')
-
-    const duration = Date.now() - startTime
-    const healthy = Object.values(checks).every(Boolean)
-
-    return {
-      healthy,
-      details: {
-        checks,
-        responseTime: duration,
-        timestamp: new Date().toISOString()
-      }
-    }
-  } catch (error) {
-    return {
-      healthy: false,
-      details: {
-        error: String(error),
-        checks,
-        timestamp: new Date().toISOString()
-      }
-    }
+    const { error } = await supabase.from('profiles').select('count(*)').limit(1)
+    return !error
+  } catch {
+    return false
   }
-}
-
-/**
- * Get detailed system status for monitoring
- */
-export async function getSystemStatus(): Promise<{
-  database: { status: string; details: Record<string, unknown> }
-  storage: { status: string; details: Record<string, unknown> }
-  security: { status: string; details: Record<string, unknown> }
-  performance: { status: string; details: Record<string, unknown> }
-}> {
-  const healthCheck = await quickHealthCheck()
-  const details = healthCheck.details
-  const checks = details.checks ?? {}
-
-  return {
-    database: {
-      status: checks.database ? 'healthy' : 'unhealthy',
-      details
-    },
-    storage: {
-      status: checks.storage ? 'healthy' : 'unhealthy',
-      details
-    },
-    security: {
-      status: checks.rls ? 'healthy' : 'unhealthy',
-      details
-    },
-    performance: {
-      status: (details.responseTime ?? 0) < 1000 ? 'good' : 'slow',
-      details: { responseTime: details.responseTime }
-    }
-  }
-}
+} 

@@ -1,4 +1,4 @@
-import { Invoice, InvoiceWithStats, InvoiceStatus } from '@/lib/types'
+import { Invoice, InvoiceStatus } from '@/lib/types'
 
 /**
  * Generate a human-readable invoice number from an invoice
@@ -140,7 +140,13 @@ export const getInvoiceStatus = (invoice: Invoice): InvoiceStatus => {
  * @param invoice - The base invoice
  * @returns Invoice with computed stats
  */
-export const addInvoiceStats = (invoice: Invoice): InvoiceWithStats => {
+export const addInvoiceStats = (invoice: Invoice): Invoice & {
+  days_overdue?: number
+  is_overdue: boolean
+  days_until_due?: number
+  client_name?: string
+  payment_status: 'paid' | 'unpaid'
+} => {
   const daysOverdue = getDaysOverdue(invoice)
   const daysUntilDue = getDaysUntilDue(invoice)
   const isOverdue = isInvoiceOverdue(invoice)

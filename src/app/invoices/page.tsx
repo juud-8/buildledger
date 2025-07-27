@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Invoice } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface InvoiceListItem extends Omit<Invoice, 'clients' | 'due_date'> {
   clients?: { name: string } | null
@@ -15,13 +16,23 @@ interface InvoiceListItem extends Omit<Invoice, 'clients' | 'due_date'> {
 }
 
 export default function InvoicesList() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
     const loadInvoices = async () => {
-      if (!user) return
+      if (!user) {
+        setLoading(false)
+        return
+      }
 
       // Fetch invoices with client names
       const { data, error } = await supabase
@@ -70,8 +81,10 @@ export default function InvoicesList() {
       setLoading(false)
     }
 
-    loadInvoices()
-  }, [user])
+    if (!authLoading) {
+      loadInvoices()
+    }
+  }, [user, authLoading])
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -95,7 +108,7 @@ export default function InvoicesList() {
     return new Date(dueDate) < new Date()
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -110,11 +123,18 @@ export default function InvoicesList() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-          <Link href="/invoices/new">
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-              + New Invoice
-            </button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/clients">
+              <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                + Add Client
+              </button>
+            </Link>
+            <Link href="/invoices/new">
+              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                + New Invoice
+              </button>
+            </Link>
+          </div>
         </div>
 
         {invoices.length === 0 ? (
