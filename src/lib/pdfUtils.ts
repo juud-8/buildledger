@@ -1,5 +1,5 @@
 import React from 'react'
-import { pdf } from '@react-pdf/renderer'
+import { pdf, Document, Page } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/components/InvoicePDF'
 import { Invoice, InvoiceItem } from '@/lib/types'
 import { generateInvoiceNumber } from '@/lib/invoiceUtils'
@@ -11,7 +11,7 @@ interface InvoiceWithDetails extends Invoice {
 
 export const generateInvoicePDF = async (invoice: InvoiceWithDetails): Promise<Blob> => {
   const element = React.createElement(InvoicePDF, { invoice })
-  const blob = await pdf(element).toBlob()
+  const blob = await pdf(element as React.ReactElement).toBlob()
   return blob
 }
 
