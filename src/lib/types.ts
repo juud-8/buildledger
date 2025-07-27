@@ -198,6 +198,14 @@ export interface Invoice extends BaseEntity {
   payments?: Payment[]
 }
 
+export interface InvoiceWithStats extends Invoice {
+  days_overdue?: number
+  is_overdue: boolean
+  days_until_due?: number
+  client_name?: string
+  payment_status: 'paid' | 'unpaid'
+}
+
 // ============================================================================
 // API AND RESPONSE TYPES
 // ============================================================================
