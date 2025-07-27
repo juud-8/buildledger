@@ -213,7 +213,7 @@ export default function EditInvoice({ params }: { params: Promise<{ id: string }
                   type="text"
                   value={invoice.invoice_number || ''}
                   onChange={(e) => setInvoice({ ...invoice, invoice_number: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="INV-001"
                 />
               </div>
@@ -225,7 +225,7 @@ export default function EditInvoice({ params }: { params: Promise<{ id: string }
                   type="date"
                   value={invoice.due_date || ''}
                   onChange={(e) => setInvoice({ ...invoice, due_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -237,7 +237,7 @@ export default function EditInvoice({ params }: { params: Promise<{ id: string }
                 value={invoice.notes || ''}
                 onChange={(e) => setInvoice({ ...invoice, notes: e.target.value })}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Additional notes..."
               />
             </div>
@@ -253,21 +253,21 @@ export default function EditInvoice({ params }: { params: Promise<{ id: string }
                   placeholder="Description"
                   value={item.description}
                   onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                  className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-grow px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="number"
                   placeholder="Qty"
                   value={item.quantity}
                   onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 1)}
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-20 px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="number"
                   placeholder="Rate"
                   value={item.rate}
                   onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                  className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-20 px-3 py-2 text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   type="button"
