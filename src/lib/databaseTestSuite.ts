@@ -56,6 +56,15 @@ export enum TestCategory {
 }
 
 /**
+ * Detailed information returned from quickHealthCheck
+ */
+interface QuickHealthCheckDetails extends Record<string, unknown> {
+  checks?: Record<string, boolean>
+  responseTime?: number
+  timestamp?: string
+}
+
+/**
  * Run a single test with comprehensive error handling and timing
  */
 async function runTest(
@@ -107,7 +116,7 @@ async function testDatabaseConnection(): Promise<{ success: boolean; message: st
       return { 
         success: false, 
         message: `Database connection failed: ${error.message}`,
-        details: { error: error.message, code: error.code }
+        details: { error: error.message }
       }
     }
 
@@ -149,7 +158,7 @@ async function testProfilesTableStructure(): Promise<{ success: boolean; message
       return { 
         success: false, 
         message: `Profile table structure error: ${insertError.message}`,
-        details: { error: insertError.message, code: insertError.code }
+        details: { error: insertError.message }
       }
     }
 
@@ -217,7 +226,7 @@ async function testAllTableStructures(): Promise<{ success: boolean; message: st
         return { 
           success: false, 
           message: `Table ${table} structure error: ${error.message}`,
-          details: { table, error: error.message, code: error.code }
+          details: { table, error: error.message }
         }
       }
     }
@@ -247,7 +256,7 @@ async function testStorageBucketConfig(): Promise<{ success: boolean; message: s
       return { 
         success: false, 
         message: `Storage bucket list error: ${error.message}`,
-        details: { error: error.message, code: error.code }
+        details: { error: error.message }
       }
     }
 
@@ -282,7 +291,7 @@ async function testStorageBucketConfig(): Promise<{ success: boolean; message: s
       return { 
         success: false, 
         message: `Storage upload test failed: ${uploadError.message}`,
-        details: { error: uploadError.message, code: uploadError.statusCode }
+        details: { error: uploadError.message }
       }
     }
 
@@ -708,7 +717,7 @@ export async function runDatabaseTestSuite(): Promise<TestSuiteResult> {
 /**
  * Quick health check for production monitoring
  */
-export async function quickHealthCheck(): Promise<{ healthy: boolean; details: Record<string, unknown> }> {
+export async function quickHealthCheck(): Promise<{ healthy: boolean; details: QuickHealthCheckDetails }> {
   const startTime = Date.now()
   const checks: Record<string, boolean> = {}
   
@@ -764,23 +773,25 @@ export async function getSystemStatus(): Promise<{
   performance: { status: string; details: Record<string, unknown> }
 }> {
   const healthCheck = await quickHealthCheck()
-  
+  const details = healthCheck.details
+  const checks = details.checks ?? {}
+
   return {
     database: {
-      status: healthCheck.details.checks?.database ? 'healthy' : 'unhealthy',
-      details: healthCheck.details
+      status: checks.database ? 'healthy' : 'unhealthy',
+      details
     },
     storage: {
-      status: healthCheck.details.checks?.storage ? 'healthy' : 'unhealthy',
-      details: healthCheck.details
+      status: checks.storage ? 'healthy' : 'unhealthy',
+      details
     },
     security: {
-      status: healthCheck.details.checks?.rls ? 'healthy' : 'unhealthy',
-      details: healthCheck.details
+      status: checks.rls ? 'healthy' : 'unhealthy',
+      details
     },
     performance: {
-      status: healthCheck.details.responseTime < 1000 ? 'good' : 'slow',
-      details: { responseTime: healthCheck.details.responseTime }
+      status: (details.responseTime ?? 0) < 1000 ? 'good' : 'slow',
+      details: { responseTime: details.responseTime }
     }
   }
-} 
+}
