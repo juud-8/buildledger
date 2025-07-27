@@ -34,7 +34,7 @@ export default function InvoicesList() {
           status,
           total,
           created_at,
-          clients!inner ( name )
+          clients ( name )
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })

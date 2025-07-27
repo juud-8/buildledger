@@ -38,7 +38,7 @@ export default function NewInvoice() {
 
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name')
+        .select('id, name, user_id')
         .eq('user_id', user.id)
         .order('name')
 
@@ -110,49 +110,59 @@ export default function NewInvoice() {
 
   // Remove line item
   const removeLineItem = (index: number) => {
-    const updatedItems = [...lineItems]
-    updatedItems.splice(index, 1)
-    setLineItems(updatedItems)
+    if (lineItems.length > 1) {
+      const updatedItems = lineItems.filter((_, i) => i !== index)
+      setLineItems(updatedItems)
+    }
   }
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!user || !clientId || lineItems.length === 0) {
-      return alert('Please select a client and add at least one item.')
+    if (!user || !clientId || !dueDate) {
+      return alert('Please fill out all required fields.')
     }
 
-    if (!dueDate) {
-      return alert('Please select a due date.')
+    if (lineItems.length === 0) {
+      return alert('Please add at least one line item.')
     }
+
+    // Validate line items
+    const validItems = lineItems.filter(item => 
+      item.description.trim() && item.quantity > 0 && item.rate >= 0
+    )
+
+    if (validItems.length === 0) {
+      return alert('Please add valid line items with description, quantity, and rate.')
+    }
+
+    setLoading(true)
 
     try {
-      // Insert invoice
-      const { data, error } = await supabase
+      // Create invoice
+      const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
           user_id: user.id,
           client_id: clientId,
-          quote_id: quoteId || null,
           due_date: dueDate,
           status: 'draft',
           total,
         })
         .select('id')
+        .single()
 
-      if (error) {
-        return alert('Error creating invoice: ' + error.message)
+      if (invoiceError) {
+        return alert('Error creating invoice: ' + invoiceError.message)
       }
 
-      const invoiceId = data?.[0]?.id
-      if (!invoiceId) {
-        return alert('Failed to retrieve invoice ID.')
-      }
+      const invoiceId = invoiceData.id
 
       // Insert line items
-      const itemsToInsert = lineItems.map(item => ({
+      const itemsToInsert = validItems.map(item => ({
         invoice_id: invoiceId,
-        description: item.description,
+        description: item.description.trim(),
         quantity: item.quantity,
         rate: item.rate,
       }))
@@ -170,6 +180,8 @@ export default function NewInvoice() {
     } catch (error) {
       console.error('Unexpected error:', error)
       alert('An unexpected error occurred.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -200,7 +212,7 @@ export default function NewInvoice() {
             {/* Client Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Client
+                Client <span className="text-red-500">*</span>
               </label>
               {loadingClients ? (
                 <p className="text-gray-500">Loading clients...</p>
@@ -209,7 +221,7 @@ export default function NewInvoice() {
                   value={clientId}
                   onChange={(e) => setClientId(e.target.value)}
                   disabled={isFromQuote}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
                   required
                 >
                   <option value="">Select a client</option>
@@ -225,13 +237,13 @@ export default function NewInvoice() {
             {/* Due Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Due Date
+                Due Date <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 form-input"
                 required
               />
             </div>
@@ -239,12 +251,12 @@ export default function NewInvoice() {
             {/* Line Items */}
             <div>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Line Items</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Line Items <span className="text-red-500">*</span></h2>
                 {!isFromQuote && (
                   <button
                     type="button"
                     onClick={addLineItem}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm"
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm btn-success"
                   >
                     + Add Item
                   </button>
@@ -256,16 +268,16 @@ export default function NewInvoice() {
                   No items added yet. Click "Add Item" to get started.
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {lineItems.map((item, index) => (
-                    <div key={index} className="flex space-x-2">
+                    <div key={index} className="flex space-x-2 items-center">
                       <input
                         type="text"
                         placeholder="Description"
                         value={item.description}
                         onChange={(e) => updateLineItem(index, 'description', e.target.value)}
                         disabled={isFromQuote}
-                        className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                        className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
                         required
                       />
                       <input
@@ -274,7 +286,7 @@ export default function NewInvoice() {
                         value={item.quantity}
                         onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
                         disabled={isFromQuote}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
                         min="0"
                         step="0.01"
                         required
@@ -285,22 +297,27 @@ export default function NewInvoice() {
                         value={item.rate}
                         onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
                         disabled={isFromQuote}
-                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
                         min="0"
                         step="0.01"
                         required
                       />
-                      {!isFromQuote && (
+                      <div className="w-8 text-center">
+                        <span className="text-sm text-gray-600">
+                          ${(item.quantity * item.rate).toFixed(2)}
+                        </span>
+                      </div>
+                      {!isFromQuote && lineItems.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeLineItem(index)}
-                          className="text-red-600 hover:text-red-800 px-2"
+                          className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
+                          title="Remove item"
                         >
                           ✕
                         </button>
                       )}
                     </div>
-                  ))}
                   ))}
                 </div>
               )}
@@ -320,9 +337,10 @@ export default function NewInvoice() {
             <div className="flex space-x-4">
               <button
                 type="submit"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-md transition"
+                disabled={loading}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-md transition btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Invoice
+                {loading ? 'Creating...' : 'Create Invoice'}
               </button>
               <Link
                 href="/invoices"
