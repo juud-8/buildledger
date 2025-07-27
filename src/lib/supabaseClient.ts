@@ -12,7 +12,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { logger } from './logger'
 import { config, isProduction } from './config'
 
-// Custom database schema type (can be generated from Supabase CLI)
+// Custom database schema type - matches live Supabase database structure
 export interface Database {
   public: {
     Tables: {
@@ -22,24 +22,54 @@ export interface Database {
           name: string | null
           company_name: string | null
           logo_url: string | null
-          plan_tier: string
+          plan_tier: 'free' | 'pro' | 'business'
+          default_payment_terms: number | null
+          default_tax_rate: number | null
+          business_address: string | null
+          business_phone: string | null
+          business_email: string | null
+          settings: any | null
+          subscription_status: 'active' | 'cancelled' | 'past_due' | 'trialing'
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           created_at: string
+          updated_at: string | null
         }
         Insert: {
           id: string
           name?: string | null
           company_name?: string | null
           logo_url?: string | null
-          plan_tier?: string
+          plan_tier?: 'free' | 'pro' | 'business'
+          default_payment_terms?: number | null
+          default_tax_rate?: number | null
+          business_address?: string | null
+          business_phone?: string | null
+          business_email?: string | null
+          settings?: any | null
+          subscription_status?: 'active' | 'cancelled' | 'past_due' | 'trialing'
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           created_at?: string
+          updated_at?: string | null
         }
         Update: {
           id?: string
           name?: string | null
           company_name?: string | null
           logo_url?: string | null
-          plan_tier?: string
+          plan_tier?: 'free' | 'pro' | 'business'
+          default_payment_terms?: number | null
+          default_tax_rate?: number | null
+          business_address?: string | null
+          business_phone?: string | null
+          business_email?: string | null
+          settings?: any | null
+          subscription_status?: 'active' | 'cancelled' | 'past_due' | 'trialing'
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           created_at?: string
+          updated_at?: string | null
         }
       }
       clients: {
@@ -51,6 +81,15 @@ export interface Database {
           phone: string | null
           address: string | null
           notes: string | null
+          tags: string[] | null
+          contact_person: string | null
+          website: string | null
+          industry: string | null
+          total_invoiced: number | null
+          total_paid: number | null
+          last_invoice_date: string | null
+          payment_terms: number | null
+          tax_exempt: boolean | null
           created_at: string
           updated_at: string | null
         }
@@ -62,6 +101,15 @@ export interface Database {
           phone?: string | null
           address?: string | null
           notes?: string | null
+          tags?: string[] | null
+          contact_person?: string | null
+          website?: string | null
+          industry?: string | null
+          total_invoiced?: number | null
+          total_paid?: number | null
+          last_invoice_date?: string | null
+          payment_terms?: number | null
+          tax_exempt?: boolean | null
           created_at?: string
           updated_at?: string | null
         }
@@ -73,11 +121,162 @@ export interface Database {
           phone?: string | null
           address?: string | null
           notes?: string | null
+          tags?: string[] | null
+          contact_person?: string | null
+          website?: string | null
+          industry?: string | null
+          total_invoiced?: number | null
+          total_paid?: number | null
+          last_invoice_date?: string | null
+          payment_terms?: number | null
+          tax_exempt?: boolean | null
           created_at?: string
           updated_at?: string | null
         }
       }
-      // Add other tables as needed...
+      quotes: {
+        Row: {
+          id: string
+          user_id: string
+          client_id: string | null
+          title: string
+          status: string
+          total: number
+          pdf_url: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          client_id?: string | null
+          title: string
+          status?: string
+          total?: number
+          pdf_url?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          client_id?: string | null
+          title?: string
+          status?: string
+          total?: number
+          pdf_url?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      quote_items: {
+        Row: {
+          id: string
+          quote_id: string | null
+          description: string
+          quantity: number
+          rate: number
+        }
+        Insert: {
+          id?: string
+          quote_id?: string | null
+          description: string
+          quantity?: number
+          rate: number
+        }
+        Update: {
+          id?: string
+          quote_id?: string | null
+          description?: string
+          quantity?: number
+          rate?: number
+        }
+      }
+      invoices: {
+        Row: {
+          id: string
+          user_id: string
+          client_id: string | null
+          quote_id: string | null
+          status: string
+          due_date: string | null
+          total: number
+          pdf_url: string | null
+          notes: string | null
+          invoice_number: string | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          client_id?: string | null
+          quote_id?: string | null
+          status?: string
+          due_date?: string | null
+          total?: number
+          pdf_url?: string | null
+          notes?: string | null
+          invoice_number?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          client_id?: string | null
+          quote_id?: string | null
+          status?: string
+          due_date?: string | null
+          total?: number
+          pdf_url?: string | null
+          notes?: string | null
+          invoice_number?: string | null
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      invoice_items: {
+        Row: {
+          id: string
+          invoice_id: string | null
+          description: string
+          quantity: number
+          rate: number
+        }
+        Insert: {
+          id?: string
+          invoice_id?: string | null
+          description: string
+          quantity?: number
+          rate: number
+        }
+        Update: {
+          id?: string
+          invoice_id?: string | null
+          description?: string
+          quantity?: number
+          rate?: number
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      get_logo_url: {
+        Args: {
+          user_id: string
+          filename?: string
+        }
+        Returns: string | null
+      }
+    }
+    Enums: {
+      [_ in never]: never
     }
   }
 }

@@ -31,21 +31,31 @@ export interface User {
 // Plan tiers for subscription management
 export type PlanTier = 'free' | 'pro' | 'business'
 
-// User profile with business information
+// Subscription status types
+export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'trialing'
+
+// User profile with business information - matches live database structure
 export interface Profile extends BaseEntity {
+  // Basic information
   name?: string
   company_name?: string
   logo_url?: string
   plan_tier: PlanTier
+  subscription_status: SubscriptionStatus
+  
   // Business settings
   default_payment_terms?: number // days
   default_tax_rate?: number // percentage
   business_address?: string
   business_phone?: string
   business_email?: string
+  
+  // Stripe integration
+  stripe_customer_id?: string
+  stripe_subscription_id?: string
+  
   // Metadata
   settings?: UserSettings
-  subscription_status?: SubscriptionStatus
 }
 
 // User preferences and settings
@@ -72,24 +82,21 @@ export interface InvoiceBranding {
   footer_text?: string
 }
 
-// Subscription management
-export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'trialing'
-
-export interface Subscription extends BaseEntity {
-  user_id: string
-  plan_tier: PlanTier
-  status: SubscriptionStatus
-  current_period_start: string
-  current_period_end: string
-  stripe_subscription_id?: string
-  stripe_customer_id?: string
+// Plan features interface
+export interface PlanFeatures {
+  max_clients: number
+  max_invoices_per_month: number
+  max_quotes_per_month: number
+  custom_branding: boolean
+  priority_support: boolean
+  advanced_analytics: boolean
 }
 
 // ============================================================================
 // BUSINESS ENTITY TYPES
 // ============================================================================
 
-// Client management
+// Client management - matches live database structure
 export interface Client extends BaseEntity {
   user_id: string
   name: string
@@ -97,17 +104,19 @@ export interface Client extends BaseEntity {
   phone?: string
   address?: string
   notes?: string
+  
+  // Enhanced client information
+  tags?: string[]
+  contact_person?: string
+  website?: string
+  industry?: string
+  
   // Business metrics
   total_invoiced?: number
   total_paid?: number
   last_invoice_date?: string
   payment_terms?: number // days
   tax_exempt?: boolean
-  // Metadata
-  tags?: string[]
-  contact_person?: string
-  website?: string
-  industry?: string
 }
 
 // Quote status and workflow
@@ -127,30 +136,18 @@ export interface QuoteItem extends BaseEntity {
   net_amount?: number
 }
 
-// Quote entity
+// Quote entity - matches live database structure
 export interface Quote extends BaseEntity {
   user_id: string
   client_id: string | null
   title: string
   status: QuoteStatus
-  // Financial fields
-  subtotal: number
-  tax_total: number
   total: number
-  discount_percentage?: number
-  // Metadata
-  quote_number?: string
-  valid_until?: string
   pdf_url?: string
   notes?: string
-  terms?: string
   // Relationships
   clients?: Pick<Client, 'id' | 'name' | 'email'>
   quote_items?: QuoteItem[]
-  // Analytics
-  viewed_at?: string
-  viewed_count?: number
-  sent_at?: string
 }
 
 // Invoice status and workflow
@@ -184,40 +181,21 @@ export interface Payment extends BaseEntity {
   stripe_payment_intent_id?: string
 }
 
-// Invoice entity
+// Invoice entity - matches live database structure
 export interface Invoice extends BaseEntity {
   user_id: string
   client_id: string | null
   quote_id: string | null
-  // Identification
-  invoice_number: string
   status: InvoiceStatus
-  // Financial fields
-  subtotal: number
-  tax_total: number
+  due_date?: string
   total: number
-  amount_paid?: number
-  amount_due?: number
-  discount_percentage?: number
-  // Dates
-  issue_date: string
-  due_date: string | null
-  paid_date?: string
-  // Metadata
   pdf_url?: string
   notes?: string
-  terms?: string
-  payment_instructions?: string
+  invoice_number?: string
   // Relationships
   clients?: Pick<Client, 'id' | 'name' | 'email' | 'phone' | 'address'>
   invoice_items?: InvoiceItem[]
   payments?: Payment[]
-  // Analytics
-  viewed_at?: string
-  viewed_count?: number
-  sent_at?: string
-  reminder_count?: number
-  last_reminder_sent?: string
 }
 
 // ============================================================================
@@ -470,6 +448,17 @@ export function isQuote(obj: unknown): obj is Quote {
     'user_id' in obj &&
     'status' in obj &&
     'total' in obj
+  )
+}
+
+// Type guard for checking if an object is a valid Profile
+export function isProfile(obj: unknown): obj is Profile {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'plan_tier' in obj &&
+    'subscription_status' in obj
   )
 }
 
