@@ -225,7 +225,7 @@ export default function EditInvoice({ params }: { params: Promise<{ id: string }
                   type="date"
                   value={invoice.due_date || ''}
                   onChange={(e) => setInvoice({ ...invoice, due_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
               </div>
             </div>

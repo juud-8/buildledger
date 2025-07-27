@@ -6,11 +6,16 @@ import { useAuth } from '@/components/AuthProvider'
 import { Navigation } from '@/components/Navigation'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Invoice } from '@/lib/types'
+import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import Link from 'next/link'
+
+interface InvoiceListItem extends Omit<Invoice, 'clients'> {
+  clients?: { name: string } | null
+}
 
 export default function InvoicesList() {
   const { user } = useAuth()
-  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -22,12 +27,14 @@ export default function InvoicesList() {
         .from('invoices')
         .select(`
           id,
-          invoice_number,
+          user_id,
+          client_id,
+          quote_id,
           due_date,
           status,
           total,
           created_at,
-          clients ( name )
+          clients!inner ( name )
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -35,7 +42,12 @@ export default function InvoicesList() {
       if (error) {
         console.error('Error loading invoices:', error)
       } else {
-        setInvoices(data || [])
+        // Transform the data to match our interface
+        const transformedData = (data || []).map((invoice: any) => ({
+          ...invoice,
+          clients: invoice.clients?.[0] || null
+        }))
+        setInvoices(transformedData)
       }
       setLoading(false)
     }
@@ -101,7 +113,7 @@ export default function InvoicesList() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition cursor-pointer bg-white">
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      {invoice.invoice_number || `Invoice #${invoice.id.slice(0, 8)}`}
+                      {generateInvoiceNumber(invoice)}
                     </h3>
                     <p className="text-sm text-gray-600">
                       {invoice.clients?.name || 'No Client'} • Created {formatDate(invoice.created_at)}

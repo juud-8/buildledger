@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
-import { InvoiceItem } from '@/lib/types'
+import { Navigation } from '@/components/Navigation'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { InvoiceItem, Client } from '@/lib/types'
+import Link from 'next/link'
 
 export default function NewInvoice() {
   const { user } = useAuth()
@@ -12,22 +15,50 @@ export default function NewInvoice() {
   const searchParams = useSearchParams()
   const quoteId = searchParams.get('quote_id')
 
+  const [clients, setClients] = useState<Client[]>([])
   const [clientId, setClientId] = useState('')
-  const [clientName, setClientName] = useState('')
-  const [dueDate, setDueDate] = useState(() => {
-    const date = new Date()
-    date.setDate(date.getDate() + 30)
-    return date.toISOString().split('T')[0]
-  })
+  const [dueDate, setDueDate] = useState('')
   const [lineItems, setLineItems] = useState<InvoiceItem[]>([])
   const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [loadingClients, setLoadingClients] = useState(true)
+  const [isFromQuote, setIsFromQuote] = useState(false)
+
+  // Set default due date on client side only to avoid hydration mismatch
+  useEffect(() => {
+    const date = new Date()
+    date.setDate(date.getDate() + 30)
+    setDueDate(date.toISOString().split('T')[0])
+  }, [])
+
+  // Load clients
+  useEffect(() => {
+    const loadClients = async () => {
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .order('name')
+
+      if (error) {
+        console.error('Error loading clients:', error)
+      } else {
+        setClients(data || [])
+      }
+      setLoadingClients(false)
+    }
+
+    loadClients()
+  }, [user])
 
   // Load quote data if quote_id exists
   useEffect(() => {
     const loadQuote = async () => {
       if (!quoteId || !user) return
 
+      setLoading(true)
       const { data, error } = await supabase
         .from('quotes')
         .select(`
@@ -48,9 +79,9 @@ export default function NewInvoice() {
         alert('Failed to load quote data.')
       } else {
         setClientId(data.client_id || '')
-        setClientName(data.clients?.[0]?.name || 'Unknown Client')
         setLineItems(data.quote_items || [])
         setTotal(data.total)
+        setIsFromQuote(true)
       }
       setLoading(false)
     }
@@ -58,18 +89,41 @@ export default function NewInvoice() {
     loadQuote()
   }, [quoteId, user])
 
-  // Calculate total (in case items are edited)
+  // Calculate total
   useEffect(() => {
     const calculateTotal = () =>
       lineItems.reduce((acc, item) => acc + item.quantity * item.rate, 0)
     setTotal(calculateTotal())
   }, [lineItems])
 
+  // Add line item
+  const addLineItem = () => {
+    setLineItems([...lineItems, { description: '', quantity: 1, rate: 0 }])
+  }
+
+  // Update line item
+  const updateLineItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
+    const updatedItems = [...lineItems]
+    updatedItems[index] = { ...updatedItems[index], [field]: value }
+    setLineItems(updatedItems)
+  }
+
+  // Remove line item
+  const removeLineItem = (index: number) => {
+    const updatedItems = [...lineItems]
+    updatedItems.splice(index, 1)
+    setLineItems(updatedItems)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!user || !clientId || lineItems.length === 0) {
-      return alert('Please fill out all fields.')
+      return alert('Please select a client and add at least one item.')
+    }
+
+    if (!dueDate) {
+      return alert('Please select a due date.')
     }
 
     try {
@@ -81,7 +135,7 @@ export default function NewInvoice() {
           client_id: clientId,
           quote_id: quoteId || null,
           due_date: dueDate,
-          status: 'sent',
+          status: 'draft',
           total,
         })
         .select('id')
@@ -119,72 +173,163 @@ export default function NewInvoice() {
     }
   }
 
-  if (loading && quoteId) {
-    return <div className="p-8 text-center">Loading quote data...</div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <LoadingSpinner text="Loading quote data..." />
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-6 rounded-xl bg-white p-8 shadow-md">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">New Invoice</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            {clientName ? `For: ${clientName}` : 'From quote or manual entry'}
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <Link href="/invoices" className="text-blue-600 hover:underline">
+            ← Back to Invoices
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900 mt-2">
+            New Invoice {isFromQuote && '(From Quote)'}
+          </h1>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+          <div className="space-y-6">
+            {/* Client Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Client
+              </label>
+              {loadingClients ? (
+                <p className="text-gray-500">Loading clients...</p>
+              ) : (
+                <select
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  disabled={isFromQuote}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                  required
+                >
+                  <option value="">Select a client</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
             {/* Due Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Due Date</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Due Date
+              </label>
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                required
               />
             </div>
 
             {/* Line Items */}
             <div>
-              <h2 className="text-lg font-semibold mb-2">Items</h2>
-              {lineItems.map((item, index) => (
-                <div key={index} className="flex space-x-2 mb-2">
-                  <input
-                    type="text"
-                    value={item.description}
-                    disabled
-                    className="flex-grow block w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-50"
-                  />
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    disabled
-                    className="w-20 rounded-md border border-gray-300 px-3 py-2 bg-gray-50"
-                  />
-                  <input
-                    type="number"
-                    value={item.rate}
-                    disabled
-                    className="w-20 rounded-md border border-gray-300 px-3 py-2 bg-gray-50"
-                  />
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Line Items</h2>
+                {!isFromQuote && (
+                  <button
+                    type="button"
+                    onClick={addLineItem}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm"
+                  >
+                    + Add Item
+                  </button>
+                )}
+              </div>
+
+              {lineItems.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">
+                  No items added yet. Click "Add Item" to get started.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {lineItems.map((item, index) => (
+                    <div key={index} className="flex space-x-2">
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                        disabled={isFromQuote}
+                        className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Qty"
+                        value={item.quantity}
+                        onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                        disabled={isFromQuote}
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Rate"
+                        value={item.rate}
+                        onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                        disabled={isFromQuote}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                      {!isFromQuote && (
+                        <button
+                          type="button"
+                          onClick={() => removeLineItem(index)}
+                          className="text-red-600 hover:text-red-800 px-2"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Total */}
-            <div className="border-t pt-2">
-              <strong>Total:</strong> <span className="font-mono">${total.toFixed(2)}</span>
+            <div className="border-t pt-4">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-900">Total:</span>
+                <span className="text-2xl font-bold text-gray-900">
+                  ${total.toFixed(2)}
+                </span>
+              </div>
             </div>
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-md transition"
-            >
-              💳 Create Invoice
-            </button>
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-md transition"
+              >
+                Create Invoice
+              </button>
+              <Link
+                href="/invoices"
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2.5 px-4 rounded-md transition text-center"
+              >
+                Cancel
+              </Link>
+            </div>
           </div>
         </form>
       </div>

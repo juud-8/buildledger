@@ -47,6 +47,6 @@ export interface Invoice {
   status: 'draft' | 'sent' | 'paid' | 'overdue'
   total: number
   created_at: string
-  clients?: { name: string }
+  clients?: { name: string; email?: string; phone?: string; address?: string }
   invoice_items?: InvoiceItem[]
 } 

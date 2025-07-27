@@ -2,6 +2,7 @@ import React from 'react'
 import { pdf } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/components/InvoicePDF'
 import { Invoice, InvoiceItem } from '@/lib/types'
+import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 
 interface InvoiceWithDetails extends Invoice {
   clients?: { name: string; email?: string; phone?: string; address?: string }
@@ -21,7 +22,7 @@ export const downloadInvoicePDF = async (invoice: InvoiceWithDetails, filename?:
     
     const link = document.createElement('a')
     link.href = url
-    link.download = filename || `${invoice.invoice_number || 'invoice'}.pdf`
+    link.download = filename || `${generateInvoiceNumber(invoice)}.pdf`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

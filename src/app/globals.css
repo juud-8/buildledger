@@ -17,10 +17,63 @@
     --background: #0a0a0a;
     --foreground: #ededed;
   }
+  
+  /* Override input colors in dark mode to ensure visibility */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    color: rgb(17 24 39); /* Keep text dark in inputs */
+    background-color: rgb(255 255 255); /* White background */
+  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Ensure all form inputs have visible text */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea,
+select {
+  color: rgb(17 24 39); /* text-gray-900 */
+}
+
+/* Ensure placeholder text is visible but lighter */
+input::placeholder,
+textarea::placeholder {
+  color: rgb(156 163 175); /* text-gray-400 */
+  opacity: 1;
+}
+
+/* Ensure disabled inputs are visible */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: rgb(75 85 99); /* text-gray-600 */
+  opacity: 1;
+}
+
+/* Ensure all text elements are visible */
+h1, h2, h3, h4, h5, h6, p, span, strong, em, label {
+  color: inherit;
 }
