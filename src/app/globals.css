@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure form inputs have visible text */
+input, textarea, select {
+  color: #171717 !important;
+}
+
+/* Dark mode support for form inputs */
+@media (prefers-color-scheme: dark) {
+  input, textarea, select {
+    color: #ededed !important;
+  }
+}

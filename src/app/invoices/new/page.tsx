@@ -142,7 +142,7 @@ export default function NewInvoice() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-gray-900"
               />
             </div>
 
@@ -155,19 +155,19 @@ export default function NewInvoice() {
                     type="text"
                     value={item.description}
                     disabled
-                    className="flex-grow block w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-50"
+                    className="flex-grow block w-full rounded-md border border-gray-300 px-3 py-2 bg-gray-50 text-gray-900"
                   />
                   <input
                     type="number"
                     value={item.quantity}
                     disabled
-                    className="w-20 rounded-md border border-gray-300 px-3 py-2 bg-gray-50"
+                    className="w-20 rounded-md border border-gray-300 px-3 py-2 bg-gray-50 text-gray-900"
                   />
                   <input
                     type="number"
                     value={item.rate}
                     disabled
-                    className="w-20 rounded-md border border-gray-300 px-3 py-2 bg-gray-50"
+                    className="w-20 rounded-md border border-gray-300 px-3 py-2 bg-gray-50 text-gray-900"
                   />
                 </div>
               ))}

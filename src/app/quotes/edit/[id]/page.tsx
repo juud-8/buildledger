@@ -169,7 +169,7 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
               <select
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-gray-900"
               >
                 <option value="">Select a client</option>
                 {clients.map((client) => (
@@ -187,7 +187,7 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-gray-900"
               />
             </div>
 
@@ -205,7 +205,7 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
                       updatedItems[index].description = e.target.value
                       setLineItems(updatedItems)
                     }}
-                    className="flex-grow block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
+                    className="flex-grow block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-gray-900"
                   />
                   <input
                     type="number"
@@ -216,7 +216,7 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
                       updatedItems[index].quantity = parseFloat(e.target.value) || 1
                       setLineItems(updatedItems)
                     }}
-                    className="w-20 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
+                    className="w-20 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-gray-900"
                   />
                   <input
                     type="number"
@@ -227,7 +227,7 @@ export default function EditQuote({ params }: { params: Promise<{ id: string }> 
                       updatedItems[index].rate = parseFloat(e.target.value) || 0
                       setLineItems(updatedItems)
                     }}
-                    className="w-20 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none"
+                    className="w-20 rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none text-gray-900"
                   />
                   <button
                     type="button"
