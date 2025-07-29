@@ -1,17 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/components/AuthProvider'
 import { Navigation } from '@/components/Navigation'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Invoice, InvoiceItem } from '@/lib/types'
-import { downloadInvoicePDF, openInvoicePDFInNewTab } from '@/lib/pdfUtils'
+import { Invoice, InvoiceItem, Client } from '@/lib/types'
+import { downloadInvoicePDF, openInvoicePDFInNewTab, generateInvoicePDF } from '@/lib/pdfUtils'
+import { generateInvoiceNumber } from '@/lib/invoiceUtils'
+import { sendInvoiceEmail, testEmailJSConfig } from '@/lib/emailService'
 import Link from 'next/link'
 
 interface InvoiceDetail extends Invoice {
-  clients?: { name: string; email?: string; phone?: string; address?: string }
+  clients?: Pick<Client, 'id' | 'name' | 'email' | 'phone' | 'address'>
   invoice_items?: InvoiceItem[]
 }
 
@@ -32,6 +34,7 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
         .select(`
           *,
           clients (
+            id,
             name,
             email,
             phone,
@@ -109,9 +112,74 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
     }
   }
 
-  const handleSendEmail = () => {
-    // This will be implemented with email integration
-    alert('Email sending coming soon!')
+  const handleSendEmail = async () => {
+    if (!invoice || !user) return
+    
+    if (!invoice.clients?.email) {
+      alert('❌ Client email not found. Please add an email address to the client.')
+      return
+    }
+
+    setUpdating(true)
+    try {
+      console.log('Frontend: Sending invoice via EmailJS:', {
+        invoiceId: invoice.id,
+        clientEmail: invoice.clients?.email,
+        clientName: invoice.clients?.name
+      })
+
+      // (Optional) Generate PDF locally (not sent via EmailJS free tier)
+      try {
+        await generateInvoicePDF(invoice)
+      } catch (pdfError) {
+        console.warn('Could not generate PDF locally:', pdfError)
+      }
+
+      // Send email using EmailJS
+      const result = await sendInvoiceEmail(invoice)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send invoice')
+      }
+
+      // Update local state if status changed
+      if (invoice.status === 'draft') {
+        // Update in database
+        const { error: updateError } = await supabase
+          .from('invoices')
+          .update({ status: 'sent' })
+          .eq('id', invoice.id)
+          .eq('user_id', user.id)
+
+        if (!updateError) {
+          setInvoice({ ...invoice, status: 'sent' })
+        }
+      }
+
+      alert(`✅ Invoice sent successfully to ${invoice.clients.email}!`)
+    } catch (error) {
+      console.error('Error sending invoice:', error)
+      alert(`❌ Failed to send invoice: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleTestEmailJS = async () => {
+    setUpdating(true)
+    try {
+      const result = await testEmailJSConfig()
+      if (result.success) {
+        alert('✅ EmailJS configuration is working!')
+      } else {
+        alert(`❌ EmailJS configuration error: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error testing EmailJS:', error)
+      alert(`❌ Error testing EmailJS: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setUpdating(false)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -173,7 +241,7 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
               ← Back to Invoices
             </Link>
             <h1 className="text-3xl font-bold text-gray-900">
-              {invoice.invoice_number || `Invoice #${invoice.id.slice(0, 8)}`}
+              {generateInvoiceNumber(invoice)}
             </h1>
             <p className="text-gray-600 mt-2">
               Created {formatDate(invoice.created_at)}
@@ -195,9 +263,19 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
             </button>
             <button
               onClick={handleSendEmail}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              disabled={updating || !invoice.clients?.email}
+              className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium"
+              title={!invoice.clients?.email ? 'Add client email address to send invoice' : 'Send invoice to client'}
             >
-              📧 Send Email
+              {updating ? '📧 Sending...' : '📧 Send to Client'}
+            </button>
+            <button
+              onClick={handleTestEmailJS}
+              disabled={updating}
+              className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md text-sm font-medium"
+              title="Test EmailJS configuration"
+            >
+              🧪 Test EmailJS
             </button>
           </div>
         </div>
@@ -210,8 +288,10 @@ export default function InvoiceDetail({ params }: { params: Promise<{ id: string
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Bill To</h2>
               <div className="space-y-2">
                 <p className="font-medium">{invoice.clients?.name || 'No Client'}</p>
-                {invoice.clients?.email && (
+                {invoice.clients?.email ? (
                   <p className="text-gray-600">{invoice.clients.email}</p>
+                ) : (
+                  <p className="text-red-600 text-sm">⚠️ No email address - cannot send invoice</p>
                 )}
                 {invoice.clients?.phone && (
                   <p className="text-gray-600">{invoice.clients.phone}</p>

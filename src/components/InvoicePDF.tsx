@@ -67,7 +67,6 @@ const styles = StyleSheet.create({
     lineHeight: 1.5
   },
   table: {
-    display: 'table',
     width: 'auto',
     borderStyle: 'solid',
     borderWidth: 1,

@@ -6,23 +6,42 @@ import { useAuth } from '@/components/AuthProvider'
 import { Navigation } from '@/components/Navigation'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Invoice } from '@/lib/types'
+import { generateInvoiceNumber } from '@/lib/invoiceUtils'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+interface InvoiceListItem extends Omit<Invoice, 'clients' | 'due_date'> {
+  clients?: { name: string } | null
+  due_date: string | null
+}
 
 export default function InvoicesList() {
-  const { user } = useAuth()
-  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
     const loadInvoices = async () => {
-      if (!user) return
+      if (!user) {
+        setLoading(false)
+        return
+      }
 
       // Fetch invoices with client names
       const { data, error } = await supabase
         .from('invoices')
         .select(`
           id,
-          invoice_number,
+          user_id,
+          client_id,
+          quote_id,
           due_date,
           status,
           total,
@@ -35,13 +54,37 @@ export default function InvoicesList() {
       if (error) {
         console.error('Error loading invoices:', error)
       } else {
-        setInvoices(data || [])
+        // Transform the data to match our interface
+        const transformedData: InvoiceListItem[] = (data || []).map((invoice: { 
+          id: string; 
+          user_id: string; 
+          client_id: string | null; 
+          quote_id: string | null; 
+          due_date: string | null; 
+          status: 'draft' | 'sent' | 'paid' | 'overdue'; 
+          total: number; 
+          created_at: string; 
+          clients?: { name: string }[] 
+        }) => ({
+          id: invoice.id,
+          user_id: invoice.user_id,
+          client_id: invoice.client_id,
+          quote_id: invoice.quote_id,
+          due_date: invoice.due_date,
+          status: invoice.status,
+          total: invoice.total,
+          created_at: invoice.created_at,
+          clients: invoice.clients?.[0] || null
+        }))
+        setInvoices(transformedData)
       }
       setLoading(false)
     }
 
-    loadInvoices()
-  }, [user])
+    if (!authLoading) {
+      loadInvoices()
+    }
+  }, [user, authLoading])
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -60,12 +103,12 @@ export default function InvoicesList() {
   }
 
   // Check if invoice is overdue
-  const isOverdue = (dueDate: string, status: string) => {
-    if (status === 'paid') return false
+  const isOverdue = (dueDate: string | null, status: string) => {
+    if (status === 'paid' || !dueDate) return false
     return new Date(dueDate) < new Date()
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -80,11 +123,18 @@ export default function InvoicesList() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-          <Link href="/invoices/new">
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-              + New Invoice
-            </button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href="/clients">
+              <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                + Add Client
+              </button>
+            </Link>
+            <Link href="/invoices/new">
+              <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                + New Invoice
+              </button>
+            </Link>
+          </div>
         </div>
 
         {invoices.length === 0 ? (
@@ -101,7 +151,7 @@ export default function InvoicesList() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition cursor-pointer bg-white">
                   <div>
                     <h3 className="font-semibold text-gray-900">
-                      {invoice.invoice_number || `Invoice #${invoice.id.slice(0, 8)}`}
+                      {generateInvoiceNumber(invoice)}
                     </h3>
                     <p className="text-sm text-gray-600">
                       {invoice.clients?.name || 'No Client'} • Created {formatDate(invoice.created_at)}
