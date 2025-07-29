@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { InvoiceItem, Client } from '@/lib/types'
 import Link from 'next/link'
 
-export default function NewInvoice() {
+export default function NewInvoiceClient() {
   const { user } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -102,7 +102,11 @@ export default function NewInvoice() {
   }
 
   // Update line item
-  const updateLineItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
+  const updateLineItem = (
+    index: number,
+    field: keyof InvoiceItem,
+    value: string | number
+  ) => {
     const updatedItems = [...lineItems]
     updatedItems[index] = { ...updatedItems[index], [field]: value }
     setLineItems(updatedItems)
@@ -110,49 +114,78 @@ export default function NewInvoice() {
 
   // Remove line item
   const removeLineItem = (index: number) => {
-    setLineItems(lineItems.filter((_, i) => i !== index))
+    if (lineItems.length > 1) {
+      const updatedItems = lineItems.filter((_, i) => i !== index)
+      setLineItems(updatedItems)
+    }
   }
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !clientId || lineItems.length === 0) return
+
+    if (!user || !clientId || !dueDate) {
+      return alert('Please fill out all required fields.')
+    }
+
+    if (lineItems.length === 0) {
+      return alert('Please add at least one line item.')
+    }
+
+    // Validate line items
+    const validItems = lineItems.filter(
+      (item) => item.description.trim() && item.quantity > 0 && item.rate >= 0
+    )
+
+    if (validItems.length === 0) {
+      return alert(
+        'Please add valid line items with description, quantity, and rate.'
+      )
+    }
 
     setLoading(true)
+
     try {
       // Create invoice
-      const { data: invoice, error: invoiceError } = await supabase
+      const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
           user_id: user.id,
           client_id: clientId,
-          total,
           due_date: dueDate,
-          status: 'draft'
+          status: 'draft',
+          total,
         })
-        .select()
+        .select('id')
         .single()
 
-      if (invoiceError) throw invoiceError
+      if (invoiceError) {
+        return alert('Error creating invoice: ' + invoiceError.message)
+      }
 
-      // Create invoice items
-      const invoiceItems = lineItems.map(item => ({
-        invoice_id: invoice.id,
-        description: item.description,
+      const invoiceId = invoiceData.id
+
+      // Insert line items
+      const itemsToInsert = validItems.map((item) => ({
+        invoice_id: invoiceId,
+        description: item.description.trim(),
         quantity: item.quantity,
-        rate: item.rate
+        rate: item.rate,
       }))
 
       const { error: itemsError } = await supabase
         .from('invoice_items')
-        .insert(invoiceItems)
+        .insert(itemsToInsert)
 
-      if (itemsError) throw itemsError
+      if (itemsError) {
+        return alert('Error saving invoice items: ' + itemsError.message)
+      }
 
-      router.push(`/invoices/${invoice.id}`)
+      alert('✅ Invoice created successfully!')
+      router.push(`/invoices/${invoiceId}`)
     } catch (error) {
-      console.error('Error creating invoice:', error)
-      alert('Failed to create invoice. Please try again.')
+      console.error('Unexpected error:', error)
+      alert('An unexpected error occurred.')
     } finally {
       setLoading(false)
     }
@@ -162,9 +195,7 @@ export default function NewInvoice() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <div className="flex items-center justify-center h-64">
-          <LoadingSpinner />
-        </div>
+        <LoadingSpinner text="Loading quote data..." />
       </div>
     )
   }
@@ -218,7 +249,6 @@ export default function NewInvoice() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 form-input"
                 required
               />
@@ -232,7 +262,7 @@ export default function NewInvoice() {
                   <button
                     type="button"
                     onClick={addLineItem}
-                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm"
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-sm btn-success"
                   >
                     + Add Item
                   </button>
@@ -244,76 +274,57 @@ export default function NewInvoice() {
                   No items added yet. Click &quot;Add Item&quot; to get started.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left font-medium text-gray-600">Description</th>
-                        <th className="px-3 py-2 text-right font-medium text-gray-600 w-24">Qty</th>
-                        <th className="px-3 py-2 text-right font-medium text-gray-600 w-32">Rate</th>
-                        <th className="px-3 py-2 text-right font-medium text-gray-600 w-32">Amount</th>
-                        {!isFromQuote && <th className="w-10" />}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {lineItems.map((item, index) => (
-                        <tr key={index} className="align-top">
-                          <td className="px-3 py-2">
-                            <input
-                              type="text"
-                              placeholder="Description"
-                              value={item.description}
-                              onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                              disabled={isFromQuote}
-                              className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                              required
-                            />
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            <input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                              disabled={isFromQuote}
-                              className="w-full text-right px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                              min="0"
-                              step="0.01"
-                              required
-                            />
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            <input
-                              type="number"
-                              value={item.rate}
-                              onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                              disabled={isFromQuote}
-                              className="w-full text-right px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                              min="0"
-                              step="0.01"
-                              required
-                            />
-                          </td>
-                          <td className="px-3 py-2 text-right font-mono">
-                            ${(item.quantity * item.rate).toFixed(2)}
-                          </td>
-                          {!isFromQuote && (
-                            <td className="px-2 py-2 text-center">
-                              {lineItems.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeLineItem(index)}
-                                  className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
-                                  title="Remove item"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-3">
+                  {lineItems.map((item, index) => (
+                    <div key={index} className="flex space-x-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={(e) => updateLineItem(index, 'description', e.target.value)}
+                        disabled={isFromQuote}
+                        className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Qty"
+                        value={item.quantity}
+                        onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                        disabled={isFromQuote}
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                      <input
+                        type="number"
+                        placeholder="Rate"
+                        value={item.rate}
+                        onChange={(e) => updateLineItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                        disabled={isFromQuote}
+                        className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 disabled:bg-gray-100 form-input"
+                        min="0"
+                        step="0.01"
+                        required
+                      />
+                      <div className="w-8 text-center">
+                        <span className="text-sm text-gray-600">
+                          ${(item.quantity * item.rate).toFixed(2)}
+                        </span>
+                      </div>
+                      {!isFromQuote && lineItems.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeLineItem(index)}
+                          className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
+                          title="Remove item"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -322,8 +333,8 @@ export default function NewInvoice() {
             <div className="border-t pt-4">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-gray-900">Total:</span>
-                <span className="text-2xl font-bold text-gray-900 font-mono">
-                  ${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <span className="text-2xl font-bold text-gray-900">
+                  ${total.toFixed(2)}
                 </span>
               </div>
             </div>
