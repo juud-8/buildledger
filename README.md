@@ -7,10 +7,13 @@ A modern web application built for contractors to manage quotes, invoices, and c
 ## ✨ Features
 
 - 🔐 **Secure Authentication** - Supabase Auth with email/password
-- 📊 **Dashboard** - Overview of quotes, invoices, and business metrics
+- 📊 **Advanced Dashboard** - Real-time revenue metrics, charts, and client insights
+- 🤖 **AI-Powered Intelligence** - MCP integration for business analysis and automation
 - 📝 **Quote Management** - Create, edit, and track project quotes
 - 🧾 **Invoice Generation** - Convert quotes to invoices seamlessly
-- 👥 **Client Management** - Organize customer information
+- 📧 **Email Integration** - Send invoices directly to clients with PDF attachments
+- 📈 **Data Visualization** - Interactive charts for invoice status and revenue tracking
+- 👥 **Client Management** - Organize customer information with payment history
 - 📱 **Responsive Design** - Works on desktop and mobile
 - 🔒 **Row Level Security** - Multi-tenant secure data access
 
@@ -43,6 +46,9 @@ Create a `.env.local` file:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_emailjs_service_id
+NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
 ```
 
 See `ENVIRONMENT_SETUP.md` for detailed instructions.
@@ -60,6 +66,10 @@ Open [http://localhost:3000](http://localhost:3000) to see your application.
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: TailwindCSS v4
 - **Backend**: Supabase (PostgreSQL + Auth)
+- **AI/ML**: MCP (Model Context Protocol) for business intelligence
+- **Email**: EmailJS (transactional emails, no domain verification)
+- **PDF**: React-PDF (invoice generation)
+- **Charts**: Recharts (data visualization)
 - **Deployment**: Vercel (recommended)
 
 ## 📁 Project Structure
@@ -90,6 +100,57 @@ The application uses the following main tables:
 - **quote_items** - Line items for quotes
 - **invoices** - Generated invoices
 - **invoice_items** - Line items for invoices
+
+## 📊 Dashboard Features
+
+The BuildLedger dashboard provides comprehensive business insights:
+
+### Key Metrics
+- **Revenue This Month** - Track current month's income
+- **Invoice Status** - Visual breakdown of paid vs unpaid invoices
+- **Payment Tracking** - Monitor total paid and outstanding amounts
+- **Client Analytics** - View client payment history and patterns
+
+### Dashboard Components
+1. **Revenue Cards** - Quick view of financial metrics
+2. **Invoice Pie Chart** - Visual representation of invoice statuses
+3. **Recent Invoices Table** - Latest invoices with client and due date info
+4. **Client History Table** - Comprehensive view of all clients with:
+   - Total invoices per client
+   - Total paid amounts
+   - Outstanding balances
+   - Last invoice date
+
+### Technologies Used
+- **Recharts** - For interactive data visualization
+- **Supabase Queries** - Optimized parallel data fetching
+- **Responsive Design** - Mobile-friendly tables and charts
+
+## 📧 Email Integration
+
+BuildLedger includes email functionality for sending invoices directly to clients:
+
+### Features
+- **Professional Templates** - Clean, branded email templates with dynamic content
+- **Template Variables** - Invoice number, total, due date automatically populated
+- **Status Tracking** - Invoice status automatically updates to 'sent'
+- **Client Validation** - Ensures client has email address before sending
+
+### Setup
+1. Sign up for a free [EmailJS](https://www.emailjs.com) account
+2. Add an email service (Gmail, Outlook, etc.)
+3. Create an email template (see `EMAILJS_TEMPLATE_EXAMPLE.md`)
+4. Add these to your `.env.local` file:
+   - `NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_service_id`
+   - `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_template_id`
+   - `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_public_key`
+
+### Usage
+- Navigate to any invoice detail page
+- Click the "📧 Send to Client" button
+- The system will validate the client has an email address
+- Invoice details are sent via email with professional template
+- Invoice status updates from 'draft' to 'sent'
 
 ## 🔧 Development
 
@@ -133,6 +194,7 @@ npm start
 
 ## 📈 Roadmap
 
+- [x] 🤖 **AI-Powered Business Intelligence** - MCP integration for financial analysis and automation
 - [ ] PDF export for quotes and invoices
 - [ ] Email integration for sending documents
 - [ ] Payment tracking and integration
@@ -159,6 +221,7 @@ If you encounter any issues:
 2. Ensure your Supabase database schema is set up correctly
 3. Verify environment variables are configured
 4. Check the browser console for error messages
+5. For AI features, see `MCP_INTEGRATION.md` for detailed documentation
 
 ---
 
