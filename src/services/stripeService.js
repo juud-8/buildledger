@@ -1,11 +1,14 @@
 import { supabase } from '../lib/supabase';
 import { getStripe, STRIPE_CONFIG, formatStripeAmount, formatStripeAmountFromCents } from '../lib/stripe';
 
+// Get API base URL from environment or fallback to localhost for development
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+
 export const stripeService = {
   // Create a Stripe customer
   async createCustomer(userId, email, name) {
     try {
-      const response = await fetch('http://localhost:3001/api/stripe/create-customer', {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/create-customer`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +39,7 @@ export const stripeService = {
   // Create a subscription
   async createSubscription(customerId, priceId) {
     try {
-      const response = await fetch('http://localhost:3001/api/stripe/create-subscription', {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/create-subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +63,7 @@ export const stripeService = {
   // Create a payment intent for invoice payment
   async createPaymentIntent(invoiceId, amount, customerId) {
     try {
-      const response = await fetch('http://localhost:3001/api/stripe/create-payment-intent', {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/create-payment-intent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +148,7 @@ export const stripeService = {
   // Cancel subscription
   async cancelSubscription(subscriptionId) {
     try {
-      const response = await fetch('http://localhost:3001/api/stripe/cancel-subscription', {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/cancel-subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +169,7 @@ export const stripeService = {
   // Update subscription
   async updateSubscription(subscriptionId, newPriceId) {
     try {
-      const response = await fetch('http://localhost:3001/api/stripe/update-subscription', {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/update-subscription`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -190,7 +193,7 @@ export const stripeService = {
   // Create customer portal session
   async createCustomerPortalSession(customerId, returnUrl) {
     try {
-      const response = await fetch('http://localhost:3001/api/stripe/create-portal-session', {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/create-portal-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +232,7 @@ export const stripeService = {
   // Attach payment method to customer
   async attachPaymentMethod(customerId, paymentMethodId) {
     try {
-      const response = await fetch('http://localhost:3001/api/stripe/attach-payment-method', {
+      const response = await fetch(`${API_BASE_URL}/api/stripe/attach-payment-method`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
