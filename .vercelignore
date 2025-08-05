@@ -1,0 +1,18 @@
+# Ignore Next.js specific files to prevent auto-detection
+.next/
+next.config.*
+pages/
+app/
+
+# Node modules and build artifacts
+node_modules/
+.git/
+*.log
+
+# Environment files
+.env*
+!.env.example
+
+# IDE files
+.vscode/
+.idea/
