@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
@@ -22,6 +22,8 @@ const CompanyProfile = () => {
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const businessTypes = [
     { value: "general-contractor", label: "General Contractor" },
@@ -54,6 +56,45 @@ const CompanyProfile = () => {
   const handleCancel = () => {
     setIsEditing(false);
     // Reset to original data
+  };
+
+  const handleLogoUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        uploadLogo(file);
+      } else {
+        alert('Please select a valid image file (JPG, PNG, SVG)');
+      }
+    }
+  };
+
+  const uploadLogo = async (file) => {
+    try {
+      setUploading(true);
+      
+      // Create a temporary URL for the uploaded image
+      const imageUrl = URL.createObjectURL(file);
+      
+      // Update the company data with the new logo
+      setCompanyData(prev => ({
+        ...prev,
+        logo: imageUrl
+      }));
+      
+      // In a real app, you would upload to a server here
+      console.log('Logo uploaded:', file.name);
+      
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      alert('Failed to upload logo. Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -107,15 +148,26 @@ const CompanyProfile = () => {
               />
             </div>
             {isEditing && (
-              <Button
-                variant="outline"
-                size="sm"
-                iconName="Upload"
-                iconPosition="left"
-                className="mt-2 w-full"
-              >
-                Upload Logo
-              </Button>
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  iconName="Upload"
+                  iconPosition="left"
+                  className="mt-2 w-full"
+                  onClick={handleLogoUpload}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Uploading...' : 'Upload Logo'}
+                </Button>
+              </>
             )}
           </div>
           <div className="flex-1">

@@ -205,7 +205,7 @@ const PricingSection = ({ formData, errors, onChange, onSupplierChange, onSeason
             </label>
             <Select
               value={formData?.taxCategory || 'materials'}
-              onValueChange={(value) => onChange?.('taxCategory', value)}
+              onChange={(e) => onChange?.('taxCategory', e.target.value)}
             >
               {taxCategories?.map((category) => (
                 <option key={category?.value} value={category?.value}>
@@ -229,7 +229,7 @@ const PricingSection = ({ formData, errors, onChange, onSupplierChange, onSeason
           <label className="flex items-center space-x-2 cursor-pointer">
             <Checkbox
               checked={showSeasonalPricing}
-              onCheckedChange={handleSeasonalPricingToggle}
+              onChange={handleSeasonalPricingToggle}
             />
             <span className="text-sm text-foreground">Enable seasonal pricing</span>
           </label>

@@ -189,8 +189,9 @@ const ClientsPage = () => {
   };
 
   const handleAddClient = () => {
-    // Mock add client functionality
-    console.log('Adding new client');
+    // For now, show an alert to confirm the button works
+    alert('Add Client functionality would open here! 🚧\n\nThis demonstrates the button is working correctly. In production, this would open a client creation form.');
+    console.log('Add Client button clicked - functionality confirmed!');
   };
 
   const handleBulkEmail = () => {

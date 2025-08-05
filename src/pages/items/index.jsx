@@ -271,15 +271,15 @@ const ItemsPage = () => {
   };
 
   const handleAddItem = () => {
-    navigate('/add-edit-item');
+    navigate('/items/add');
   };
 
   const handleEditItem = (itemId) => {
-    navigate(`/add-edit-item?id=${itemId}`);
+    navigate(`/items/edit/${itemId}`);
   };
 
   const handleDuplicateItem = (itemId) => {
-    navigate(`/add-edit-item?duplicate=${itemId}`);
+    navigate(`/items/add?duplicate=${itemId}`);
   };
 
   const handleDeleteItem = (itemId) => {

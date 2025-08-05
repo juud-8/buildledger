@@ -23,12 +23,20 @@ const Dashboard = () => {
       try {
         setIsLoading(true);
         
-        // Load all dashboard data in parallel
-        const [kpi, projects, activity, revenue] = await Promise.all([
-          dashboardService.getKPIData(),
-          dashboardService.getRecentProjects(),
-          dashboardService.getRecentActivity(),
-          dashboardService.getRevenueData()
+        // Add timeout to prevent infinite loading
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 5000)
+        );
+        
+        // Load all dashboard data in parallel with timeout
+        const [kpi, projects, activity, revenue] = await Promise.race([
+          Promise.all([
+            dashboardService.getKPIData(),
+            dashboardService.getRecentProjects(),
+            dashboardService.getRecentActivity(),
+            dashboardService.getRevenueData()
+          ]),
+          timeoutPromise
         ]);
 
         setKpiData(kpi);
@@ -37,7 +45,7 @@ const Dashboard = () => {
         setRevenueData(revenue);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
-        // Set fallback data
+        // Set fallback data for new users
         setKpiData([
           {
             title: 'Active Projects',
@@ -72,6 +80,9 @@ const Dashboard = () => {
             color: 'success'
           }
         ]);
+        setRecentProjects([]);
+        setRecentActivity([]);
+        setRevenueData({ labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], data: [0, 0, 0, 0, 0, 0] });
       } finally {
         setIsLoading(false);
       }

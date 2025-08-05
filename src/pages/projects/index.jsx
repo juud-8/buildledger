@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
+import { useNavigate } from 'react-router-dom';
 import Header from '../../components/ui/Header';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import ProjectFilters from './components/ProjectFilters';
@@ -9,6 +10,7 @@ import ProjectGrid from './components/ProjectGrid';
 import Button from '../../components/ui/Button';
 
 const Projects = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]);
@@ -220,8 +222,9 @@ const Projects = () => {
   };
 
   const handleNewProject = () => {
-    // Navigate to new project form or open modal
-    console.log('Create new project');
+    // For now, show an alert to confirm the button works
+    alert('New Project functionality would open here! 🚧\n\nThis demonstrates the button is working correctly. In production, this would open a project creation form.');
+    console.log('New Project button clicked - functionality confirmed!');
   };
 
   return (

@@ -71,8 +71,10 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
+      console.log('AuthContext: Starting sign in process...');
       const { data, error } = await authService.signIn(email, password);
       if (error) {
+        console.error('AuthContext: Sign in error:', error);
         // Provide user-friendly error messages
         let errorMessage = 'Login failed. Please try again.';
         
@@ -88,8 +90,15 @@ export const AuthProvider = ({ children }) => {
         
         throw new Error(errorMessage);
       }
+      
+      console.log('AuthContext: Sign in successful, user:', data.user?.id);
+      
+      // The onAuthStateChange listener will handle setting user state
+      // Don't set state here to avoid double calls
+      
       return data;
     } catch (error) {
+      console.error('AuthContext: Sign in exception:', error);
       throw error;
     }
   };
@@ -109,8 +118,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    const { error } = await authService.signOut();
-    if (error) throw error;
+    try {
+      const { error } = await authService.signOut();
+      if (error) throw error;
+      
+      // Clear local state
+      setUser(null);
+      setUserProfile(null);
+      
+      // Clear localStorage
+      localStorage.clear();
+      
+      console.log('User signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    }
   };
 
   // Force clear all auth data (for development/testing)

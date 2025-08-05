@@ -116,7 +116,7 @@ const AdvancedSection = ({ formData, errors, onChange }) => {
           <label className="flex items-center space-x-2 cursor-pointer">
             <Checkbox
               checked={showInventorySettings}
-              onCheckedChange={handleInventoryToggle}
+              onChange={handleInventoryToggle}
             />
             <span className="text-sm text-foreground">Enable inventory tracking</span>
           </label>

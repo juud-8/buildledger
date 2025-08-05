@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../AppIcon';
 import Button from './Button';
 
@@ -7,6 +8,8 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut, forceClearAuth, user } = useAuth();
 
   const navigationItems = [
     { label: 'Dashboard', path: '/dashboard', icon: 'LayoutDashboard' },
@@ -40,6 +43,21 @@ const Header = () => {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      // Use forceClearAuth as it's more reliable
+      await forceClearAuth();
+      setIsUserMenuOpen(false);
+      setIsMobileMenuOpen(false);
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Fallback: manually clear everything
+      localStorage.clear();
+      window.location.href = '/';
+    }
   };
 
   return (
@@ -102,7 +120,7 @@ const Header = () => {
                     <hr className="my-1 border-border" />
                     <button
                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-popover-foreground hover:bg-muted transition-colors"
-                      onClick={() => setIsUserMenuOpen(false)}
+                      onClick={handleSignOut}
                     >
                       <Icon name="LogOut" size={16} />
                       <span>Sign Out</span>
@@ -190,7 +208,7 @@ const Header = () => {
                 </div>
                 <button
                   className="flex items-center space-x-3 w-full px-4 py-3 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors rounded-md"
-                  onClick={closeMobileMenu}
+                  onClick={handleSignOut}
                 >
                   <Icon name="LogOut" size={20} />
                   <span>Sign Out</span>

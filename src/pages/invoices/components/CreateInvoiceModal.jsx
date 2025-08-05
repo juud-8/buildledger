@@ -274,13 +274,13 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-card border border-border rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Create New Invoice</h2>
+          <h2 className="text-2xl font-bold text-foreground">Create New Invoice</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             ✕
           </button>
@@ -291,12 +291,12 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
           {['Basic Info', 'Items', 'Review'].map((step, index) => (
             <div
               key={step}
-              className={`flex-1 text-center py-2 ${
+              className={`flex-1 text-center py-2 rounded ${
                 currentStep > index + 1
-                  ? 'bg-green-500 text-white'
+                  ? 'bg-green-600 text-white'
                   : currentStep === index + 1
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-600'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {step}
@@ -310,7 +310,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Invoice Number</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Invoice Number</label>
                   <Input
                     value={formData.invoiceNumber}
                     onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
@@ -319,7 +319,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Client</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Client</label>
                   <Select
                     value={formData.clientId}
                     onChange={(e) => handleInputChange('clientId', e.target.value)}
@@ -336,7 +336,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Project (Optional)</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">Project (Optional)</label>
                 <Select
                   value={formData.projectId}
                   onChange={(e) => handleInputChange('projectId', e.target.value)}
@@ -351,7 +351,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Title</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">Title</label>
                 <Input
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
@@ -402,14 +402,14 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                 <Button
                   type="button"
                   onClick={() => setShowItemSelection(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
                 >
                   Add Item
                 </Button>
               </div>
 
               {selectedItems?.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
+                <p className="text-muted-foreground text-center py-8">
                   No items added yet. Click "Add Item" to get started.
                 </p>
               ) : (
@@ -448,7 +448,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                         <input
                           type="number"
                           value={item.total_price}
-                          className="w-full p-1 border rounded bg-gray-100"
+                          className="w-full p-1 border rounded bg-muted"
                           placeholder="Total"
                           readOnly
                         />
@@ -493,7 +493,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
 
               <div>
                 <p><strong>Description:</strong></p>
-                <p className="text-gray-600">{formData.description || 'No description'}</p>
+                <p className="text-muted-foreground">{formData.description || 'No description'}</p>
               </div>
 
               <div>
@@ -522,7 +522,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               type="button"
               onClick={prevStep}
               disabled={currentStep === 1}
-              className="bg-gray-500 text-white px-4 py-2 rounded disabled:opacity-50"
+              className="bg-muted text-muted-foreground px-4 py-2 rounded disabled:opacity-50 hover:bg-muted/80"
             >
               Previous
             </Button>
@@ -531,7 +531,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               <Button
                 type="button"
                 onClick={nextStep}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
               >
                 Next
               </Button>
@@ -539,7 +539,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50"
+                className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
               >
                 {isLoading ? 'Creating...' : 'Create Invoice'}
               </Button>

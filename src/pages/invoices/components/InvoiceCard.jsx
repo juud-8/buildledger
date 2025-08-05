@@ -190,13 +190,14 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
         </div>
       </CardContent>
       <CardFooter>
-        <div className="flex items-center space-x-2 pt-4 border-t border-border w-full">
+        <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border w-full">
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={() => onEdit(invoice?.id)}
             iconName="Edit"
             iconPosition="left"
+            className="bg-primary hover:bg-primary/90 flex-shrink-0"
           >
             Edit
           </Button>
@@ -208,6 +209,7 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
                 onClick={() => setIsPaymentModalOpen(true)}
                 iconName="CreditCard"
                 iconPosition="left"
+                className="flex-shrink-0 whitespace-nowrap"
               >
                 Record Payment
               </Button>
@@ -217,18 +219,19 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
                 onClick={() => setIsStripePaymentOpen(true)}
                 iconName="Zap"
                 iconPosition="left"
-                className="bg-primary hover:bg-primary/90"
+                className="bg-primary hover:bg-primary/90 flex-shrink-0 whitespace-nowrap"
               >
                 Pay Online
               </Button>
             </>
           )}
           <Button
-            variant="ghost"
+            variant="default"
             size="sm"
             onClick={() => onDownloadPDF(invoice?.id)}
             iconName="Download"
             iconPosition="left"
+            className="bg-primary hover:bg-primary/90 flex-shrink-0"
           >
             PDF
           </Button>

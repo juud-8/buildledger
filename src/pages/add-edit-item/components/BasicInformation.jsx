@@ -105,7 +105,7 @@ const BasicInformation = ({ formData, errors, onChange }) => {
               </label>
               <Select
                 value={formData?.category || ''}
-                onValueChange={(value) => onChange?.('category', value)}
+                onChange={(e) => onChange?.('category', e.target.value)}
                 placeholder="Select category"
               >
                 {categories?.map((category) => (
@@ -126,7 +126,7 @@ const BasicInformation = ({ formData, errors, onChange }) => {
               </label>
               <Select
                 value={formData?.unit || ''}
-                onValueChange={(value) => onChange?.('unit', value)}
+                onChange={(e) => onChange?.('unit', e.target.value)}
                 placeholder="Select unit"
               >
                 {units?.map((unit) => (

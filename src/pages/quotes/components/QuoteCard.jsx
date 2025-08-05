@@ -133,13 +133,14 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
         </div>
       </CardContent>
       <CardFooter>
-        <div className="flex items-center space-x-2 pt-4 border-t border-border w-full">
+        <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border w-full">
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={() => onEdit(quote?.id)}
             iconName="Edit"
             iconPosition="left"
+            className="bg-primary hover:bg-primary/90 flex-shrink-0"
           >
             Edit
           </Button>
@@ -150,6 +151,7 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
               onClick={() => onSend(quote?.id)}
               iconName="Send"
               iconPosition="left"
+              className="bg-primary hover:bg-primary/90 flex-shrink-0"
             >
               Send
             </Button>
@@ -161,6 +163,7 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
               onClick={() => onConvertToInvoice(quote?.id)}
               iconName="ArrowRight"
               iconPosition="right"
+              className="flex-shrink-0 whitespace-nowrap"
             >
               To Invoice
             </Button>

@@ -6,7 +6,43 @@ export const dashboardService = {
     try {
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('User not authenticated');
+      if (userError || !user) {
+        console.log('User not authenticated, returning default KPI data');
+        return [
+          {
+            title: 'Active Projects',
+            value: '0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'Building2',
+            color: 'primary'
+          },
+          {
+            title: 'Pending Revenue',
+            value: '$0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'FileText',
+            color: 'construction'
+          },
+          {
+            title: 'Overdue Amount',
+            value: '$0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'AlertTriangle',
+            color: 'warning'
+          },
+          {
+            title: 'Monthly Revenue',
+            value: '$0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'DollarSign',
+            color: 'success'
+          }
+        ];
+      }
 
       // Get user profile to get company_id
       const { data: userProfile, error: profileError } = await supabase
@@ -15,8 +51,43 @@ export const dashboardService = {
         .eq('id', user.id)
         .single();
       
+      // If no profile or company_id, return default data
       if (profileError || !userProfile?.company_id) {
-        throw new Error('User profile or company not found');
+        console.log('No user profile or company found, returning default KPI data');
+        return [
+          {
+            title: 'Active Projects',
+            value: '0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'Building2',
+            color: 'primary'
+          },
+          {
+            title: 'Pending Revenue',
+            value: '$0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'FileText',
+            color: 'construction'
+          },
+          {
+            title: 'Overdue Amount',
+            value: '$0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'AlertTriangle',
+            color: 'warning'
+          },
+          {
+            title: 'Monthly Revenue',
+            value: '$0',
+            change: 'No data',
+            changeType: 'neutral',
+            icon: 'DollarSign',
+            color: 'success'
+          }
+        ];
       }
 
       const companyId = userProfile.company_id;
@@ -89,7 +160,41 @@ export const dashboardService = {
       ];
     } catch (error) {
       console.error('Error fetching KPI data:', error);
-      throw error;
+      // Return default data instead of throwing error
+      return [
+        {
+          title: 'Active Projects',
+          value: '0',
+          change: 'No data',
+          changeType: 'neutral',
+          icon: 'Building2',
+          color: 'primary'
+        },
+        {
+          title: 'Pending Revenue',
+          value: '$0',
+          change: 'No data',
+          changeType: 'neutral',
+          icon: 'FileText',
+          color: 'construction'
+        },
+        {
+          title: 'Overdue Amount',
+          value: '$0',
+          change: 'No data',
+          changeType: 'neutral',
+          icon: 'AlertTriangle',
+          color: 'warning'
+        },
+        {
+          title: 'Monthly Revenue',
+          value: '$0',
+          change: 'No data',
+          changeType: 'neutral',
+          icon: 'DollarSign',
+          color: 'success'
+        }
+      ];
     }
   },
 
@@ -107,8 +212,10 @@ export const dashboardService = {
         .eq('id', user.id)
         .single();
       
+      // If no profile or company_id, return empty array
       if (profileError || !userProfile?.company_id) {
-        throw new Error('User profile or company not found');
+        console.log('No user profile or company found, returning empty projects list');
+        return [];
       }
 
       const companyId = userProfile.company_id;
@@ -132,7 +239,7 @@ export const dashboardService = {
       return projects || [];
     } catch (error) {
       console.error('Error fetching recent projects:', error);
-      throw error;
+      return [];
     }
   },
 
@@ -236,8 +343,10 @@ export const dashboardService = {
         .eq('id', user.id)
         .single();
       
+      // If no profile or company_id, return empty array
       if (profileError || !userProfile?.company_id) {
-        throw new Error('User profile or company not found');
+        console.log('No user profile or company found, returning empty activity list');
+        return [];
       }
 
       const companyId = userProfile.company_id;
@@ -253,7 +362,7 @@ export const dashboardService = {
       return activity || [];
     } catch (error) {
       console.error('Error fetching recent activity:', error);
-      throw error;
+      return [];
     }
   },
 
@@ -271,8 +380,13 @@ export const dashboardService = {
         .eq('id', user.id)
         .single();
       
+      // If no profile or company_id, return default chart data
       if (profileError || !userProfile?.company_id) {
-        throw new Error('User profile or company not found');
+        console.log('No user profile or company found, returning default revenue data');
+        return {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          data: [0, 0, 0, 0, 0, 0]
+        };
       }
 
       const companyId = userProfile.company_id;
@@ -307,7 +421,10 @@ export const dashboardService = {
       };
     } catch (error) {
       console.error('Error fetching revenue chart data:', error);
-      throw error;
+      return {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        data: [0, 0, 0, 0, 0, 0]
+      };
     }
   }
 };

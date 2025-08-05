@@ -1,17 +1,17 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const RevenueChart = ({ data = { months: [], revenue: [] } }) => {
+const RevenueChart = ({ data = { labels: [], data: [] } }) => {
   // Transform data for the chart
-  const revenueData = data.months.map((month, index) => ({
+  const revenueData = (data.labels || []).map((month, index) => ({
     month,
-    revenue: data.revenue[index] || 0,
+    revenue: (data.data || [])[index] || 0,
     projects: Math.floor(Math.random() * 5) + 1 // Mock project count for now
   }));
 
   // Calculate current month revenue
-  const currentMonthRevenue = data.revenue[data.revenue.length - 1] || 0;
-  const previousMonthRevenue = data.revenue[data.revenue.length - 2] || 0;
+  const currentMonthRevenue = (data.data || [])[(data.data || []).length - 1] || 0;
+  const previousMonthRevenue = (data.data || [])[(data.data || []).length - 2] || 0;
   const revenueChange = previousMonthRevenue > 0 
     ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue * 100).toFixed(1)
     : 0;

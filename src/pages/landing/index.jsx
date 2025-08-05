@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Building2, DollarSign, Users, FileText, BarChart3, Shield, X, Check } from 'lucide-react';
@@ -8,8 +8,15 @@ const LandingPage = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

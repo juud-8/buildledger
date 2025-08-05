@@ -11,18 +11,23 @@ export const brandingService = {
         .eq('id', userId)
         .single();
       
+      // If no profile or company_id, return null (will show "Get Started" screen)
       if (profileError || !userProfile?.company_id) {
-        throw new Error('User profile or company not found');
+        console.log('No user profile or company found, returning null for branding');
+        return null;
       }
 
       const companyId = userProfile.company_id;
 
       const { data, error } = await supabase?.from('companies')?.select('*')?.eq('id', companyId)?.single();
-      if (error) throw error;
+      if (error) {
+        console.log('Company not found, returning null for branding');
+        return null;
+      }
       return data;
     } catch (error) {
       console.error('Error fetching company branding:', error);
-      throw error;
+      return null; // Return null instead of throwing error
     }
   },
 

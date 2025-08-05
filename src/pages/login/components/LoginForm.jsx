@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
@@ -9,7 +9,7 @@ import { Checkbox } from '../../../components/ui/Checkbox';
 
 const LoginForm = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user, loading } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -18,6 +18,14 @@ const LoginForm = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-redirect when user is authenticated
+  useEffect(() => {
+    if (!loading && user) {
+      console.log('LoginForm: User is authenticated, redirecting to dashboard...');
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e?.target;
@@ -61,14 +69,17 @@ const LoginForm = () => {
       return;
     }
 
+    console.log('LoginForm: Submitting login form with:', formData.email);
     setIsLoading(true);
     setErrors({});
 
     try {
-      await signIn(formData.email, formData.password);
-      navigate('/dashboard');
+      console.log('LoginForm: Calling signIn...');
+      const result = await signIn(formData.email, formData.password);
+      console.log('LoginForm: Sign in result:', result);
+      // Don't navigate here - let the useEffect handle it when user state updates
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('LoginForm: Login error:', error);
       setErrors({
         general: error.message || 'Invalid email or password. Please try again.'
       });
@@ -214,8 +225,8 @@ const LoginForm = () => {
         <div className="mt-6 p-4 bg-muted/50 rounded-md w-full">
           <p className="text-xs text-muted-foreground text-center mb-2">Demo Credentials:</p>
           <div className="text-xs text-muted-foreground text-center space-y-1">
-            <p><strong>Email:</strong> admin@buildledger.com</p>
-            <p><strong>Password:</strong> BuildLedger2025!</p>
+            <p><strong>Email:</strong> demo@buildledger.com</p>
+            <p><strong>Password:</strong> demo123456</p>
           </div>
         </div>
       </CardFooter>
