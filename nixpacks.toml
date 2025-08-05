@@ -19,7 +19,7 @@ cmd = "npm run railway:start"
 [variables]
 NODE_ENV = "production"
 NIXPACKS_BUILD_CMD = "npm run railway:build"
-NIXPACKS_START_CMD = "npm run railway:start"
+NIXPACKS_START_CMD = "node serve.js"
 DISABLE_NEXT_TELEMETRY = "1"
 
 [options]

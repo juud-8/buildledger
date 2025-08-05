@@ -22,5 +22,5 @@ RUN npm prune --production
 # Expose port
 EXPOSE $PORT
 
-# Start the application
-CMD npm run railway:start
+# Start the application with Express server
+CMD ["node", "serve.js"]
