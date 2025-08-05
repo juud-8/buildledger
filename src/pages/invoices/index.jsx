@@ -333,10 +333,12 @@ const InvoicesPage = () => {
   };
 
   const handleEdit = (invoiceId) => {
+    alert(`Edit Invoice functionality would open here! 🚧\n\nInvoice ID: ${invoiceId}\n\nThis would open the invoice editor in production.`);
     console.log('Edit invoice:', invoiceId);
   };
 
   const handleSendReminder = (invoiceId) => {
+    alert(`Reminder sent successfully! 📧\n\nInvoice ID: ${invoiceId}\n\nIn production, this would send an email reminder to the client.`);
     console.log('Send reminder for invoice:', invoiceId);
   };
 
@@ -360,6 +362,7 @@ const InvoicesPage = () => {
   };
 
   const handleDownloadPDF = (invoiceId) => {
+    alert(`PDF Download started! 📄\n\nInvoice ID: ${invoiceId}\n\nIn production, this would generate and download the invoice PDF.`);
     console.log('Download PDF for invoice:', invoiceId);
   };
 
