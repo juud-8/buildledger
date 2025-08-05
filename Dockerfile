@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies needed for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -16,8 +16,11 @@ COPY . .
 # Build the application
 RUN npm run build
 
+# Remove dev dependencies after build to reduce image size
+RUN npm prune --production
+
 # Expose port
 EXPOSE $PORT
 
 # Start the application
-CMD ["npm", "run", "serve", "--", "--host", "0.0.0.0", "--port", "$PORT"]
+CMD npm run railway:start
