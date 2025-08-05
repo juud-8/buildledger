@@ -8,7 +8,7 @@ nixpkgs = ["nodejs-18_x", "npm-9_x"]
 nixpkgs = ["nodejs-18_x", "npm-9_x"]
 
 [phases.install]
-cmd = "npm ci"
+cmd = "npm install"
 
 [phases.build]
 cmd = "npm run railway:build"
