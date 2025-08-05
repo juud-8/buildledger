@@ -5,11 +5,17 @@ import tagger from "@dhiwise/component-tagger";
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json']
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+    alias: {
+      '@': '/src'
+    }
   },
   build: {
     outDir: "build",
     chunkSizeWarningLimit: 2000,
+    commonjsOptions: {
+      include: [/node_modules/]
+    },
     rollupOptions: {
       output: {
         manualChunks: (id) => {
