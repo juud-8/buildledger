@@ -63,7 +63,9 @@
   "scripts": {
     "start": "vite",
     "build": "vite build --sourcemap",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "railway:build": "vite build --sourcemap",
+    "railway:start": "vite preview --host 0.0.0.0 --port $PORT"
   },
   "eslintConfig": {
     "extends": [

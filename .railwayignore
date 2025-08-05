@@ -1,0 +1,4 @@
+node_modules/@dhiwise/component-tagger/dist/nextLoader.*
+node_modules/**/next*
+.next/
+next.config.*

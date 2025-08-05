@@ -1,12 +1,22 @@
 [providers]
 nodejs = "18"
 
+[build]
+nixpkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.setup]
+nixpkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmd = "npm ci"
+
 [phases.build]
-cmd = "npm ci && npm run build"
+cmd = "npm run railway:build"
 
 [phases.start]
-cmd = "npm run serve"
+cmd = "npm run railway:start"
 
 [variables]
 NODE_ENV = "production"
-PORT = "8080"
+NIXPACKS_BUILD_CMD = "npm run railway:build"
+NIXPACKS_START_CMD = "npm run railway:start"
