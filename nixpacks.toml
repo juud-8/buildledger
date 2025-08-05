@@ -1,0 +1,12 @@
+[providers]
+nodejs = "18"
+
+[phases.build]
+cmd = "npm ci && npm run build"
+
+[phases.start]
+cmd = "npm run serve"
+
+[variables]
+NODE_ENV = "production"
+PORT = "8080"

@@ -17,5 +17,10 @@ export default defineConfig({
     host: "0.0.0.0",
     strictPort: true,
     allowedHosts: ['.amazonaws.com', '.builtwithrocket.new']
+  },
+  preview: {
+    port: process.env.PORT || 4173,
+    host: "0.0.0.0",
+    strictPort: false
   }
 });
