@@ -67,7 +67,7 @@ export const authService = {
       return { data, error: null };
     } catch (error) {
       console.error('Error signing in:', error);
-      return { data: null, error };
+      throw error;
     }
   },
 

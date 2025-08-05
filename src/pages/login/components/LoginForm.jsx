@@ -6,6 +6,7 @@ import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { ENV_CONFIG } from '../../../lib/env';
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -222,13 +223,15 @@ const LoginForm = () => {
           </p>
         </div>
 
-        <div className="mt-6 p-4 bg-muted/50 rounded-md w-full">
-          <p className="text-xs text-muted-foreground text-center mb-2">Demo Credentials:</p>
-          <div className="text-xs text-muted-foreground text-center space-y-1">
-            <p><strong>Email:</strong> demo@buildledger.com</p>
-            <p><strong>Password:</strong> demo123456</p>
+        {ENV_CONFIG.IS_DEVELOPMENT && (
+          <div className="mt-6 p-4 bg-muted/50 rounded-md w-full">
+            <p className="text-xs text-muted-foreground text-center mb-2">Demo Credentials:</p>
+            <div className="text-xs text-muted-foreground text-center space-y-1">
+              <p><strong>Email:</strong> demo@buildledger.com</p>
+              <p><strong>Password:</strong> demo123456</p>
+            </div>
           </div>
-        </div>
+        )}
       </CardFooter>
     </Card>
   );
