@@ -20,3 +20,7 @@ cmd = "npm run railway:start"
 NODE_ENV = "production"
 NIXPACKS_BUILD_CMD = "npm run railway:build"
 NIXPACKS_START_CMD = "npm run railway:start"
+DISABLE_NEXT_TELEMETRY = "1"
+
+[options]
+disable_auto_detection = true

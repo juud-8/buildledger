@@ -2,9 +2,12 @@
   "name": "buildledger",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "rocketCritical": {
     "dependencies": [
-      "@dhiwise/component-tagger",
       "react",
       "react-dom",
       "@reduxjs/toolkit",
