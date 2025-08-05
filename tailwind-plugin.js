@@ -23,9 +23,14 @@ module.exports = plugin(
             if (!acc[baseKey]) {
               acc[baseKey] = {};
             }
+            if (typeof acc[baseKey] === 'string') {
+              acc[baseKey] = { DEFAULT: acc[baseKey] };
+            }
             acc[baseKey].foreground = `hsl(var(--${key}))`;
           } else {
-            acc[key] = `hsl(var(--${key}))`;
+            if (!acc[key]) {
+              acc[key] = `hsl(var(--${key}))`;
+            }
           }
           return acc;
         }, {}),
