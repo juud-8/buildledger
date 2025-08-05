@@ -3,7 +3,7 @@ import { BrowserRouter, Routes as RouterRoutes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 
-import LandingPage from '/src/pages/landing/index.jsx';
+import LandingPage from './pages/landing/index.jsx';
 import DashboardPage from './pages/dashboard/index';
 import ProjectsPage from './pages/projects/index';
 import ProjectDetailsPage from './pages/project-details/index';
