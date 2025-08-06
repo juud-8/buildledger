@@ -72,7 +72,10 @@
     "build": "vite build --sourcemap",
     "serve": "vite preview",
     "railway:build": "vite build --sourcemap",
-    "railway:start": "node serve.js"
+    "railway:start": "node serve.js",
+    "deploy": "echo '🚨 USE: vercel build --prod && vercel --prod --prebuilt' && echo '❌ NEVER USE: vercel --prod' && exit 1",
+    "deploy:correct": "vercel build --prod && vercel --prod --prebuilt",
+    "deploy:wrong": "echo '❌ THIS IS THE WRONG WAY - USE npm run deploy:correct' && exit 1"
   },
   "eslintConfig": {
     "extends": [
