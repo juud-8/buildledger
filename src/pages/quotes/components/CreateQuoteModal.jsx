@@ -16,6 +16,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
   const [showItemSelection, setShowItemSelection] = useState(false);
   const [isClientsLoading, setIsClientsLoading] = useState(false);
   const [clientsError, setClientsError] = useState(null);
+  const [useCustomClient, setUseCustomClient] = useState(false);
   
   // Data
   const [clients, setClients] = useState([]);
@@ -26,6 +27,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
   // Form data
   const [formData, setFormData] = useState({
     clientId: '',
+    customClientName: '',
     projectId: '',
     quoteNumber: '',
     title: '',
@@ -135,7 +137,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
       
       // Create quote using service
       const quoteData = {
-        client_id: formData?.clientId,
+        client_id: useCustomClient ? null : (formData?.clientId || null),
+        custom_client_name: useCustomClient ? formData?.customClientName : null,
         project_id: formData?.projectId || null,
         quote_number: formData?.quoteNumber,
         title: formData?.title,
@@ -221,6 +224,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
   const resetForm = () => {
     setFormData({
       clientId: '',
+      customClientName: '',
       projectId: '',
       quoteNumber: '',
       title: '',
@@ -231,6 +235,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
     });
     setSelectedItems([]);
     setCurrentStep(1);
+    setUseCustomClient(false);
   };
 
   const handleInputChange = (field, value) => {
@@ -325,30 +330,56 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-foreground">Client</label>
-                  <Select
-                    value={formData.clientId}
-                    onChange={(e) => handleInputChange('clientId', e.target.value)}
-                    required
-                    disabled={isClientsLoading}
-                  >
-                    {isClientsLoading ? (
-                      <option>Loading clients...</option>
-                    ) : clientsError ? (
-                      <option>{clientsError}</option>
-                    ) : clients.length === 0 ? (
-                      <option>No clients available</option>
-                    ) : (
-                      <>
-                        <option value="">Select Client</option>
-                        {clients.map(client => (
-                          <option key={client.id} value={client.id}>
-                            {client.name}
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </Select>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-foreground">Client</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="useCustomClient"
+                        checked={useCustomClient}
+                        onChange={(e) => {
+                          setUseCustomClient(e.target.checked);
+                          handleInputChange('clientId', '');
+                          handleInputChange('customClientName', '');
+                        }}
+                        className="rounded border-border text-primary focus:ring-primary"
+                      />
+                      <label htmlFor="useCustomClient" className="text-sm text-muted-foreground">
+                        Use custom client name
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {useCustomClient ? (
+                    <Input
+                      value={formData.customClientName}
+                      onChange={(e) => handleInputChange('customClientName', e.target.value)}
+                      placeholder="Enter custom client name"
+                    />
+                  ) : (
+                    <Select
+                      value={formData.clientId}
+                      onChange={(e) => handleInputChange('clientId', e.target.value)}
+                      disabled={isClientsLoading}
+                    >
+                      {isClientsLoading ? (
+                        <option>Loading clients...</option>
+                      ) : clientsError ? (
+                        <option>{clientsError}</option>
+                      ) : clients.length === 0 ? (
+                        <option>No clients available</option>
+                      ) : (
+                        <>
+                          <option value="">Select Client (Optional)</option>
+                          {clients.map(client => (
+                            <option key={client.id} value={client.id}>
+                              {client.name}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </Select>
+                  )}
                 </div>
               </div>
 
@@ -498,7 +529,11 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p><strong>Quote Number:</strong> {formData.quoteNumber}</p>
-                  <p><strong>Client:</strong> {clients?.find(c => c.id === formData.clientId)?.name}</p>
+                  <p><strong>Client:</strong> {
+                    useCustomClient 
+                      ? formData.customClientName || 'Custom Client'
+                      : clients?.find(c => c.id === formData.clientId)?.name || 'No Client Selected'
+                  }</p>
                   <p><strong>Project:</strong> {projects?.find(p => p.id === formData.projectId)?.name || 'None'}</p>
                 </div>
                 <div>

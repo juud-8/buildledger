@@ -34,7 +34,6 @@ export const clientsService = {
         .from('clients')
         .select('*')
         .eq('company_id', companyId)
-        .eq('is_active', true)
         .order('name');
 
       if (error) {
