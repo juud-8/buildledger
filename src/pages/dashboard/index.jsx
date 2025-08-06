@@ -9,8 +9,10 @@ import QuickActions from './components/QuickActions';
 import WeatherWidget from './components/WeatherWidget';
 import RevenueChart from './components/RevenueChart';
 import { dashboardService } from '../../services/dashboardService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Dashboard = () => {
+  const { userProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [kpiData, setKpiData] = useState([]);
@@ -135,7 +137,7 @@ const Dashboard = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
-                  Welcome back, John
+                  Welcome back, {userProfile?.full_name || 'User'}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   {currentTime.toLocaleDateString('en-US', { 
