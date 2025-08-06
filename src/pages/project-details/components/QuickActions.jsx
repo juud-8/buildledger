@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import CreateQuoteFromProjectModal from './CreateQuoteFromProjectModal';
+import { useAuth } from '../../../contexts/AuthContext';
+import { hasPermission, FEATURES } from '../../../utils/rbac';
 
 const QuickActions = ({ project, recentUpdates = [] }) => {
+  const { userProfile } = useAuth();
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(project?.status);
+  const [isCreateQuoteModalOpen, setIsCreateQuoteModalOpen] = useState(false);
 
   const statusOptions = [
     { value: 'planning', label: 'Planning', color: 'bg-blue-100 text-blue-800' },
@@ -16,50 +21,62 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
 
   const quickActions = [
     {
+      id: 'create-quote',
+      label: 'Create Quote',
+      icon: 'FileText',
+      color: 'bg-indigo-500 hover:bg-indigo-600',
+      onClick: () => setIsCreateQuoteModalOpen(true),
+      feature: FEATURES.CREATE_EDIT_PROJECTS,
+    },
+    {
       id: 'update-status',
       label: 'Update Status',
       icon: 'RefreshCw',
       color: 'bg-blue-500 hover:bg-blue-600',
-      onClick: () => setIsStatusModalOpen(true)
+      onClick: () => setIsStatusModalOpen(true),
+      feature: FEATURES.CREATE_EDIT_PROJECTS,
     },
     {
       id: 'add-milestone',
       label: 'Add Milestone',
       icon: 'Flag',
       color: 'bg-green-500 hover:bg-green-600',
-      onClick: () => console.log('Add milestone')
+      onClick: () => console.log('Add milestone'),
+      feature: FEATURES.CREATE_EDIT_PROJECTS,
     },
     {
       id: 'upload-photos',
       label: 'Upload Photos',
       icon: 'Camera',
       color: 'bg-purple-500 hover:bg-purple-600',
-      onClick: () => console.log('Upload photos')
+      onClick: () => console.log('Upload photos'),
+      feature: FEATURES.CREATE_EDIT_PROJECTS,
     },
     {
       id: 'create-invoice',
       label: 'Create Invoice',
       icon: 'Receipt',
       color: 'bg-orange-500 hover:bg-orange-600',
-      onClick: () => console.log('Create invoice')
+      onClick: () => console.log('Create invoice'),
+      feature: FEATURES.CREATE_EDIT_PROJECTS,
     },
     {
       id: 'contact-client',
       label: 'Contact Client',
       icon: 'Phone',
-      color: 'bg-indigo-500 hover:bg-indigo-600',
-      onClick: () => console.log('Contact client')
+      color: 'bg-cyan-500 hover:bg-cyan-600',
+      onClick: () => console.log('Contact client'),
+      feature: FEATURES.CREATE_EDIT_CLIENTS,
     },
     {
       id: 'schedule-inspection',
       label: 'Schedule Inspection',
       icon: 'Search',
       color: 'bg-teal-500 hover:bg-teal-600',
-      onClick: () => console.log('Schedule inspection')
+      onClick: () => console.log('Schedule inspection'),
+      feature: FEATURES.CREATE_EDIT_PROJECTS,
     }
   ];
-
-  
 
   const handleStatusUpdate = () => {
     // In real app, would make API call to update status
@@ -73,16 +90,20 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
       <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
         <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {quickActions?.map((action) => (
-            <button
-              key={action?.id}
-              onClick={action?.onClick}
-              className={`${action?.color} text-white p-4 rounded-lg construction-transition flex items-center space-x-3 text-left`}
-            >
-              <Icon name={action?.icon} size={20} />
-              <span className="font-medium">{action?.label}</span>
-            </button>
-          ))}
+          {quickActions?.map((action) => {
+            const canPerformAction = hasPermission(userProfile?.role, action.feature);
+            return (
+              <button
+                key={action.id}
+                onClick={action.onClick}
+                disabled={!canPerformAction}
+                className={`${action.color} text-white p-4 rounded-lg construction-transition flex items-center space-x-3 text-left ${!canPerformAction ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <Icon name={action.icon} size={20} />
+                <span className="font-medium">{action.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
       {/* Project Stats */}
@@ -248,6 +269,17 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
           </div>
         </div>
       )}
+      
+      {/* Create Quote Modal */}
+      <CreateQuoteFromProjectModal
+        isOpen={isCreateQuoteModalOpen}
+        onClose={() => setIsCreateQuoteModalOpen(false)}
+        project={project}
+        onSuccess={() => {
+          setIsCreateQuoteModalOpen(false);
+          // Optionally refresh project data here
+        }}
+      />
     </div>
   );
 };
