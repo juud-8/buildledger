@@ -1,8 +1,6 @@
 # Ignore Next.js specific files to prevent auto-detection
 .next/
 next.config.*
-pages/
-app/
 
 # Node modules and build artifacts
 node_modules/

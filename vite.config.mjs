@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tagger from "@dhiwise/component-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -41,7 +40,7 @@ export default defineConfig({
       }
     }
   },
-  plugins: [react(), tagger()],
+  plugins: [react()],
   server: {
     port: 4028,
     host: "0.0.0.0",
