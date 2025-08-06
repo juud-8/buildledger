@@ -9,7 +9,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import ItemSelectionModal from '../../item-selection-modal';
 
-const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
+const CreateQuoteModal = ({ isOpen, onClose, onSuccess, editMode = false, quoteId = null }) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -36,9 +36,13 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
   useEffect(() => {
     if (isOpen && user) {
       loadData();
-      generateQuoteNumber();
+      if (editMode && quoteId) {
+        loadQuoteData();
+      } else {
+        generateQuoteNumber();
+      }
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, editMode, quoteId]);
 
   const loadData = async () => {
     try {
@@ -78,6 +82,43 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
       setItems(itemsData || []);
     } catch (error) {
       console.error('Error loading data:', error);
+    }
+  };
+
+  const loadQuoteData = async () => {
+    try {
+      setIsLoading(true);
+      const quote = await quotesService.getQuote(quoteId);
+      
+      if (quote) {
+        // Set form data from existing quote
+        setFormData({
+          clientId: quote.client_id || '',
+          projectId: quote.project_id || '',
+          quoteNumber: quote.quote_number || '',
+          title: quote.title || '',
+          description: quote.description || '',
+          taxRate: quote.tax_rate || 0,
+          validUntil: quote.valid_until ? new Date(quote.valid_until).toISOString().split('T')[0] : '',
+          notes: quote.notes || ''
+        });
+        
+        // Load quote items if they exist
+        if (quote.quote_items && quote.quote_items.length > 0) {
+          setSelectedItems(quote.quote_items.map(item => ({
+            item_id: item.item_id,
+            name: item.item?.name || item.name || 'Item',
+            unit_price: item.unit_price,
+            quantity: item.quantity,
+            total_price: item.total_price
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading quote data:', error);
+      alert('Failed to load quote data. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,44 +164,80 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
       
-      // Create quote using service
       const quoteData = {
         client_id: formData?.clientId,
         project_id: formData?.projectId || null,
         quote_number: formData?.quoteNumber,
         title: formData?.title,
         description: formData?.description,
-        status: 'draft',
+        status: editMode ? undefined : 'draft', // Don't change status when editing
         subtotal,
         tax_amount: taxAmount,
         total_amount: total,
+        tax_rate: formData?.taxRate,
         valid_until: formData?.validUntil,
         notes: formData?.notes
       };
 
-      const quote = await quotesService.createQuote(quoteData);
+      let quote;
+      if (editMode && quoteId) {
+        // Update existing quote
+        quote = await quotesService.updateQuote(quoteId, quoteData);
+        
+        // Delete existing quote items
+        const { error: deleteError } = await supabase
+          .from('quote_items')
+          .delete()
+          .eq('quote_id', quoteId);
+        
+        if (deleteError) throw deleteError;
+        
+        // Add updated quote items
+        if (selectedItems?.length > 0) {
+          const quoteItems = selectedItems?.map(item => ({
+            quote_id: quoteId,
+            item_id: item?.item_id,
+            name: item?.name, // Store name as backup
+            quantity: item?.quantity,
+            unit_price: item?.unit_price,
+            total_price: item?.total_price
+          }));
 
-      // Add quote items
-      if (selectedItems?.length > 0) {
-        const quoteItems = selectedItems?.map(item => ({
-          quote_id: quote?.id,
-          item_id: item?.item_id,
-          quantity: item?.quantity,
-          unit_price: item?.unit_price,
-          total_price: item?.total_price
-        }));
+          const { error: itemsError } = await supabase
+            .from('quote_items')
+            .insert(quoteItems);
 
-        const { error: itemsError } = await supabase?.from('quote_items')?.insert(quoteItems);
+          if (itemsError) throw itemsError;
+        }
+      } else {
+        // Create new quote
+        quote = await quotesService.createQuote(quoteData);
 
-        if (itemsError) throw itemsError;
+        // Add quote items
+        if (selectedItems?.length > 0) {
+          const quoteItems = selectedItems?.map(item => ({
+            quote_id: quote?.id,
+            item_id: item?.item_id,
+            name: item?.name, // Store name as backup
+            quantity: item?.quantity,
+            unit_price: item?.unit_price,
+            total_price: item?.total_price
+          }));
+
+          const { error: itemsError } = await supabase
+            .from('quote_items')
+            .insert(quoteItems);
+
+          if (itemsError) throw itemsError;
+        }
       }
 
       onSuccess?.();
       onClose();
       resetForm();
     } catch (error) {
-      console.error('Error creating quote:', error);
-      alert('Error creating quote. Please try again.');
+      console.error(`Error ${editMode ? 'updating' : 'creating'} quote:`, error);
+      alert(`Error ${editMode ? 'updating' : 'creating'} quote. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -273,7 +350,9 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-card border border-border rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground">Create New Quote</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            {editMode ? 'Edit Quote' : 'Create New Quote'}
+          </h2>
           <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -537,7 +616,10 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                 disabled={isLoading}
                 className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
               >
-                {isLoading ? 'Creating...' : 'Create Quote'}
+                {isLoading 
+                  ? (editMode ? 'Updating...' : 'Creating...') 
+                  : (editMode ? 'Update Quote' : 'Create Quote')
+                }
               </Button>
             )}
           </div>

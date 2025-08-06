@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import Breadcrumb from '../../components/ui/Breadcrumb';
-import QuoteFilters from './components/QuoteFilters';
 import QuoteToolbar from './components/QuoteToolbar';
+import QuoteFilters from './components/QuoteFilters';
 import QuotesList from './components/QuotesList';
 import CreateQuoteModal from './components/CreateQuoteModal';
+import { quotesService } from '../../services/quotesService';
 
 const QuotesPage = () => {
   const [quotes, setQuotes] = useState([]);
@@ -14,6 +15,8 @@ const QuotesPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('date-desc');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingQuoteId, setEditingQuoteId] = useState(null);
   
   const [filters, setFilters] = useState({
     status: 'all',
@@ -268,8 +271,16 @@ const QuotesPage = () => {
   };
 
   const handleEdit = (quoteId) => {
-    console.log('Edit quote:', quoteId);
-    // Navigate to edit page or open edit modal
+    setEditingQuoteId(quoteId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    setEditingQuoteId(null);
+    // Refresh quotes list
+    // In a real app, you would refetch from the database
+    console.log('Quote updated successfully');
   };
 
   const handleDuplicate = (quoteId) => {
@@ -303,6 +314,19 @@ const QuotesPage = () => {
   const handleDownloadPDF = (quoteId) => {
     console.log('Download PDF for quote:', quoteId);
     // Implement PDF generation and download
+  };
+
+  const handleDelete = async (quoteId) => {
+    try {
+      await quotesService.deleteQuote(quoteId);
+      // Remove from local state
+      setQuotes(prev => prev.filter(quote => quote.id !== quoteId));
+      setFilteredQuotes(prev => prev.filter(quote => quote.id !== quoteId));
+      console.log('Quote deleted successfully');
+    } catch (error) {
+      console.error('Error deleting quote:', error);
+      alert('Failed to delete quote. Please try again.');
+    }
   };
 
   return (
@@ -351,17 +375,39 @@ const QuotesPage = () => {
                   onSend={handleSend}
                   onConvertToInvoice={handleConvertToInvoice}
                   onDownloadPDF={handleDownloadPDF}
+                  onDelete={handleDelete}
                 />
               </div>
             </div>
           </div>
         </main>
 
-        <CreateQuoteModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onCreateQuote={handleCreateQuote}
-        />
+        {/* Create Quote Modal */}
+        {isCreateModalOpen && (
+          <CreateQuoteModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onSuccess={() => {
+              setIsCreateModalOpen(false);
+              // Refresh quotes list
+              console.log('Quote created successfully');
+            }}
+          />
+        )}
+
+        {/* Edit Quote Modal */}
+        {isEditModalOpen && (
+          <CreateQuoteModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setEditingQuoteId(null);
+            }}
+            onSuccess={handleEditSuccess}
+            editMode={true}
+            quoteId={editingQuoteId}
+          />
+        )}
       </div>
     </>
   );

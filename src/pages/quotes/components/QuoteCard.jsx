@@ -3,7 +3,7 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from '../../../components/ui/Card';
 
-const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onDownloadPDF }) => {
+const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onDownloadPDF, onDelete }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const expirationStatus = (() => {
@@ -100,6 +100,19 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
                         </button>
                       </>
                     )}
+                    <hr className="my-1 border-border" />
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to delete quote ${quote?.quoteNumber}?`)) {
+                          onDelete(quote?.id);
+                          setIsMenuOpen(false);
+                        }
+                      }}
+                      className="flex items-center w-full px-4 py-2 text-sm text-destructive hover:bg-muted"
+                    >
+                      <Icon name="Trash2" size={16} className="mr-2" />
+                      Delete Quote
+                    </button>
                   </div>
                 </div>
               )}
@@ -168,6 +181,20 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
               To Invoice
             </Button>
           )}
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to delete quote ${quote?.quoteNumber}?`)) {
+                onDelete(quote?.id);
+              }
+            }}
+            iconName="Trash2"
+            iconPosition="left"
+            className="ml-auto flex-shrink-0"
+          >
+            Delete
+          </Button>
         </div>
       </CardFooter>
       {isMenuOpen && (

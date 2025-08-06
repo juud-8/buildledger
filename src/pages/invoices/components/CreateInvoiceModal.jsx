@@ -8,12 +8,16 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import ItemSelectionModal from '../../item-selection-modal';
+import CreateClientModal from '../../clients/components/CreateClientModal';
 
 const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invoiceId = null }) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showItemSelection, setShowItemSelection] = useState(false);
+  const [isClientsLoading, setIsClientsLoading] = useState(false);
+  const [clientsError, setClientsError] = useState(null);
+  const [isCreateClientModalOpen, setIsCreateClientModalOpen] = useState(false);
   
   // Data
   const [clients, setClients] = useState([]);

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
 
 export const projectsService = {
   // Get all projects for the current user
@@ -33,7 +34,7 @@ export const projectsService = {
       if (error) throw error;
       return projects || [];
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      showErrorToast('Failed to fetch projects', error);
       throw error;
     }
   },
@@ -71,7 +72,7 @@ export const projectsService = {
       if (error) throw error;
       return project;
     } catch (error) {
-      console.error('Error fetching project:', error);
+      showErrorToast('Failed to fetch project details', error);
       throw error;
     }
   },
@@ -106,9 +107,11 @@ export const projectsService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Project "${project.name}" created successfully`, project);
       return project;
     } catch (error) {
-      console.error('Error creating project:', error);
+      showErrorToast('Failed to create project', error);
       throw error;
     }
   },

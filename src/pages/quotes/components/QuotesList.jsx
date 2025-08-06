@@ -13,7 +13,8 @@ const QuotesList = ({
   onDuplicate,
   onSend,
   onConvertToInvoice,
-  onDownloadPDF 
+  onDownloadPDF,
+  onDelete
 }) => {
   const isAllSelected = quotes?.length > 0 && selectedQuotes?.length === quotes?.length;
   const isPartiallySelected = selectedQuotes?.length > 0 && selectedQuotes?.length < quotes?.length;
@@ -152,6 +153,7 @@ const QuotesList = ({
               onSend={onSend}
               onConvertToInvoice={onConvertToInvoice}
               onDownloadPDF={onDownloadPDF}
+              onDelete={onDelete}
             />
           </div>
         ))}

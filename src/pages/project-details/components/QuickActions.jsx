@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import AddMilestoneModal from './AddMilestoneModal';
+import UploadPhotosModal from './UploadPhotosModal';
+import CreateInvoiceModal from './CreateInvoiceModal';
+import ContactClientModal from './ContactClientModal';
+import ScheduleInspectionModal from './ScheduleInspectionModal';
 
 const QuickActions = ({ project, recentUpdates = [] }) => {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [isUploadPhotosModalOpen, setIsUploadPhotosModalOpen] = useState(false);
+  const [isCreateInvoiceModalOpen, setIsCreateInvoiceModalOpen] = useState(false);
+  const [isContactClientModalOpen, setIsContactClientModalOpen] = useState(false);
+  const [isScheduleInspectionModalOpen, setIsScheduleInspectionModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(project?.status);
 
   const statusOptions = [
@@ -27,35 +37,35 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
       label: 'Add Milestone',
       icon: 'Flag',
       color: 'bg-green-500 hover:bg-green-600',
-      onClick: () => console.log('Add milestone')
+      onClick: () => setIsMilestoneModalOpen(true)
     },
     {
       id: 'upload-photos',
       label: 'Upload Photos',
       icon: 'Camera',
       color: 'bg-purple-500 hover:bg-purple-600',
-      onClick: () => console.log('Upload photos')
+      onClick: () => setIsUploadPhotosModalOpen(true)
     },
     {
       id: 'create-invoice',
       label: 'Create Invoice',
       icon: 'Receipt',
       color: 'bg-orange-500 hover:bg-orange-600',
-      onClick: () => console.log('Create invoice')
+      onClick: () => setIsCreateInvoiceModalOpen(true)
     },
     {
       id: 'contact-client',
       label: 'Contact Client',
       icon: 'Phone',
       color: 'bg-indigo-500 hover:bg-indigo-600',
-      onClick: () => console.log('Contact client')
+      onClick: () => setIsContactClientModalOpen(true)
     },
     {
       id: 'schedule-inspection',
       label: 'Schedule Inspection',
       icon: 'Search',
       color: 'bg-teal-500 hover:bg-teal-600',
-      onClick: () => console.log('Schedule inspection')
+      onClick: () => setIsScheduleInspectionModalOpen(true)
     }
   ];
 
@@ -65,6 +75,31 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
     // In real app, would make API call to update status
     setIsStatusModalOpen(false);
     console.log('Status updated to:', selectedStatus);
+  };
+
+  const handleAddMilestone = (milestone) => {
+    // In a real app, you would make an API call to add the milestone
+    console.log('New milestone added:', milestone);
+  };
+
+  const handleUploadPhotos = (files) => {
+    // In a real app, you would make an API call to upload the photos
+    console.log('Uploading photos:', files);
+  };
+
+  const handleCreateInvoice = (invoice) => {
+    // In a real app, you would make an API call to create the invoice
+    console.log('Creating invoice:', invoice);
+  };
+
+  const handleContactClient = (message) => {
+    // In a real app, you would make an API call to send the message
+    console.log('Sending message to client:', message);
+  };
+
+  const handleScheduleInspection = (inspection) => {
+    // In a real app, you would make an API call to schedule the inspection
+    console.log('Scheduling inspection:', inspection);
   };
 
   return (
@@ -195,6 +230,38 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
           </div>
         </div>
       </div>
+
+      <AddMilestoneModal
+        isOpen={isMilestoneModalOpen}
+        onClose={() => setIsMilestoneModalOpen(false)}
+        onAddMilestone={handleAddMilestone}
+      />
+
+      <UploadPhotosModal
+        isOpen={isUploadPhotosModalOpen}
+        onClose={() => setIsUploadPhotosModalOpen(false)}
+        onUpload={handleUploadPhotos}
+      />
+
+      <CreateInvoiceModal
+        isOpen={isCreateInvoiceModalOpen}
+        onClose={() => setIsCreateInvoiceModalOpen(false)}
+        onCreateInvoice={handleCreateInvoice}
+      />
+
+      <ContactClientModal
+        isOpen={isContactClientModalOpen}
+        onClose={() => setIsContactClientModalOpen(false)}
+        onSendMessage={handleContactClient}
+        client={project?.client}
+      />
+
+      <ScheduleInspectionModal
+        isOpen={isScheduleInspectionModalOpen}
+        onClose={() => setIsScheduleInspectionModalOpen(false)}
+        onScheduleInspection={handleScheduleInspection}
+      />
+
       {/* Status Update Modal */}
       {isStatusModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
