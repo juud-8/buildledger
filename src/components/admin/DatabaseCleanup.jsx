@@ -20,28 +20,21 @@ const DatabaseCleanup = () => {
     try {
       const cleanupResults = [];
 
-      // Step 1: Get all users from auth.users
-      console.log('🔍 Fetching all users from auth.users...');
-      const { data: authUsers, error: fetchError } = await supabase.auth.admin.listUsers();
-      
-      if (fetchError) {
-        throw new Error(`Failed to fetch users: ${fetchError.message}`);
-      }
-
+      // Show instructions since we can't use admin methods
       cleanupResults.push({
-        step: 'Fetch Users',
-        status: 'success',
-        message: `Found ${authUsers.users.length} users to delete`
+        step: 'Permission Notice',
+        status: 'warning',
+        message: 'Cannot delete auth users with anon key. See manual instructions below.'
       });
 
-      // Step 2: Delete all user profiles first (to avoid FK constraints)
+      // Step 1: Delete all user profiles first (to avoid FK constraints)
       console.log('🗑️ Deleting all user profiles...');
-      const { error: profilesError } = await supabase
+      const { error: profilesError, count: profilesCount } = await supabase
         .from('user_profiles')
-        .delete()
+        .delete({ count: 'exact' })
         .gte('created_at', '1900-01-01'); // Delete all records
 
-      if (profilesError) {
+      if (profilesError && !profilesError.message.includes('relation')) {
         cleanupResults.push({
           step: 'Delete Profiles',
           status: 'warning',
@@ -51,18 +44,18 @@ const DatabaseCleanup = () => {
         cleanupResults.push({
           step: 'Delete Profiles',
           status: 'success',
-          message: 'All user profiles deleted successfully'
+          message: `User profiles deleted: ${profilesCount || 'all'}`
         });
       }
 
-      // Step 3: Delete companies (optional)
+      // Step 2: Delete companies
       console.log('🗑️ Deleting all companies...');
-      const { error: companiesError } = await supabase
+      const { error: companiesError, count: companiesCount } = await supabase
         .from('companies')
-        .delete()
-        .gte('created_at', '1900-01-01'); // Delete all records
+        .delete({ count: 'exact' })
+        .gte('created_at', '1900-01-01');
 
-      if (companiesError) {
+      if (companiesError && !companiesError.message.includes('relation')) {
         cleanupResults.push({
           step: 'Delete Companies',
           status: 'warning',
@@ -72,53 +65,24 @@ const DatabaseCleanup = () => {
         cleanupResults.push({
           step: 'Delete Companies',
           status: 'success',
-          message: 'All companies deleted successfully'
+          message: `Companies deleted: ${companiesCount || 'all'}`
         });
       }
 
-      // Step 4: Delete all auth users
-      console.log('🗑️ Deleting all auth users...');
-      let deletedCount = 0;
-      let errorCount = 0;
-
-      for (const user of authUsers.users) {
-        try {
-          const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
-          
-          if (deleteError) {
-            console.error(`Failed to delete user ${user.email}:`, deleteError);
-            errorCount++;
-          } else {
-            console.log(`✅ Deleted user: ${user.email}`);
-            deletedCount++;
-          }
-          
-          // Small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-        } catch (error) {
-          console.error(`Error deleting user ${user.email}:`, error);
-          errorCount++;
-        }
-      }
-
-      cleanupResults.push({
-        step: 'Delete Auth Users',
-        status: errorCount === 0 ? 'success' : 'warning',
-        message: `Deleted ${deletedCount} users successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}`
-      });
-
-      // Step 5: Clean up any remaining data
+      // Step 3: Clean up remaining data tables
       console.log('🧹 Cleaning up remaining data...');
       
-      // Delete projects, clients, invoices, etc.
-      const tablesToClean = ['projects', 'clients', 'invoices', 'quotes', 'items'];
+      const tablesToClean = [
+        'projects', 'clients', 'invoices', 'quotes', 'items', 
+        'project_items', 'invoice_items', 'quote_items',
+        'project_photos', 'project_documents'
+      ];
       
       for (const table of tablesToClean) {
         try {
-          const { error: tableError } = await supabase
+          const { error: tableError, count: tableCount } = await supabase
             .from(table)
-            .delete()
+            .delete({ count: 'exact' })
             .gte('created_at', '1900-01-01');
 
           if (tableError && !tableError.message.includes('relation') && !tableError.message.includes('does not exist')) {
@@ -127,14 +91,15 @@ const DatabaseCleanup = () => {
               status: 'warning',
               message: `${table}: ${tableError.message}`
             });
-          } else {
+          } else if (!tableError) {
             cleanupResults.push({
               step: `Clean ${table}`,
               status: 'success',
-              message: `${table} cleaned successfully`
+              message: `${table}: deleted ${tableCount || 0} records`
             });
           }
         } catch (error) {
+          // Silently skip tables that don't exist
           if (!error.message.includes('relation') && !error.message.includes('does not exist')) {
             cleanupResults.push({
               step: `Clean ${table}`,
@@ -146,9 +111,15 @@ const DatabaseCleanup = () => {
       }
 
       cleanupResults.push({
-        step: 'Database Cleanup Complete',
+        step: 'Database Data Cleanup Complete',
         status: 'success',
-        message: '🎉 Database has been completely cleaned and is ready for fresh setup!'
+        message: '✅ All profile and application data deleted!'
+      });
+
+      cleanupResults.push({
+        step: 'Next Steps Required',
+        status: 'warning',
+        message: '⚠️ Manual auth user deletion required. See instructions below.'
       });
 
       setResults(cleanupResults);
@@ -257,13 +228,45 @@ const DatabaseCleanup = () => {
                 ))}
               </div>
 
+              {/* Manual Instructions */}
+              {results.some(r => r.step === 'Next Steps Required') && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-3">📋 Manual Steps Required</h4>
+                  <div className="text-sm text-blue-700 space-y-3">
+                    <p className="font-medium">To complete the cleanup, you need to manually delete auth users:</p>
+                    
+                    <div className="bg-white p-3 rounded border">
+                      <p className="font-medium mb-2">Option 1: Supabase Dashboard</p>
+                      <ol className="list-decimal list-inside space-y-1 text-xs">
+                        <li>Go to <a href="https://app.supabase.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">app.supabase.com</a></li>
+                        <li>Open your BuildLedger project</li>
+                        <li>Go to Authentication → Users</li>
+                        <li>Select all users and delete them</li>
+                      </ol>
+                    </div>
+
+                    <div className="bg-white p-3 rounded border">
+                      <p className="font-medium mb-2">Option 2: SQL Query</p>
+                      <div className="bg-gray-100 p-2 rounded text-xs font-mono">
+                        <p>-- Run this in SQL Editor:</p>
+                        <p>DELETE FROM auth.users;</p>
+                      </div>
+                    </div>
+
+                    <p className="font-medium text-blue-800">
+                      After deleting auth users, your database will be completely clean and ready for fresh account setup!
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Success Message */}
-              {results.some(r => r.step === 'Database Cleanup Complete') && (
+              {results.some(r => r.step === 'Database Data Cleanup Complete') && (
                 <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-semibold text-green-800 mb-2">🎉 Ready for Fresh Setup!</h4>
-                  <p className="text-sm text-green-700">
-                    The database has been completely cleaned. You can now use the Account Setup tool 
-                    to create fresh accounts with the exact specifications you need.
+                  <h4 className="font-semibold text-green-800 mb-2">✅ Data Cleanup Complete!</h4>
+                  <p className="text-sm text-green-700 mb-3">
+                    All profile and application data has been deleted. After completing the manual auth user deletion above, 
+                    you can create fresh accounts with the exact specifications you need.
                   </p>
                   <div className="mt-3">
                     <a
