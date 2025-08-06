@@ -1,4 +1,7 @@
 import { supabase } from '../lib/supabase';
+import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
+
+const isDev = import.meta.env.DEV;
 
 export const projectsService = {
   // Get all projects for the current user
@@ -33,7 +36,7 @@ export const projectsService = {
       if (error) throw error;
       return projects || [];
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      showErrorToast('Failed to fetch projects', error);
       throw error;
     }
   },
@@ -71,7 +74,7 @@ export const projectsService = {
       if (error) throw error;
       return project;
     } catch (error) {
-      console.error('Error fetching project:', error);
+      showErrorToast('Failed to fetch project details', error);
       throw error;
     }
   },
@@ -79,6 +82,11 @@ export const projectsService = {
   // Create a new project
   async createProject(projectData) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] CREATE_PROJECT_START:`, projectData);
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -106,9 +114,11 @@ export const projectsService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Project "${project.name}" created successfully`, project);
       return project;
     } catch (error) {
-      console.error('Error creating project:', error);
+      showErrorToast('Failed to create project', error);
       throw error;
     }
   },
@@ -116,6 +126,11 @@ export const projectsService = {
   // Update a project
   async updateProject(id, updates) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] UPDATE_PROJECT_START:`, { id, updates });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -141,9 +156,11 @@ export const projectsService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Project "${project.name}" updated successfully`, project);
       return project;
     } catch (error) {
-      console.error('Error updating project:', error);
+      showErrorToast('Failed to update project', error);
       throw error;
     }
   },
@@ -151,6 +168,11 @@ export const projectsService = {
   // Delete a project
   async deleteProject(id) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] DELETE_PROJECT_START:`, { id });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -167,6 +189,14 @@ export const projectsService = {
 
       const companyId = userProfile.company_id;
 
+      // First get the project name for the success message
+      const { data: project } = await supabase
+        .from('projects')
+        .select('name')
+        .eq('company_id', companyId)
+        .eq('id', id)
+        .single();
+
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -174,9 +204,11 @@ export const projectsService = {
         .eq('id', id);
 
       if (error) throw error;
+      
+      showSuccessToast(`Project "${project?.name || 'Project'}" deleted successfully`);
       return true;
     } catch (error) {
-      console.error('Error deleting project:', error);
+      showErrorToast('Failed to delete project', error);
       throw error;
     }
   }

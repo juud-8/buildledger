@@ -1,4 +1,7 @@
 import { supabase } from '../lib/supabase';
+import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
+
+const isDev = import.meta.env.DEV;
 
 export const quotesService = {
   // Get all quotes for the current user
@@ -33,7 +36,7 @@ export const quotesService = {
       if (error) throw error;
       return quotes || [];
     } catch (error) {
-      console.error('Error fetching quotes:', error);
+      showErrorToast('Failed to fetch quotes', error);
       throw error;
     }
   },
@@ -75,7 +78,7 @@ export const quotesService = {
       if (error) throw error;
       return quote;
     } catch (error) {
-      console.error('Error fetching quote:', error);
+      showErrorToast('Failed to fetch quote details', error);
       throw error;
     }
   },
@@ -83,6 +86,11 @@ export const quotesService = {
   // Create a new quote
   async createQuote(quoteData) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] CREATE_QUOTE_START:`, quoteData);
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -110,9 +118,11 @@ export const quotesService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Quote #${quote.quote_number} created successfully`, quote);
       return quote;
     } catch (error) {
-      console.error('Error creating quote:', error);
+      showErrorToast('Failed to create quote', error);
       throw error;
     }
   },
@@ -120,6 +130,11 @@ export const quotesService = {
   // Update a quote
   async updateQuote(id, updates) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] UPDATE_QUOTE_START:`, { id, updates });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -145,9 +160,11 @@ export const quotesService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Quote #${quote.quote_number} updated successfully`, quote);
       return quote;
     } catch (error) {
-      console.error('Error updating quote:', error);
+      showErrorToast('Failed to update quote', error);
       throw error;
     }
   },
@@ -155,6 +172,11 @@ export const quotesService = {
   // Delete a quote
   async deleteQuote(id) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] DELETE_QUOTE_START:`, { id });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -171,6 +193,14 @@ export const quotesService = {
 
       const companyId = userProfile.company_id;
 
+      // First get the quote number for the success message
+      const { data: quote } = await supabase
+        .from('quotes')
+        .select('quote_number')
+        .eq('company_id', companyId)
+        .eq('id', id)
+        .single();
+
       const { error } = await supabase
         .from('quotes')
         .delete()
@@ -178,9 +208,11 @@ export const quotesService = {
         .eq('id', id);
 
       if (error) throw error;
+      
+      showSuccessToast(`Quote #${quote?.quote_number || 'Quote'} deleted successfully`);
       return true;
     } catch (error) {
-      console.error('Error deleting quote:', error);
+      showErrorToast('Failed to delete quote', error);
       throw error;
     }
   }

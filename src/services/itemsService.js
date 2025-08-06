@@ -3,9 +3,9 @@ import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
 
 const isDev = import.meta.env.DEV;
 
-export const clientsService = {
-  // Get all clients for the current user
-  async getClients() {
+export const itemsService = {
+  // Get all items for the current user
+  async getItems() {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
@@ -23,23 +23,23 @@ export const clientsService = {
 
       const companyId = userProfile.company_id;
 
-      const { data: clients, error } = await supabase
-        .from('clients')
+      const { data: items, error } = await supabase
+        .from('items_database')
         .select('*')
         .eq('company_id', companyId)
         .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
-      return clients || [];
+      return items || [];
     } catch (error) {
-      showErrorToast('Failed to fetch clients', error);
+      showErrorToast('Failed to fetch items', error);
       throw error;
     }
   },
 
-  // Get a single client by ID
-  async getClient(id) {
+  // Get a single item by ID
+  async getItem(id) {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
@@ -57,79 +57,27 @@ export const clientsService = {
 
       const companyId = userProfile.company_id;
 
-      const { data: client, error } = await supabase
-        .from('clients')
+      const { data: item, error } = await supabase
+        .from('items_database')
         .select('*')
         .eq('company_id', companyId)
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      return client;
+      return item;
     } catch (error) {
-      showErrorToast('Failed to fetch client details', error);
+      showErrorToast('Failed to fetch item details', error);
       throw error;
     }
   },
 
-  // Create a new client
-  async createClient(clientData) {
+  // Create a new item
+  async createItem(itemData) {
     try {
       if (isDev) {
         const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] CREATE_CLIENT_START:`, clientData);
-      }
-      
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        if (isDev) console.error('Error getting user:', userError);
-        throw new Error('User not authenticated');
-      }
-      if (isDev) console.log('User authenticated for client creation:', user.id);
-
-      // Get user profile to get company_id
-      const { data: userProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileError || !userProfile?.company_id) {
-        if (isDev) console.error('Error fetching user profile or company_id:', profileError);
-        throw new Error('User profile or company not found');
-      }
-      if (isDev) console.log('User profile found with company_id:', userProfile.company_id);
-
-      const companyId = userProfile.company_id;
-
-      const { data: client, error } = await supabase
-        .from('clients')
-        .insert({
-          ...clientData,
-          company_id: companyId
-        })
-        .select()
-        .single();
-
-      if (error) {
-        if (isDev) console.error('Error creating client in Supabase:', error);
-        throw error;
-      }
-      
-      showSuccessToast(`Client "${client.name}" created successfully`, client);
-      return client;
-    } catch (error) {
-      showErrorToast('Failed to create client', error);
-      throw error;
-    }
-  },
-
-  // Update a client
-  async updateClient(id, updates) {
-    try {
-      if (isDev) {
-        const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] UPDATE_CLIENT_START:`, { id, updates });
+        console.log(`[${timestamp}] CREATE_ITEM_START:`, itemData);
       }
       
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -148,8 +96,52 @@ export const clientsService = {
 
       const companyId = userProfile.company_id;
 
-      const { data: client, error } = await supabase
-        .from('clients')
+      const { data: item, error } = await supabase
+        .from('items_database')
+        .insert({
+          ...itemData,
+          company_id: companyId,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      showSuccessToast(`Item "${item.name}" created successfully`, item);
+      return item;
+    } catch (error) {
+      showErrorToast('Failed to create item', error);
+      throw error;
+    }
+  },
+
+  // Update an item
+  async updateItem(id, updates) {
+    try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] UPDATE_ITEM_START:`, { id, updates });
+      }
+      
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('User not authenticated');
+
+      // Get user profile to get company_id
+      const { data: userProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError || !userProfile?.company_id) {
+        throw new Error('User profile or company not found');
+      }
+
+      const companyId = userProfile.company_id;
+
+      const { data: item, error } = await supabase
+        .from('items_database')
         .update(updates)
         .eq('company_id', companyId)
         .eq('id', id)
@@ -158,20 +150,20 @@ export const clientsService = {
 
       if (error) throw error;
       
-      showSuccessToast(`Client "${client.name}" updated successfully`, client);
-      return client;
+      showSuccessToast(`Item "${item.name}" updated successfully`, item);
+      return item;
     } catch (error) {
-      showErrorToast('Failed to update client', error);
+      showErrorToast('Failed to update item', error);
       throw error;
     }
   },
 
-  // Delete a client
-  async deleteClient(id) {
+  // Delete an item (soft delete by setting is_active to false)
+  async deleteItem(id) {
     try {
       if (isDev) {
         const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] DELETE_CLIENT_START:`, { id });
+        console.log(`[${timestamp}] DELETE_ITEM_START:`, { id });
       }
       
       const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -190,26 +182,27 @@ export const clientsService = {
 
       const companyId = userProfile.company_id;
 
-      // First get the client name for the success message
-      const { data: client } = await supabase
-        .from('clients')
+      // First get the item name for the success message
+      const { data: item } = await supabase
+        .from('items_database')
         .select('name')
         .eq('company_id', companyId)
         .eq('id', id)
         .single();
 
+      // Soft delete by setting is_active to false
       const { error } = await supabase
-        .from('clients')
-        .delete()
+        .from('items_database')
+        .update({ is_active: false })
         .eq('company_id', companyId)
         .eq('id', id);
 
       if (error) throw error;
       
-      showSuccessToast(`Client "${client?.name || 'Client'}" deleted successfully`);
+      showSuccessToast(`Item "${item?.name || 'Item'}" deleted successfully`);
       return true;
     } catch (error) {
-      showErrorToast('Failed to delete client', error);
+      showErrorToast('Failed to delete item', error);
       throw error;
     }
   }

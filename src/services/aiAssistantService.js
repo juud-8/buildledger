@@ -1,4 +1,4 @@
-import openai from '../utils/openaiClient';
+import { multiAI } from '../utils/aiClient';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -139,27 +139,16 @@ You can help with:
 
 Be helpful, professional, and construction-industry focused. Provide specific, actionable advice when possible.`;
 
-    // Call OpenAI API with streaming
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message }
-      ],
-      max_tokens: 500,
-      temperature: 0.7,
-      stream: true
-    });
+    // Use multi-provider AI with streaming
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: message }
+    ];
 
-    let fullResponse = '';
-    
-    for await (const chunk of response) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      if (content) {
-        fullResponse += content;
-        onChunk(content);
-      }
-    }
+    const fullResponse = await multiAI.generateStreamingResponse(messages, onChunk, {
+      max_tokens: 500,
+      temperature: 0.7
+    });
 
     // Store conversation in database
     try {
@@ -226,15 +215,15 @@ Be helpful, professional, and construction-industry focused. Provide specific, a
         { role: 'user', content: message }
       ];
 
-      // Call OpenAI API
-      const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages,
+      // Use multi-provider AI
+      const aiResult = await multiAI.generateResponse(messages, {
         max_tokens: 500,
         temperature: 0.7
       });
 
-      const aiResponse = response.choices[0]?.message?.content || 'Sorry, I couldn\'t process your request.';
+      const aiResponse = aiResult.content || 'Sorry, I couldn\'t process your request.';
+      
+      console.log(`AI response generated using provider: ${aiResult.provider}`);
 
       // Store conversation in database if we have real data
       if (businessData && data !== mockBusinessData) {
