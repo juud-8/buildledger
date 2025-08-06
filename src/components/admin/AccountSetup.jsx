@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { authService } from '../../services/authService';
+import { supabase } from '../../lib/supabase';
 import Button from '../ui/Button';
 import { Card, CardHeader, CardContent, CardTitle } from '../ui/Card';
 
@@ -86,11 +87,69 @@ const AccountSetup = () => {
         throw result.error;
       }
 
+      // Wait for user creation and then try to create/fix the profile
+      const userId = result.data.user?.id;
+      if (userId) {
+        console.log(`User created with ID: ${userId}, checking profile...`);
+        
+        // Wait a moment for the trigger to run
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Check if profile exists, if not create it manually
+        try {
+          
+          const { data: existingProfile, error: profileCheckError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+          if (profileCheckError && profileCheckError.code === 'PGRST116') {
+            // Profile doesn't exist, create it manually
+            console.log(`Creating profile manually for ${account.email}`);
+            
+            const { error: createProfileError } = await supabase
+              .from('user_profiles')
+              .insert({
+                id: userId,
+                email: account.email,
+                full_name: account.fullName,
+                company_name: account.companyName,
+                role: account.role || 'company_owner',
+                subscription_plan: account.plan || 'professional',
+                subscription_status: 'active',
+                preferences: {
+                  plan: account.plan || 'professional',
+                  lifetime_access: account.plan?.includes('lifetime') || false,
+                  payment_required: false
+                }
+              });
+
+            if (createProfileError) {
+              console.error('Manual profile creation failed:', createProfileError);
+              return {
+                email: account.email,
+                status: 'warning',
+                message: 'User created but profile setup incomplete'
+              };
+            }
+          }
+          
+        } catch (profileError) {
+          console.error('Profile management error:', profileError);
+          return {
+            email: account.email,
+            status: 'warning', 
+            message: 'User created but profile verification failed'
+          };
+        }
+      }
+
       return { 
         email: account.email, 
         status: 'success', 
         message: 'Account created successfully',
-        userId: result.data.user?.id 
+        userId: userId
       };
 
     } catch (error) {
@@ -130,6 +189,7 @@ const AccountSetup = () => {
     switch (status) {
       case 'success': return '✅';
       case 'exists': return '⚠️';
+      case 'warning': return '⚠️';
       case 'error': return '❌';
       default: return '⏳';
     }
@@ -139,6 +199,7 @@ const AccountSetup = () => {
     switch (status) {
       case 'success': return 'text-green-600';
       case 'exists': return 'text-yellow-600';
+      case 'warning': return 'text-orange-600';
       case 'error': return 'text-red-600';
       default: return 'text-gray-600';
     }
