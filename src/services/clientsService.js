@@ -4,8 +4,13 @@ export const clientsService = {
   // Get all clients for the current user
   async getClients() {
     try {
+      console.log('Attempting to fetch clients...');
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('User not authenticated');
+      if (userError || !user) {
+        console.error('Error getting user:', userError);
+        throw new Error('User not authenticated');
+      }
+      console.log('User authenticated:', user.id);
 
       // Get user profile to get company_id
       const { data: userProfile, error: profileError } = await supabase
@@ -15,8 +20,10 @@ export const clientsService = {
         .single();
       
       if (profileError || !userProfile?.company_id) {
+        console.error('Error fetching user profile or company_id:', profileError);
         throw new Error('User profile or company not found');
       }
+      console.log('User profile found with company_id:', userProfile.company_id);
 
       const companyId = userProfile.company_id;
 
@@ -26,10 +33,15 @@ export const clientsService = {
         .eq('company_id', companyId)
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching clients from Supabase:', error);
+        throw error;
+      }
+      
+      console.log(`Found ${clients?.length || 0} clients for company ${companyId}.`);
       return clients || [];
     } catch (error) {
-      console.error('Error fetching clients:', error);
+      console.error('Error in getClients service:', error.message);
       throw error;
     }
   },
