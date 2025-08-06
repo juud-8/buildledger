@@ -168,6 +168,11 @@ export const clientsService = {
   // Delete a client
   async deleteClient(id) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] DELETE_CLIENT_START:`, { id });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -184,6 +189,14 @@ export const clientsService = {
 
       const companyId = userProfile.company_id;
 
+      // First get the client name for the success message
+      const { data: client } = await supabase
+        .from('clients')
+        .select('name')
+        .eq('company_id', companyId)
+        .eq('id', id)
+        .single();
+
       const { error } = await supabase
         .from('clients')
         .delete()
@@ -191,9 +204,11 @@ export const clientsService = {
         .eq('id', id);
 
       if (error) throw error;
+      
+      showSuccessToast(`Client "${client?.name || 'Client'}" deleted successfully`);
       return true;
     } catch (error) {
-      console.error('Error deleting client:', error);
+      showErrorToast('Failed to delete client', error);
       throw error;
     }
   }

@@ -3,20 +3,21 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 
-const ScheduleInspectionModal = ({ isOpen, onClose, onScheduleInspection }) => {
-  const [inspectionType, setInspectionType] = useState('');
-  const [inspectionDate, setInspectionDate] = useState('');
-  const [inspector, setInspector] = useState('');
+const AddMilestoneModal = ({ isOpen, onClose, onAddMilestone }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    if (!inspectionType || !inspectionDate) {
-      alert('Inspection Type and Date are required.');
+    // Basic validation
+    if (!title || !dueDate) {
+      alert('Title and Due Date are required.');
       return;
     }
-    onScheduleInspection({ inspectionType, inspectionDate, inspector });
-    console.log('Scheduling inspection:', { inspectionType, inspectionDate, inspector });
+    onAddMilestone({ title, description, dueDate });
+    console.log('Adding milestone:', { title, description, dueDate });
     onClose();
   };
 
@@ -24,7 +25,7 @@ const ScheduleInspectionModal = ({ isOpen, onClose, onScheduleInspection }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
       <div className="bg-card rounded-lg p-6 w-full max-w-md construction-shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-foreground">Schedule Inspection</h3>
+          <h3 className="text-lg font-semibold text-foreground">Add New Milestone</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-muted rounded-lg construction-transition"
@@ -35,22 +36,22 @@ const ScheduleInspectionModal = ({ isOpen, onClose, onScheduleInspection }) => {
         
         <div className="space-y-4 mb-6">
           <Input
-            label="Inspection Type"
-            placeholder="e.g., Electrical, Plumbing"
-            value={inspectionType}
-            onChange={(e) => setInspectionType(e.target.value)}
+            label="Milestone Title"
+            placeholder="e.g., Foundation Pour"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
           <Input
-            label="Inspector"
-            placeholder="e.g., City Inspector"
-            value={inspector}
-            onChange={(e) => setInspector(e.target.value)}
+            label="Description"
+            placeholder="Briefly describe the milestone"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
           <Input
-            label="Inspection Date"
+            label="Due Date"
             type="date"
-            value={inspectionDate}
-            onChange={(e) => setInspectionDate(e.target.value)}
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
           />
         </div>
         
@@ -67,7 +68,7 @@ const ScheduleInspectionModal = ({ isOpen, onClose, onScheduleInspection }) => {
             onClick={handleSubmit}
             fullWidth
           >
-            Schedule
+            Add Milestone
           </Button>
         </div>
       </div>
@@ -75,4 +76,4 @@ const ScheduleInspectionModal = ({ isOpen, onClose, onScheduleInspection }) => {
   );
 };
 
-export default ScheduleInspectionModal;
+export default AddMilestoneModal;

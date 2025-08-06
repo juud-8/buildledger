@@ -1,4 +1,7 @@
 import { supabase } from '../lib/supabase';
+import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
+
+const isDev = import.meta.env.DEV;
 
 export const invoicesService = {
   // Get all invoices for the current user
@@ -34,7 +37,7 @@ export const invoicesService = {
       if (error) throw error;
       return invoices || [];
     } catch (error) {
-      console.error('Error fetching invoices:', error);
+      showErrorToast('Failed to fetch invoices', error);
       throw error;
     }
   },
@@ -77,7 +80,7 @@ export const invoicesService = {
       if (error) throw error;
       return invoice;
     } catch (error) {
-      console.error('Error fetching invoice:', error);
+      showErrorToast('Failed to fetch invoice details', error);
       throw error;
     }
   },
@@ -85,6 +88,11 @@ export const invoicesService = {
   // Create a new invoice
   async createInvoice(invoiceData) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] CREATE_INVOICE_START:`, invoiceData);
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -112,9 +120,11 @@ export const invoicesService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Invoice #${invoice.invoice_number} created successfully`, invoice);
       return invoice;
     } catch (error) {
-      console.error('Error creating invoice:', error);
+      showErrorToast('Failed to create invoice', error);
       throw error;
     }
   },
@@ -122,6 +132,11 @@ export const invoicesService = {
   // Update an invoice
   async updateInvoice(id, updates) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] UPDATE_INVOICE_START:`, { id, updates });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -147,9 +162,11 @@ export const invoicesService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Invoice #${invoice.invoice_number} updated successfully`, invoice);
       return invoice;
     } catch (error) {
-      console.error('Error updating invoice:', error);
+      showErrorToast('Failed to update invoice', error);
       throw error;
     }
   },
@@ -157,6 +174,11 @@ export const invoicesService = {
   // Delete an invoice
   async deleteInvoice(id) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] DELETE_INVOICE_START:`, { id });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -173,6 +195,14 @@ export const invoicesService = {
 
       const companyId = userProfile.company_id;
 
+      // First get the invoice number for the success message
+      const { data: invoice } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('company_id', companyId)
+        .eq('id', id)
+        .single();
+
       const { error } = await supabase
         .from('invoices')
         .delete()
@@ -180,9 +210,11 @@ export const invoicesService = {
         .eq('id', id);
 
       if (error) throw error;
+      
+      showSuccessToast(`Invoice #${invoice?.invoice_number || 'Invoice'} deleted successfully`);
       return true;
     } catch (error) {
-      console.error('Error deleting invoice:', error);
+      showErrorToast('Failed to delete invoice', error);
       throw error;
     }
   }
