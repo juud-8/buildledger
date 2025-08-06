@@ -6,8 +6,12 @@ import Breadcrumb from '../../components/ui/Breadcrumb';
 import ItemFilters from './components/ItemFilters';
 import ItemCard from './components/ItemCard';
 import ItemToolbar from './components/ItemToolbar';
+import BarcodeScanner from '../../components/barcode/BarcodeScanner';
+import FloatingActionButton from '../../components/ui/FloatingActionButton';
+import { useBarcodeScanning } from '../../hooks/useBarcodeScanning';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
+import { showInfoToast } from '../../utils/toastHelper';
 
 const ItemsPage = () => {
   const navigate = useNavigate();
@@ -16,6 +20,10 @@ const ItemsPage = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState('grid');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannedItem, setScannedItem] = useState(null);
+  
+  const { searchItemByBarcode, isBarcodeSupported, isLoading: isBarcodeLoading } = useBarcodeScanning();
 
   // Mock items data
   const mockItems = [
@@ -306,6 +314,39 @@ const ItemsPage = () => {
     console.log('Viewing usage history for:', itemId);
   };
 
+  // Barcode scanning handlers
+  const handleOpenScanner = () => {
+    if (!isBarcodeSupported()) {
+      showInfoToast('Barcode scanning requires a mobile device with camera access');
+      return;
+    }
+    setIsScannerOpen(true);
+  };
+
+  const handleBarcodeDetected = async (barcode) => {
+    console.log('Barcode detected:', barcode);
+    
+    // Search for existing item with this barcode
+    const foundItem = await searchItemByBarcode(barcode);
+    
+    if (foundItem) {
+      // Item found - highlight it in the list
+      setScannedItem(foundItem);
+      setSearchQuery(barcode); // This will filter the list to show the scanned item
+    } else {
+      // Item not found - could navigate to add new item with barcode pre-filled
+      showInfoToast(`Item not found with barcode: ${barcode}. You can add it as a new item.`);
+      // Optional: navigate to add item page with barcode pre-filled
+      // navigate(`/items/add?barcode=${barcode}`);
+    }
+    
+    setIsScannerOpen(false);
+  };
+
+  const handleScannerClose = () => {
+    setIsScannerOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -343,30 +384,67 @@ const ItemsPage = () => {
                   Manage construction items, pricing, and inventory
                 </p>
               </div>
-              <div className="hidden lg:flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  iconName="Upload"
-                  iconPosition="left"
-                  onClick={handleBulkImport}
-                >
-                  Import Items
-                </Button>
-                <Button
-                  variant="outline"
-                  iconName="Download"
-                  iconPosition="left"
-                  onClick={() => handleBulkExport('csv')}
-                >
-                  Export Items
-                </Button>
+              <div className="flex items-center space-x-2">
+                {/* Mobile Barcode Scanner Button */}
+                {isBarcodeSupported() && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleOpenScanner}
+                    className="lg:hidden"
+                    disabled={isBarcodeLoading}
+                  >
+                    <Icon name="ScanLine" size={20} />
+                  </Button>
+                )}
+                
+                {/* Desktop Actions */}
+                <div className="hidden lg:flex items-center space-x-2">
+                  {isBarcodeSupported() && (
+                    <Button
+                      variant="outline"
+                      iconName="ScanLine"
+                      iconPosition="left"
+                      onClick={handleOpenScanner}
+                      disabled={isBarcodeLoading}
+                    >
+                      Scan Item
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    iconName="Upload"
+                    iconPosition="left"
+                    onClick={handleBulkImport}
+                  >
+                    Import Items
+                  </Button>
+                  <Button
+                    variant="outline"
+                    iconName="Download"
+                    iconPosition="left"
+                    onClick={() => handleBulkExport('csv')}
+                  >
+                    Export Items
+                  </Button>
+                  <Button
+                    variant="default"
+                    iconName="Plus"
+                    iconPosition="left"
+                    onClick={handleAddItem}
+                  >
+                    Add Item
+                  </Button>
+                </div>
+                
+                {/* Mobile Add Item Button */}
                 <Button
                   variant="default"
-                  iconName="Plus"
-                  iconPosition="left"
+                  size="icon"
                   onClick={handleAddItem}
+                  className="lg:hidden"
                 >
-                  Add Item
+                  <Icon name="Plus" size={20} />
                 </Button>
               </div>
             </div>
@@ -448,6 +526,7 @@ const ItemsPage = () => {
                         key={item?.id}
                         item={item}
                         viewMode={viewMode}
+                        isHighlighted={scannedItem && scannedItem.id === item.id}
                         onEdit={handleEditItem}
                         onDuplicate={handleDuplicateItem}
                         onDelete={handleDeleteItem}
@@ -462,6 +541,28 @@ const ItemsPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Floating Scan Button */}
+      {isBarcodeSupported() && (
+        <FloatingActionButton
+          icon="ScanLine"
+          onClick={handleOpenScanner}
+          disabled={isBarcodeLoading}
+          className="lg:hidden"
+          variant="default"
+        />
+      )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={handleScannerClose}
+        onBarcodeDetected={handleBarcodeDetected}
+        onItemNotFound={(barcode) => {
+          showInfoToast(`Item not found with barcode: ${barcode}`);
+          setIsScannerOpen(false);
+        }}
+      />
     </div>
   );
 };

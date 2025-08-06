@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Image from '../../../components/AppImage';
+import ClientMessaging from '../../../components/messaging/ClientMessaging';
 
 const ClientDetailModal = ({ client, isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -227,41 +228,7 @@ const ClientDetailModal = ({ client, isOpen, onClose }) => {
   );
 
   const renderCommunicationTab = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-foreground">Communication Log</h4>
-        <Button variant="outline" size="sm" iconName="Plus" iconPosition="left">
-          Log Communication
-        </Button>
-      </div>
-      
-      <div className="space-y-3">
-        {mockCommunications?.map((comm) => (
-          <div key={comm?.id} className="border border-border rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                <Icon 
-                  name={comm?.type === 'email' ? 'Mail' : comm?.type === 'call' ? 'Phone' : 'Users'} 
-                  size={16} 
-                  className="text-primary" 
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <h5 className="font-medium text-foreground">{comm?.subject}</h5>
-                  <span className="text-sm text-muted-foreground">{formatDate(comm?.date)}</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {comm?.type === 'call' && `Duration: ${comm?.duration}`}
-                  {comm?.type === 'meeting' && `Location: ${comm?.location}`}
-                  {comm?.type === 'email' && `Status: ${comm?.status}`}
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <ClientMessaging client={client} onClose={onClose} />
   );
 
   const renderDocumentsTab = () => (

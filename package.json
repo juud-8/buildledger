@@ -41,6 +41,8 @@
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/line-clamp": "^0.1.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
     "axios": "^1.8.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -64,14 +66,15 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "tailwindcss-elevation": "^2.0.0",
-    "tailwindcss-fluid-type": "^2.0.7"
+    "tailwindcss-fluid-type": "^2.0.7",
+    "twilio": "^5.8.0"
   },
   "scripts": {
     "start": "vite",
     "build": "vite build --sourcemap",
     "serve": "vite preview",
     "railway:build": "vite build --sourcemap",
-    "railway:start": "node serve.js",
+    "railway:start": "node deployment/serve.js",
     "deploy": "echo '🚨 USE: vercel build --prod && vercel --prod --prebuilt' && echo '❌ NEVER USE: vercel --prod' && exit 1",
     "deploy:correct": "vercel build --prod && vercel --prod --prebuilt",
     "deploy:wrong": "echo '❌ THIS IS THE WRONG WAY - USE npm run deploy:correct' && exit 1"

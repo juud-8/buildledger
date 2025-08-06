@@ -10,7 +10,8 @@ const ItemCard = ({
   onDuplicate, 
   onDelete, 
   onAddToFavorites, 
-  onViewUsageHistory 
+  onViewUsageHistory,
+  isHighlighted = false 
 }) => {
   const [showActions, setShowActions] = useState(false);
 
@@ -39,7 +40,7 @@ const ItemCard = ({
 
   if (viewMode === 'list') {
     return (
-      <Card>
+      <Card className={isHighlighted ? "ring-2 ring-primary ring-offset-2 bg-primary/5" : ""}>
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-4 flex-1">
             <div className={`p-2 rounded-lg bg-${item?.category?.toLowerCase()}/10 text-${item?.category?.toLowerCase()}`}>
@@ -117,7 +118,7 @@ const ItemCard = ({
   }
 
   return (
-    <Card>
+    <Card className={isHighlighted ? "ring-2 ring-primary ring-offset-2 bg-primary/5" : ""}>
       <CardHeader>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-3">

@@ -1,5 +1,5 @@
 const plugin = require('tailwindcss/plugin');
-const { theme } = require('./src/lib/theme');
+const { theme } = require('../src/lib/theme');
 
 module.exports = plugin(
   function ({ addBase }) {
