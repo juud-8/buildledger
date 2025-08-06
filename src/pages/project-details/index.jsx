@@ -11,8 +11,11 @@ import ProjectPhotos from './components/ProjectPhotos';
 import ProjectDocuments from './components/ProjectDocuments';
 import ProjectFinancials from './components/ProjectFinancials';
 import QuickActions from './components/QuickActions';
+import { useAuth } from '../../contexts/AuthContext';
+import { hasPermission, FEATURES } from '../../utils/rbac';
 
 const ProjectDetails = () => {
+  const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [project, setProject] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -371,9 +374,11 @@ const ProjectDetails = () => {
                     <Button variant="outline" iconName="Download" iconPosition="left">
                       Export
                     </Button>
-                    <Button variant="default" iconName="Edit" iconPosition="left">
-                      Edit Project
-                    </Button>
+                    {hasPermission(userProfile?.role, FEATURES.CREATE_EDIT_PROJECTS) && (
+                      <Button variant="default" iconName="Edit" iconPosition="left">
+                        Edit Project
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
