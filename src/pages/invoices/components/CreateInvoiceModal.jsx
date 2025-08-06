@@ -9,7 +9,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import ItemSelectionModal from '../../item-selection-modal';
 
-const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
+const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invoiceId = null }) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -36,9 +36,50 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
   useEffect(() => {
     if (isOpen && user) {
       loadData();
-      generateInvoiceNumber();
+      if (editMode && invoiceId) {
+        loadInvoiceData();
+      } else {
+        generateInvoiceNumber();
+      }
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, editMode, invoiceId]);
+
+  const loadInvoiceData = async () => {
+    try {
+      setIsLoading(true);
+      const invoice = await invoicesService.getInvoice(invoiceId);
+      
+      if (invoice) {
+        // Set form data from existing invoice
+        setFormData({
+          clientId: invoice.client_id || '',
+          projectId: invoice.project_id || '',
+          invoiceNumber: invoice.invoice_number || '',
+          title: invoice.title || '',
+          description: invoice.description || '',
+          taxRate: invoice.tax_rate || 0,
+          dueDate: invoice.due_date ? new Date(invoice.due_date).toISOString().split('T')[0] : '',
+          notes: invoice.notes || ''
+        });
+        
+        // Load invoice items if they exist
+        if (invoice.invoice_items && invoice.invoice_items.length > 0) {
+          setSelectedItems(invoice.invoice_items.map(item => ({
+            item_id: item.item_id,
+            name: item.item?.name || item.name,
+            unit_price: item.unit_price,
+            quantity: item.quantity,
+            total_price: item.total_price
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading invoice data:', error);
+      alert('Failed to load invoice data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -115,52 +156,72 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     return { subtotal, taxAmount, total };
   };
 
-  const handleSubmit = async (e) => {
-    e?.preventDefault();
-    if (!user || isLoading) return;
-
+  const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const { subtotal, taxAmount, total } = calculateTotals();
-
-      // Create invoice using service
       const invoiceData = {
         client_id: formData?.clientId,
-        project_id: formData?.projectId || null,
+        project_id: formData?.projectId,
         invoice_number: formData?.invoiceNumber,
         title: formData?.title,
         description: formData?.description,
-        status: 'draft',
-        subtotal,
-        tax_amount: taxAmount,
-        total_amount: total,
+        amount: calculateTotals().subtotal,
+        tax_amount: calculateTotals().taxAmount,
+        total_amount: calculateTotals().total,
+        tax_rate: formData?.taxRate,
         due_date: formData?.dueDate,
-        notes: formData?.notes
+        notes: formData?.notes,
+        status: 'pending'
       };
 
-      const invoice = await invoicesService.createInvoice(invoiceData);
+      let invoice;
+      if (editMode && invoiceId) {
+        // Update existing invoice
+        invoice = await invoicesService.updateInvoice(invoiceId, invoiceData);
+        
+        // Delete existing invoice items
+        const { error: deleteError } = await supabase
+          .from('invoice_items')
+          .delete()
+          .eq('invoice_id', invoiceId);
+        
+        if (deleteError) {
+          console.error('Error deleting old invoice items:', deleteError);
+        }
+      } else {
+        // Create new invoice
+        invoice = await invoicesService.createInvoice(invoiceData);
+      }
 
-      // Add invoice items
-      if (selectedItems?.length > 0) {
+      // Add invoice items (for both create and update)
+      if (selectedItems?.length > 0 && invoice?.id) {
         const invoiceItems = selectedItems?.map((item) => ({
           invoice_id: invoice?.id,
           item_id: item?.item_id,
+          name: item?.name, // Store name as backup
           quantity: item?.quantity,
           unit_price: item?.unit_price,
           total_price: item?.total_price
         }));
 
-        const { error: itemsError } = await supabase?.from('invoice_items')?.insert(invoiceItems);
+        const { error: itemsError } = await supabase
+          .from('invoice_items')
+          .insert(invoiceItems);
 
-        if (itemsError) throw itemsError;
+        if (itemsError) {
+          console.error('Error adding invoice items:', itemsError);
+          // Don't throw here, invoice is already created/updated
+        }
       }
 
       onSuccess?.();
       onClose();
-      resetForm();
+      if (!editMode) {
+        resetForm();
+      }
     } catch (error) {
-      console.error('Error creating invoice:', error);
-      alert('Error creating invoice. Please try again.');
+      console.error(`Error ${editMode ? 'updating' : 'creating'} invoice:`, error);
+      alert(`Error ${editMode ? 'updating' : 'creating'} invoice. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -277,7 +338,9 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-card border border-border rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground">Create New Invoice</h2>
+          <h2 className="text-2xl font-bold text-foreground">
+            {editMode ? 'Edit Invoice' : 'Create New Invoice'}
+          </h2>
           <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -541,7 +604,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
                 disabled={isLoading}
                 className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
               >
-                {isLoading ? 'Creating...' : 'Create Invoice'}
+                {isLoading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Invoice' : 'Create Invoice')}
               </Button>
             )}
           </div>
