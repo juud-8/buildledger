@@ -15,8 +15,12 @@ import SubcontractorPerformance from './components/SubcontractorPerformance';
 import CostAnalysis from './components/CostAnalysis';
 import GeographicRevenue from './components/GeographicRevenue';
 import FilterSidebar from './components/FilterSidebar';
+import { useAuth } from '../../contexts/AuthContext';
+import { hasPermission, FEATURES } from '../../utils/rbac';
+import Icon from '../../components/AppIcon';
 
 const Analytics = () => {
+  const { userProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState('yearly');
   const [filters, setFilters] = useState({
@@ -47,6 +51,26 @@ const Analytics = () => {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  if (!hasPermission(userProfile?.role, FEATURES.VIEW_ANALYTICS)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-16">
+          <Breadcrumb />
+          <main className="px-4 lg:px-6 py-8">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <Icon name="Lock" size={48} className="text-destructive mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
+                <p className="text-muted-foreground">You do not have permission to view this page. Please upgrade to an Enterprise plan.</p>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
