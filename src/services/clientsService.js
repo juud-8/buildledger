@@ -1,4 +1,7 @@
 import { supabase } from '../lib/supabase';
+import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
+
+const isDev = import.meta.env.DEV;
 
 export const clientsService = {
   // Get all clients for the current user
@@ -29,7 +32,7 @@ export const clientsService = {
       if (error) throw error;
       return clients || [];
     } catch (error) {
-      console.error('Error fetching clients:', error);
+      showErrorToast('Failed to fetch clients', error);
       throw error;
     }
   },
@@ -63,7 +66,7 @@ export const clientsService = {
       if (error) throw error;
       return client;
     } catch (error) {
-      console.error('Error fetching client:', error);
+      showErrorToast('Failed to fetch client details', error);
       throw error;
     }
   },
@@ -71,13 +74,17 @@ export const clientsService = {
   // Create a new client
   async createClient(clientData) {
     try {
-      console.log('Attempting to create client with data:', clientData);
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] CREATE_CLIENT_START:`, clientData);
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
-        console.error('Error getting user:', userError);
+        if (isDev) console.error('Error getting user:', userError);
         throw new Error('User not authenticated');
       }
-      console.log('User authenticated for client creation:', user.id);
+      if (isDev) console.log('User authenticated for client creation:', user.id);
 
       // Get user profile to get company_id
       const { data: userProfile, error: profileError } = await supabase
@@ -87,10 +94,10 @@ export const clientsService = {
         .single();
       
       if (profileError || !userProfile?.company_id) {
-        console.error('Error fetching user profile or company_id:', profileError);
+        if (isDev) console.error('Error fetching user profile or company_id:', profileError);
         throw new Error('User profile or company not found');
       }
-      console.log('User profile found with company_id:', userProfile.company_id);
+      if (isDev) console.log('User profile found with company_id:', userProfile.company_id);
 
       const companyId = userProfile.company_id;
 
@@ -104,14 +111,14 @@ export const clientsService = {
         .single();
 
       if (error) {
-        console.error('Error creating client in Supabase:', error);
+        if (isDev) console.error('Error creating client in Supabase:', error);
         throw error;
       }
       
-      console.log('Client created successfully:', client);
+      showSuccessToast(`Client "${client.name}" created successfully`, client);
       return client;
     } catch (error) {
-      console.error('Error in createClient service:', error.message);
+      showErrorToast('Failed to create client', error);
       throw error;
     }
   },
@@ -119,6 +126,11 @@ export const clientsService = {
   // Update a client
   async updateClient(id, updates) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] UPDATE_CLIENT_START:`, { id, updates });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -144,9 +156,11 @@ export const clientsService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Client "${client.name}" updated successfully`, client);
       return client;
     } catch (error) {
-      console.error('Error updating client:', error);
+      showErrorToast('Failed to update client', error);
       throw error;
     }
   },

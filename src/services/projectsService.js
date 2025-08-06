@@ -144,9 +144,11 @@ export const projectsService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Project "${project.name}" updated successfully`, project);
       return project;
     } catch (error) {
-      console.error('Error updating project:', error);
+      showErrorToast('Failed to update project', error);
       throw error;
     }
   },
@@ -170,6 +172,14 @@ export const projectsService = {
 
       const companyId = userProfile.company_id;
 
+      // First get the project name for the success message
+      const { data: project } = await supabase
+        .from('projects')
+        .select('name')
+        .eq('company_id', companyId)
+        .eq('id', id)
+        .single();
+
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -177,9 +187,11 @@ export const projectsService = {
         .eq('id', id);
 
       if (error) throw error;
+      
+      showSuccessToast(`Project "${project?.name || 'Project'}" deleted successfully`);
       return true;
     } catch (error) {
-      console.error('Error deleting project:', error);
+      showErrorToast('Failed to delete project', error);
       throw error;
     }
   }
