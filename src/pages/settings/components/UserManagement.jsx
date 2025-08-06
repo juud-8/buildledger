@@ -38,14 +38,6 @@ const UserManagement = () => {
 
     fetchUsers();
   }, []);
-  
-
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteData, setInviteData] = useState({
-    email: "",
-    role: "",
-    name: ""
-  });
 
   const roleOptions = [
     { value: "owner", label: "Owner/Manager", description: "Full system access and billing management" },
