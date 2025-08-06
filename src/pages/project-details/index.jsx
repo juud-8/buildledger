@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
+import { projectsService } from '../../services/projectsService';
 import Header from '../../components/ui/Header';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import Icon from '../../components/AppIcon';
@@ -13,10 +14,31 @@ import QuickActions from './components/QuickActions';
 
 const ProjectDetails = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [project, setProject] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
+  const { id } = useParams();
 
-  // Mock project data
-  const project = {
+  useEffect(() => {
+    fetchProjectDetails();
+  }, [id]);
+
+  const fetchProjectDetails = async () => {
+    try {
+      setIsLoading(true);
+      const data = await projectsService.getProject(id);
+      setProject(data);
+    } catch (error) {
+      console.error('Failed to fetch project details:', error);
+      // Use mock data as fallback for demo
+      setProject(getMockProject());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Mock project data fallback
+  const getMockProject = () => ({
     id: 'PRJ-001',
     name: 'Modern Kitchen Renovation',
     description: 'Complete kitchen renovation including new cabinets, countertops, appliances, and flooring for a contemporary family home.',
@@ -264,7 +286,35 @@ const ProjectDetails = () => {
         status: 'pending'
       }
     ]
-  };
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Icon name="Loader" size={48} className="animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading project details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Icon name="AlertCircle" size={48} className="text-destructive mx-auto mb-4" />
+            <p className="text-muted-foreground">Project not found</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: 'LayoutDashboard' },
