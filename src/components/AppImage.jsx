@@ -17,7 +17,7 @@ function Image({
         className
       )}
       onError={(e) => {
-        e.target.src = "/assets/images/no_image.png"
+        e.target.src = "/assets/images/buildledger-logo-watermark.png"
       }}
       {...props}
     />

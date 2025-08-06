@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Building2, DollarSign, Users, FileText, BarChart3, Shield, X, Check } from 'lucide-react';
+import Logo from '../../components/ui/Logo';
 
 const LandingPage = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -94,11 +95,8 @@ const LandingPage = () => {
       <nav className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-                <Building2 size={20} color="white" />
-              </div>
-              <span className="text-xl font-bold text-foreground">BuildLedger</span>
+            <div className="flex items-center space-x-3">
+              <Logo variant="horizontal" size="md" />
             </div>
             
             <div className="flex items-center space-x-4">
