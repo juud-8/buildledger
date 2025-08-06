@@ -6,8 +6,10 @@ export const ENV_CONFIG = {
   // Stripe Configuration
   STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
   
-  // OpenAI Configuration
+  // AI Provider Configuration
   OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
+  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
+  ANTHROPIC_API_KEY: import.meta.env.VITE_ANTHROPIC_API_KEY,
   
   // Supabase Configuration
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,

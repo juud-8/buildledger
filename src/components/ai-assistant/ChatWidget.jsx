@@ -84,10 +84,21 @@ const ChatWidget = () => {
 
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      let errorContent = 'Sorry, I encountered an error. Please try again.';
+      
+      if (error?.message?.includes('quota') || error?.message?.includes('429')) {
+        errorContent = 'I apologize, but my primary AI service has reached its usage limit. I\'m trying alternative services to assist you. If this persists, please try again in a few minutes.';
+      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
+        errorContent = 'I\'m having trouble connecting to my AI services. Please check your internet connection and try again.';
+      } else if (error?.message?.includes('401') || error?.message?.includes('403')) {
+        errorContent = 'I\'m experiencing authentication issues with my AI services. The system administrator has been notified.';
+      }
+      
       const errorMessage = {
         id: Date.now() + 1,
         type: 'assistant',
-        content: error?.message || 'Sorry, I encountered an error. Please try again.',
+        content: errorContent,
         timestamp: new Date(),
         isError: true
       };
