@@ -3,25 +3,25 @@ import { BrowserRouter, Routes as RouterRoutes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 
-import LandingPage from './pages/landing/index.jsx';
-import DashboardPage from './pages/dashboard/index.jsx';
-import ProjectsPage from './pages/projects/index.jsx';
-import ProjectDetailsPage from './pages/project-details/index.jsx';
-import InvoicesPage from './pages/invoices/index.jsx';
-import QuotesPage from './pages/quotes/index.jsx';
-import ClientsPage from './pages/clients/index.jsx';
-import ItemsPage from './pages/items/index.jsx';
-import AddEditItemPage from './pages/add-edit-item/index.jsx';
-import ItemSelectionModalPage from './pages/item-selection-modal/index.jsx';
-import AnalyticsPage from './pages/analytics/index.jsx';
-import SettingsPage from './pages/settings/index.jsx';
-import LoginPage from './pages/login/index.jsx';
-import RegisterPage from './pages/register/index.jsx';
-import PricingPage from './pages/pricing/index.jsx';
+import LandingPage from './pages/landing/index';
+import DashboardPage from './pages/dashboard/index';
+import ProjectsPage from './pages/projects/index';
+import ProjectDetailsPage from './pages/project-details/index';
+import InvoicesPage from './pages/invoices/index';
+import QuotesPage from './pages/quotes/index';
+import ClientsPage from './pages/clients/index';
+import ItemsPage from './pages/items/index';
+import AddEditItemPage from './pages/add-edit-item/index';
+import ItemSelectionModalPage from './pages/item-selection-modal/index';
+import AnalyticsPage from './pages/analytics/index';
+import SettingsPage from './pages/settings/index';
+import LoginPage from './pages/login/index';
+import RegisterPage from './pages/register/index';
+import PricingPage from './pages/pricing/index';
 import NotFoundPage from './pages/NotFound.jsx';
-import BrandingPage from './pages/branding/index.jsx';
-import AdminSetupPage from './pages/admin-setup/index.jsx';
-import AdminCleanupPage from './pages/admin-cleanup/index.jsx';
+import BrandingPage from './pages/branding/index';
+import AdminSetupPage from './pages/admin-setup/index';
+import AdminCleanupPage from './pages/admin-cleanup/index';
 
 export default function Routes() {
   return (
