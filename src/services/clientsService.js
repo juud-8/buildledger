@@ -1,4 +1,7 @@
 import { supabase } from '../lib/supabase';
+import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
+
+const isDev = import.meta.env.DEV;
 
 export const clientsService = {
   // Get all clients for the current user
@@ -29,7 +32,7 @@ export const clientsService = {
       if (error) throw error;
       return clients || [];
     } catch (error) {
-      console.error('Error fetching clients:', error);
+      showErrorToast('Failed to fetch clients', error);
       throw error;
     }
   },
@@ -63,7 +66,7 @@ export const clientsService = {
       if (error) throw error;
       return client;
     } catch (error) {
-      console.error('Error fetching client:', error);
+      showErrorToast('Failed to fetch client details', error);
       throw error;
     }
   },
@@ -71,8 +74,17 @@ export const clientsService = {
   // Create a new client
   async createClient(clientData) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] CREATE_CLIENT_START:`, clientData);
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error('User not authenticated');
+      if (userError || !user) {
+        if (isDev) console.error('Error getting user:', userError);
+        throw new Error('User not authenticated');
+      }
+      if (isDev) console.log('User authenticated for client creation:', user.id);
 
       // Get user profile to get company_id
       const { data: userProfile, error: profileError } = await supabase
@@ -82,8 +94,10 @@ export const clientsService = {
         .single();
       
       if (profileError || !userProfile?.company_id) {
+        if (isDev) console.error('Error fetching user profile or company_id:', profileError);
         throw new Error('User profile or company not found');
       }
+      if (isDev) console.log('User profile found with company_id:', userProfile.company_id);
 
       const companyId = userProfile.company_id;
 
@@ -96,10 +110,15 @@ export const clientsService = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (isDev) console.error('Error creating client in Supabase:', error);
+        throw error;
+      }
+      
+      showSuccessToast(`Client "${client.name}" created successfully`, client);
       return client;
     } catch (error) {
-      console.error('Error creating client:', error);
+      showErrorToast('Failed to create client', error);
       throw error;
     }
   },
@@ -107,6 +126,11 @@ export const clientsService = {
   // Update a client
   async updateClient(id, updates) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] UPDATE_CLIENT_START:`, { id, updates });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -132,9 +156,11 @@ export const clientsService = {
         .single();
 
       if (error) throw error;
+      
+      showSuccessToast(`Client "${client.name}" updated successfully`, client);
       return client;
     } catch (error) {
-      console.error('Error updating client:', error);
+      showErrorToast('Failed to update client', error);
       throw error;
     }
   },
@@ -142,6 +168,11 @@ export const clientsService = {
   // Delete a client
   async deleteClient(id) {
     try {
+      if (isDev) {
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] DELETE_CLIENT_START:`, { id });
+      }
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not authenticated');
 
@@ -158,6 +189,14 @@ export const clientsService = {
 
       const companyId = userProfile.company_id;
 
+      // First get the client name for the success message
+      const { data: client } = await supabase
+        .from('clients')
+        .select('name')
+        .eq('company_id', companyId)
+        .eq('id', id)
+        .single();
+
       const { error } = await supabase
         .from('clients')
         .delete()
@@ -165,9 +204,11 @@ export const clientsService = {
         .eq('id', id);
 
       if (error) throw error;
+      
+      showSuccessToast(`Client "${client?.name || 'Client'}" deleted successfully`);
       return true;
     } catch (error) {
-      console.error('Error deleting client:', error);
+      showErrorToast('Failed to delete client', error);
       throw error;
     }
   }
