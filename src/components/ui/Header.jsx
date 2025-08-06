@@ -10,7 +10,7 @@ const Header = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, forceClearAuth, user } = useAuth();
+  const { signOut, forceClearAuth, user, userProfile } = useAuth();
 
   const navigationItems = [
     { label: 'Dashboard', path: '/dashboard', icon: 'LayoutDashboard' },
@@ -100,7 +100,7 @@ const Header = () => {
                 <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                   <Icon name="User" size={16} color="white" />
                 </div>
-                <span className="text-sm font-medium">John Doe</span>
+                <span className="text-sm font-medium">{userProfile?.full_name || 'User'}</span>
                 <Icon name="ChevronDown" size={16} />
               </Button>
 
@@ -199,7 +199,7 @@ const Header = () => {
                     <Icon name="User" size={20} color="white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">John Doe</p>
+                    <p className="text-sm font-medium text-foreground">{userProfile?.full_name || 'User'}</p>
                     <p className="text-xs text-muted-foreground">Project Manager</p>
                   </div>
                 </div>

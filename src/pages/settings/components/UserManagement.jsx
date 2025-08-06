@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../../lib/supabase';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
@@ -6,38 +7,38 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@buildledger.com",
-      role: "owner",
-      status: "active",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      lastActive: "2 hours ago",
-      joinDate: "01/15/2024"
-    },
-    {
-      id: 2,
-      name: "Sarah Wilson",
-      email: "sarah@buildledger.com",
-      role: "project-manager",
-      status: "active",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      lastActive: "1 day ago",
-      joinDate: "02/20/2024"
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@buildledger.com",
-      role: "field-supervisor",
-      status: "inactive",
-      avatar: "https://randomuser.me/api/portraits/men/56.jpg",
-      lastActive: "1 week ago",
-      joinDate: "03/10/2024"
-    }
-  ]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteData, setInviteData] = useState({
+    email: "",
+    role: "",
+    name: ""
+  });
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*');
+
+        if (error) {
+          throw error;
+        }
+        setUsers(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+  
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteData, setInviteData] = useState({
@@ -125,12 +126,31 @@ const UserManagement = () => {
                   </div>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
                   <div className="flex items-center space-x-4 mt-1">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-md ${getRoleBadgeColor(user?.role)}`}>
-                      {roleOptions?.find(r => r?.value === user?.role)?.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Last active: {user?.lastActive}
-                    </span>
+                    <div className="p-6">
+        {loading && <p>Loading users...</p>}
+        {error && <p className="text-error">{error}</p>}
+        {users && !loading && (
+          <div className="space-y-4">
+            {users.map((user) => (
+              <div key={user.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 rounded-full overflow-hidden">
+                    <Image
+                      src={user.avatar_url || `https://api.dicebear.com/6.x/initials/svg?seed=${user.full_name}`}
+                      alt={user.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-foreground">{user.full_name}</h4>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
                   </div>
                 </div>
               </div>
