@@ -6,130 +6,81 @@ import ClientFilters from './components/ClientFilters';
 import ClientCard from './components/ClientCard';
 import ClientToolbar from './components/ClientToolbar';
 import ClientDetailModal from './components/ClientDetailModal';
+import CreateClientModal from './components/CreateClientModal';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
+import { clientsService } from '../../services/clientsService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ClientsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
   const [selectedClients, setSelectedClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [clients, setClients] = useState([]);
+  const [filteredClients, setFilteredClients] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Mock clients data
-  const mockClients = [
-    {
-      id: 1,
-      name: "Johnson Family",
-      email: "mike.johnson@email.com",
-      phone: "(555) 123-4567",
-      location: "123 Oak Street, Springfield, IL",
-      type: "residential",
-      isRepeat: true,
-      totalValue: 125000,
-      activeProjects: 2,
-      totalProjects: 5,
-      paymentHistory: "excellent",
-      lastContact: "2024-01-18",
-      clientSince: "2022-03-15",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
-    },
-    {
-      id: 2,
-      name: "Springfield Commercial LLC",
-      email: "contact@springfieldcommercial.com",
-      phone: "(555) 987-6543",
-      location: "456 Business Park Dr, Springfield, IL",
-      type: "commercial",
-      isRepeat: false,
-      totalValue: 450000,
-      activeProjects: 1,
-      totalProjects: 2,
-      paymentHistory: "good",
-      lastContact: "2024-01-15",
-      clientSince: "2023-08-20",
-      avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face"
-    },
-    {
-      id: 3,
-      name: "Davis Residence",
-      email: "sarah.davis@email.com",
-      phone: "(555) 456-7890",
-      location: "789 Maple Avenue, Springfield, IL",
-      type: "residential",
-      isRepeat: true,
-      totalValue: 85000,
-      activeProjects: 0,
-      totalProjects: 3,
-      paymentHistory: "excellent",
-      lastContact: "2024-01-12",
-      clientSince: "2021-11-10",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face"
-    },
-    {
-      id: 4,
-      name: "Metro Office Complex",
-      email: "facilities@metrooffice.com",
-      phone: "(555) 321-0987",
-      location: "321 Downtown Plaza, Springfield, IL",
-      type: "commercial",
-      isRepeat: true,
-      totalValue: 750000,
-      activeProjects: 3,
-      totalProjects: 8,
-      paymentHistory: "good",
-      lastContact: "2024-01-20",
-      clientSince: "2020-05-18",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"
-    },
-    {
-      id: 5,
-      name: "Wilson Family",
-      email: "tom.wilson@email.com",
-      phone: "(555) 654-3210",
-      location: "654 Pine Street, Springfield, IL",
-      type: "residential",
-      isRepeat: false,
-      totalValue: 65000,
-      activeProjects: 1,
-      totalProjects: 1,
-      paymentHistory: "fair",
-      lastContact: "2024-01-10",
-      clientSince: "2024-01-05",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face"
-    },
-    {
-      id: 6,
-      name: "Green Valley Shopping Center",
-      email: "management@greenvalley.com",
-      phone: "(555) 789-0123",
-      location: "987 Valley Road, Springfield, IL",
-      type: "commercial",
-      isRepeat: false,
-      totalValue: 320000,
-      activeProjects: 1,
-      totalProjects: 1,
-      paymentHistory: "good",
-      lastContact: "2024-01-16",
-      clientSince: "2023-12-01",
-      avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&h=100&fit=crop&crop=face"
-    }
-  ];
-
-  const [clients, setClients] = useState(mockClients);
-  const [filteredClients, setFilteredClients] = useState(mockClients);
-
+  // Fetch clients from Supabase
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    const fetchClients = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-    return () => clearTimeout(timer);
-  }, []);
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await clientsService.getClients();
+        setClients(data || []);
+        setFilteredClients(data || []);
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+        setError('Failed to load clients. Please try again.');
+        // Use mock data as fallback for demo purposes
+        const mockClients = [
+          {
+            id: 1,
+            name: "Johnson Family",
+            email: "mike.johnson@email.com",
+            phone: "(555) 123-4567",
+            address: { street: "123 Oak Street", city: "Springfield", state: "IL", zip: "62701" },
+            client_type: "residential",
+            is_active: true,
+            payment_terms: "net30",
+            created_at: "2022-03-15",
+          },
+          {
+            id: 2,
+            name: "Springfield Commercial LLC",
+            email: "contact@springfieldcommercial.com",
+            phone: "(555) 987-6543",
+            address: { street: "456 Business Park Dr", city: "Springfield", state: "IL", zip: "62702" },
+            client_type: "commercial",
+            is_active: true,
+            payment_terms: "net45",
+            created_at: "2023-08-20",
+          }
+        ];
+        setClients(mockClients);
+        setFilteredClients(mockClients);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchClients();
+  }, [user, refreshKey]);
+
+  // Filter clients based on search and filters
   useEffect(() => {
     filterClients();
   }, [searchQuery, activeFilters, clients]);
@@ -142,7 +93,8 @@ const ClientsPage = () => {
       filtered = filtered?.filter(client =>
         client?.name?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
         client?.email?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
-        client?.location?.toLowerCase()?.includes(searchQuery?.toLowerCase())
+        client?.phone?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
+        client?.company_name?.toLowerCase()?.includes(searchQuery?.toLowerCase())
       );
     }
 
@@ -152,13 +104,13 @@ const ClientsPage = () => {
         filtered = filtered?.filter(client => {
           switch (category) {
             case 'clientType':
-              return values?.includes(client?.type) || (values?.includes('repeat') && client?.isRepeat);
-            case 'projectStatus':
-              if (values?.includes('active')) return client?.activeProjects > 0;
-              if (values?.includes('completed')) return client?.totalProjects > client?.activeProjects;
+              return values?.includes(client?.client_type);
+            case 'status':
+              if (values?.includes('active')) return client?.is_active === true;
+              if (values?.includes('inactive')) return client?.is_active === false;
               return true;
-            case 'paymentHistory':
-              return values?.includes(client?.paymentHistory);
+            case 'paymentTerms':
+              return values?.includes(client?.payment_terms);
             default:
               return true;
           }
@@ -175,34 +127,169 @@ const ClientsPage = () => {
     setIsDetailModalOpen(true);
   };
 
+  const handleEditClient = (clientId) => {
+    const client = clients?.find(c => c?.id === clientId);
+    setSelectedClient(client);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClient = async (clientId) => {
+    if (!window.confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await clientsService.deleteClient(clientId);
+      // Refresh the clients list
+      setRefreshKey(prev => prev + 1);
+      // Show success message (you might want to use a toast notification here)
+      console.log('Client deleted successfully');
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      alert('Failed to delete client. Please try again.');
+    }
+  };
+
   const handleCreateQuote = (clientId) => {
-    navigate('/quotes', { state: { clientId } });
+    navigate('/quotes', { state: { clientId, action: 'create' } });
   };
 
   const handleStartProject = (clientId) => {
-    navigate('/projects', { state: { clientId } });
+    const client = clients?.find(c => c?.id === clientId);
+    navigate('/projects', { state: { clientId, clientName: client?.name, action: 'create' } });
   };
 
-  const handleContactClient = (clientId) => {
-    // Mock contact functionality
-    console.log('Contacting client:', clientId);
+  const handleContactClient = (client) => {
+    // Open email client
+    if (client?.email) {
+      window.location.href = `mailto:${client.email}?subject=Hello ${client.name}`;
+    } else if (client?.phone) {
+      window.location.href = `tel:${client.phone}`;
+    } else {
+      alert('No contact information available for this client.');
+    }
   };
 
   const handleAddClient = () => {
-    // For now, show an alert to confirm the button works
-    alert('Add Client functionality would open here! 🚧\n\nThis demonstrates the button is working correctly. In production, this would open a client creation form.');
-    console.log('Add Client button clicked - functionality confirmed!');
+    setIsCreateModalOpen(true);
+  };
+
+  const handleClientCreated = () => {
+    setIsCreateModalOpen(false);
+    // Refresh the clients list
+    setRefreshKey(prev => prev + 1);
+  };
+
+  const handleClientUpdated = () => {
+    setIsEditModalOpen(false);
+    setSelectedClient(null);
+    // Refresh the clients list
+    setRefreshKey(prev => prev + 1);
   };
 
   const handleBulkEmail = () => {
-    // Mock bulk email functionality
-    console.log('Sending bulk email to:', selectedClients);
+    if (selectedClients.length === 0) {
+      alert('Please select at least one client to email.');
+      return;
+    }
+    
+    const selectedEmails = selectedClients
+      .map(id => clients.find(c => c.id === id))
+      .filter(c => c?.email)
+      .map(c => c.email);
+    
+    if (selectedEmails.length === 0) {
+      alert('Selected clients do not have email addresses.');
+      return;
+    }
+    
+    // Open email client with multiple recipients
+    window.location.href = `mailto:${selectedEmails.join(',')}?subject=Important Update from BuildLedger`;
   };
 
   const handleExport = (format) => {
-    // Mock export functionality
-    console.log('Exporting clients as:', format);
+    // Prepare data for export
+    const exportData = filteredClients.map(client => ({
+      Name: client.name,
+      Email: client.email,
+      Phone: client.phone,
+      Company: client.company_name || '',
+      Type: client.client_type,
+      Status: client.is_active ? 'Active' : 'Inactive',
+      'Payment Terms': client.payment_terms,
+      Address: client.address ? 
+        `${client.address.street || ''} ${client.address.city || ''} ${client.address.state || ''} ${client.address.zip || ''}`.trim() : '',
+      'Created Date': new Date(client.created_at).toLocaleDateString()
+    }));
+
+    if (format === 'csv') {
+      // Convert to CSV
+      const headers = Object.keys(exportData[0] || {});
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row => 
+          headers.map(header => `"${row[header] || ''}"`).join(',')
+        )
+      ].join('\n');
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `clients_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } else if (format === 'pdf') {
+      // For PDF export, you would typically use a library like jsPDF
+      // For now, we'll just show an alert
+      alert('PDF export functionality coming soon!');
+    }
   };
+
+  const handleSelectClient = (clientId) => {
+    setSelectedClients(prev => {
+      if (prev.includes(clientId)) {
+        return prev.filter(id => id !== clientId);
+      } else {
+        return [...prev, clientId];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedClients.length === filteredClients.length) {
+      setSelectedClients([]);
+    } else {
+      setSelectedClients(filteredClients.map(c => c.id));
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="pt-16">
+          <Breadcrumb />
+          <div className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <Icon name="Lock" size={48} className="text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Authentication Required</h3>
+              <p className="text-muted-foreground mb-4">Please log in to view your clients</p>
+              <Button
+                variant="default"
+                onClick={() => navigate('/login')}
+                iconName="LogIn"
+                iconPosition="left"
+              >
+                Go to Login
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -242,9 +329,9 @@ const ClientsPage = () => {
                   variant="outline"
                   iconName="Download"
                   iconPosition="left"
-                  onClick={() => handleExport('pdf')}
+                  onClick={() => handleExport('csv')}
                 >
-                  Export Report
+                  Export CSV
                 </Button>
                 <Button
                   variant="default"
@@ -257,6 +344,13 @@ const ClientsPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive">
+              {error}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Filters Sidebar */}
@@ -278,6 +372,7 @@ const ClientsPage = () => {
                 onExport={handleExport}
                 selectedClients={selectedClients}
                 totalClients={filteredClients?.length}
+                onSelectAll={handleSelectAll}
               />
 
               {/* Results */}
@@ -287,7 +382,8 @@ const ClientsPage = () => {
                   <h3 className="text-lg font-semibold text-foreground mb-2">No clients found</h3>
                   <p className="text-muted-foreground mb-4">
                     {searchQuery || Object.keys(activeFilters)?.length > 0
-                      ? "Try adjusting your search or filters" :"Get started by adding your first client"
+                      ? "Try adjusting your search or filters"
+                      : "Get started by adding your first client"
                     }
                   </p>
                   <Button
@@ -318,10 +414,14 @@ const ClientsPage = () => {
                       <ClientCard
                         key={client?.id}
                         client={client}
+                        isSelected={selectedClients.includes(client?.id)}
+                        onSelect={() => handleSelectClient(client?.id)}
                         onViewDetails={handleViewDetails}
+                        onEdit={handleEditClient}
+                        onDelete={handleDeleteClient}
                         onCreateQuote={handleCreateQuote}
                         onStartProject={handleStartProject}
-                        onContactClient={handleContactClient}
+                        onContactClient={() => handleContactClient(client)}
                       />
                     ))}
                   </div>
@@ -331,7 +431,8 @@ const ClientsPage = () => {
           </div>
         </div>
       </div>
-      {/* Client Detail Modal */}
+
+      {/* Modals */}
       <ClientDetailModal
         client={selectedClient}
         isOpen={isDetailModalOpen}
@@ -339,7 +440,29 @@ const ClientsPage = () => {
           setIsDetailModalOpen(false);
           setSelectedClient(null);
         }}
+        onEdit={handleEditClient}
+        onDelete={handleDeleteClient}
       />
+      
+      <CreateClientModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleClientCreated}
+      />
+      
+      {/* You can create an EditClientModal component similar to CreateClientModal */}
+      {isEditModalOpen && selectedClient && (
+        <CreateClientModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedClient(null);
+          }}
+          onSuccess={handleClientUpdated}
+          editMode={true}
+          initialData={selectedClient}
+        />
+      )}
     </div>
   );
 };
