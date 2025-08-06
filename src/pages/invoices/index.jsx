@@ -14,6 +14,8 @@ const InvoicesPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('date-desc');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingInvoiceId, setEditingInvoiceId] = useState(null);
   
   const [filters, setFilters] = useState({
     paymentStatus: 'all',
@@ -333,8 +335,16 @@ const InvoicesPage = () => {
   };
 
   const handleEdit = (invoiceId) => {
-    alert(`Edit Invoice functionality would open here! 🚧\n\nInvoice ID: ${invoiceId}\n\nThis would open the invoice editor in production.`);
-    console.log('Edit invoice:', invoiceId);
+    setEditingInvoiceId(invoiceId);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    setEditingInvoiceId(null);
+    // Refresh invoices list
+    // In a real app, you would refetch from the database
+    console.log('Invoice updated successfully');
   };
 
   const handleSendReminder = (invoiceId) => {
@@ -417,10 +427,26 @@ const InvoicesPage = () => {
           </div>
         </main>
 
+        {/* Create Invoice Modal */}
         <CreateInvoiceModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onCreateInvoice={handleCreateInvoice}
+          onSuccess={() => {
+            setIsCreateModalOpen(false);
+            // In production, refresh the invoices list here
+          }}
+        />
+
+        {/* Edit Invoice Modal */}
+        <CreateInvoiceModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingInvoiceId(null);
+          }}
+          onSuccess={handleEditSuccess}
+          editMode={true}
+          invoiceId={editingInvoiceId}
         />
       </div>
     </>
