@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const QuickActions = ({ project }) => {
+const QuickActions = ({ project, recentUpdates = [] }) => {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(project?.status);
 
@@ -59,40 +59,7 @@ const QuickActions = ({ project }) => {
     }
   ];
 
-  const recentUpdates = [
-    {
-      id: 1,
-      type: 'status',
-      message: 'Project status updated to "In Progress"',
-      user: 'John Doe',
-      timestamp: '2 hours ago',
-      icon: 'RefreshCw'
-    },
-    {
-      id: 2,
-      type: 'milestone',
-      message: 'Foundation milestone completed',
-      user: 'Mike Johnson',
-      timestamp: '5 hours ago',
-      icon: 'CheckCircle'
-    },
-    {
-      id: 3,
-      type: 'photo',
-      message: '12 new photos uploaded',
-      user: 'Sarah Wilson',
-      timestamp: '1 day ago',
-      icon: 'Camera'
-    },
-    {
-      id: 4,
-      type: 'document',
-      message: 'Permit documents signed',
-      user: 'Client',
-      timestamp: '2 days ago',
-      icon: 'FileCheck'
-    }
-  ];
+  
 
   const handleStatusUpdate = () => {
     // In real app, would make API call to update status
