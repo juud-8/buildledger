@@ -12,6 +12,7 @@ const AccountSetup = () => {
     {
       email: 'demo@buildledger.com',
       password: 'demo123456',
+      userId: 'f68fec3a-d1e5-4817-b932-61dc5e581c5a',
       fullName: 'Demo User',
       companyName: 'Demo Construction Co',
       role: 'company_owner',
@@ -69,88 +70,141 @@ const AccountSetup = () => {
     try {
       console.log(`Creating account: ${account.email}`);
       
-      const result = await authService.signUp(
-        account.email,
-        account.password,
-        account.fullName,
-        account.companyName
-      );
-
-      if (result.error) {
-        if (result.error.message.includes('User already registered')) {
-          return { 
-            email: account.email, 
-            status: 'exists', 
-            message: 'Account already exists' 
-          };
-        }
-        throw result.error;
-      }
-
-      // Wait for user creation and then try to create/fix the profile
-      const userId = result.data.user?.id;
-      if (userId) {
-        console.log(`User created with ID: ${userId}, checking profile...`);
+      // For demo account, use admin.createUser to set specific UUID
+      if (account.userId) {
+        console.log(`Creating user with specific UUID: ${account.userId}`);
         
-        // Wait a moment for the trigger to run
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Check if profile exists, if not create it manually
-        try {
-          
-          const { data: existingProfile, error: profileCheckError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-          if (profileCheckError && profileCheckError.code === 'PGRST116') {
-            // Profile doesn't exist, create it manually
-            console.log(`Creating profile manually for ${account.email}`);
-            
-            const { error: createProfileError } = await supabase
-              .from('user_profiles')
-              .insert({
-                id: userId,
-                email: account.email,
-                full_name: account.fullName,
-                company_name: account.companyName,
-                role: account.role || 'company_owner',
-                subscription_plan: account.plan || 'professional',
-                subscription_status: 'active',
-                preferences: {
-                  plan: account.plan || 'professional',
-                  lifetime_access: account.plan?.includes('lifetime') || false,
-                  payment_required: false
-                }
-              });
-
-            if (createProfileError) {
-              console.error('Manual profile creation failed:', createProfileError);
-              return {
-                email: account.email,
-                status: 'warning',
-                message: 'User created but profile setup incomplete'
-              };
-            }
+        const { data, error } = await supabase.auth.admin.createUser({
+          email: account.email,
+          password: account.password,
+          email_confirm: true, // Auto-confirm email
+          user_metadata: {
+            full_name: account.fullName,
+            company_name: account.companyName
           }
-          
-        } catch (profileError) {
-          console.error('Profile management error:', profileError);
+        });
+
+        if (error) {
+          if (error.message.includes('User already registered') || error.message.includes('already registered')) {
+            return { 
+              email: account.email, 
+              status: 'exists', 
+              message: 'Account already exists' 
+            };
+          }
+          throw error;
+        }
+
+        // Use the specified UUID for the profile
+        const userId = account.userId;
+        
+        // Create the user profile directly
+        console.log(`Creating profile with UUID: ${userId}`);
+        
+        const { error: createProfileError } = await supabase
+          .from('user_profiles')
+          .upsert({
+            id: userId,
+            email: account.email,
+            full_name: account.fullName,
+            company_name: account.companyName,
+            role: account.role || 'company_owner',
+            subscription_plan: account.plan || 'professional',
+            subscription_status: 'active',
+            preferences: {
+              plan: account.plan || 'professional',
+              lifetime_access: account.plan?.includes('lifetime') || false,
+              payment_required: false
+            },
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'id'
+          });
+
+        if (createProfileError) {
+          console.error('Profile creation failed:', createProfileError);
           return {
             email: account.email,
-            status: 'warning', 
-            message: 'User created but profile verification failed'
+            status: 'warning',
+            message: 'User created but profile setup failed'
           };
         }
-      }
 
-      return { 
-        email: account.email, 
-        status: 'success', 
-        message: 'Account created successfully',
-        userId: userId
-      };
+        return { 
+          email: account.email, 
+          status: 'success', 
+          message: 'Account created successfully with custom UUID',
+          userId: userId
+        };
+        
+      } else {
+        // For other accounts, use regular signup
+        const result = await authService.signUp(
+          account.email,
+          account.password,
+          account.fullName,
+          account.companyName
+        );
+
+        if (result.error) {
+          if (result.error.message.includes('User already registered')) {
+            return { 
+              email: account.email, 
+              status: 'exists', 
+              message: 'Account already exists' 
+            };
+          }
+          throw result.error;
+        }
+
+        // Wait for user creation and then create profile manually
+        const userId = result.data.user?.id;
+        if (userId) {
+          console.log(`User created with ID: ${userId}, creating profile...`);
+          
+          // Wait a moment for any trigger to run
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Create profile manually to ensure it exists
+          const { error: createProfileError } = await supabase
+            .from('user_profiles')
+            .upsert({
+              id: userId,
+              email: account.email,
+              full_name: account.fullName,
+              company_name: account.companyName,
+              role: account.role || 'company_owner',
+              subscription_plan: account.plan || 'professional',
+              subscription_status: 'active',
+              preferences: {
+                plan: account.plan || 'professional',
+                lifetime_access: account.plan?.includes('lifetime') || false,
+                payment_required: false
+              },
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'id'
+            });
+
+          if (createProfileError) {
+            console.error('Profile creation failed:', createProfileError);
+            return {
+              email: account.email,
+              status: 'warning',
+              message: 'User created but profile setup incomplete'
+            };
+          }
+        }
+
+        return { 
+          email: account.email, 
+          status: 'success', 
+          message: 'Account created successfully',
+          userId: userId
+        };
+      }
 
     } catch (error) {
       console.error(`Error creating account ${account.email}:`, error);
