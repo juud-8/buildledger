@@ -48,7 +48,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.0.1",
     "express": "^4.21.2",
-    "framer-motion": "^10.16.4",
+    "framer-motion": "^12.23.12",
     "lucide-react": "^0.484.0",
     "openai": "^5.11.0",
     "react": "^19.1.1",
