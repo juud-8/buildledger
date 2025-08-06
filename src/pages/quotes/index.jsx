@@ -243,12 +243,14 @@ const QuotesPage = () => {
     }
   };
 
-  const handleCreateQuote = () => {
+  const handleCreateQuote = (newQuote) => {
     // The CreateQuoteModal handles the actual quote creation
     // This callback is called when the quote is successfully created
-    console.log('Quote created successfully');
+    if (newQuote) {
+      setQuotes(prev => [newQuote, ...prev]);
+      setFilteredQuotes(prev => [newQuote, ...prev]);
+    }
     setIsCreateModalOpen(false);
-    // TODO: Refresh quotes list from database
   };
 
   const handleBulkAction = (actionId, selectedIds) => {

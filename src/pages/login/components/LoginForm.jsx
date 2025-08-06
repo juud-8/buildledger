@@ -7,6 +7,7 @@ import Icon from '../../../components/AppIcon';
 import Logo from '../../../components/ui/Logo';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { showInfoToast } from '../../../utils/toastHelper';
 import { ENV_CONFIG } from '../../../lib/env';
 
 const LoginForm = () => {
@@ -92,8 +93,8 @@ const LoginForm = () => {
 
   const handleGoogleLogin = () => {
     setIsLoading(true);
-    // TODO: Implement Google OAuth with Supabase
-    console.log('Google OAuth not implemented yet');
+    // Google OAuth functionality would need to be configured in Supabase
+    showInfoToast('Google OAuth coming soon');
     setIsLoading(false);
   };
 

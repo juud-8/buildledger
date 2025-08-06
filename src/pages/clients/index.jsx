@@ -11,7 +11,7 @@ import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { clientsService } from '../../services/clientsService';
 import { useAuth } from '../../contexts/AuthContext';
-import { showInfoToast } from '../../utils/toastHelper';
+import { showInfoToast, showErrorToast } from '../../utils/toastHelper';
 
 const ClientsPage = () => {
   const navigate = useNavigate();
@@ -147,7 +147,7 @@ const ClientsPage = () => {
       console.log('Client deleted successfully');
     } catch (error) {
       console.error('Error deleting client:', error);
-      alert('Failed to delete client. Please try again.');
+      showErrorToast('Failed to delete client. Please try again.');
     }
   };
 
@@ -167,7 +167,7 @@ const ClientsPage = () => {
     } else if (client?.phone) {
       window.location.href = `tel:${client.phone}`;
     } else {
-      alert('No contact information available for this client.');
+      showInfoToast('No contact information available for this client.');
     }
   };
 
@@ -190,7 +190,7 @@ const ClientsPage = () => {
 
   const handleBulkEmail = () => {
     if (selectedClients.length === 0) {
-      alert('Please select at least one client to email.');
+      showInfoToast('Please select at least one client to email.');
       return;
     }
     
@@ -200,7 +200,7 @@ const ClientsPage = () => {
       .map(c => c.email);
     
     if (selectedEmails.length === 0) {
-      alert('Selected clients do not have email addresses.');
+      showInfoToast('Selected clients do not have email addresses.');
       return;
     }
     
@@ -242,9 +242,8 @@ const ClientsPage = () => {
       a.click();
       window.URL.revokeObjectURL(url);
     } else if (format === 'pdf') {
-      // For PDF export, you would typically use a library like jsPDF
+      // For PDF export, would need to implement with jsPDF library
       showInfoToast('PDF export functionality coming soon!', '📄');
-      // TODO: Implement PDF export with jsPDF or similar library
     }
   };
 

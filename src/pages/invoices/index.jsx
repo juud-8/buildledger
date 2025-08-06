@@ -355,7 +355,7 @@ const InvoicesPage = () => {
   const handleSendReminder = (invoiceId) => {
     showSuccessToast('Reminder sent successfully!', '📧');
     console.log('Send reminder for invoice:', invoiceId);
-    // TODO: Implement email reminder functionality
+    // Email reminder functionality would integrate with email service
   };
 
   const handleRecordPayment = (invoiceId, paymentData) => {

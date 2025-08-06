@@ -4,6 +4,7 @@ import Button from '../../../components/ui/Button';
 import CreateQuoteFromProjectModal from './CreateQuoteFromProjectModal';
 import { useAuth } from '../../../contexts/AuthContext';
 import { hasPermission, FEATURES } from '../../../utils/rbac';
+import { showInfoToast } from '../../../utils/toastHelper';
 
 const QuickActions = ({ project, recentUpdates = [] }) => {
   const { userProfile } = useAuth();
@@ -41,7 +42,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
       label: 'Add Milestone',
       icon: 'Flag',
       color: 'bg-green-500 hover:bg-green-600',
-      onClick: () => console.log('Add milestone'),
+      onClick: () => showInfoToast('Add milestone functionality coming soon'),
       feature: FEATURES.CREATE_EDIT_PROJECTS,
     },
     {
@@ -49,7 +50,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
       label: 'Upload Photos',
       icon: 'Camera',
       color: 'bg-purple-500 hover:bg-purple-600',
-      onClick: () => console.log('Upload photos'),
+      onClick: () => showInfoToast('Photo upload functionality coming soon'),
       feature: FEATURES.CREATE_EDIT_PROJECTS,
     },
     {
@@ -57,7 +58,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
       label: 'Create Invoice',
       icon: 'Receipt',
       color: 'bg-orange-500 hover:bg-orange-600',
-      onClick: () => console.log('Create invoice'),
+      onClick: () => showInfoToast('Invoice creation from project coming soon'),
       feature: FEATURES.CREATE_EDIT_PROJECTS,
     },
     {
@@ -65,7 +66,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
       label: 'Contact Client',
       icon: 'Phone',
       color: 'bg-cyan-500 hover:bg-cyan-600',
-      onClick: () => console.log('Contact client'),
+      onClick: () => showInfoToast('Client contact functionality coming soon'),
       feature: FEATURES.CREATE_EDIT_CLIENTS,
     },
     {
@@ -73,7 +74,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
       label: 'Schedule Inspection',
       icon: 'Search',
       color: 'bg-teal-500 hover:bg-teal-600',
-      onClick: () => console.log('Schedule inspection'),
+      onClick: () => showInfoToast('Inspection scheduling coming soon'),
       feature: FEATURES.CREATE_EDIT_PROJECTS,
     }
   ];

@@ -6,6 +6,7 @@ import Breadcrumb from '../../components/ui/Breadcrumb';
 import ProjectFilters from './components/ProjectFilters';
 import ProjectToolbar from './components/ProjectToolbar';
 import ProjectGrid from './components/ProjectGrid';
+import CreateProjectModal from './components/CreateProjectModal';
 
 import Button from '../../components/ui/Button';
 
@@ -16,6 +17,7 @@ const Projects = () => {
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('date');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     status: 'all',
     client: 'all',
@@ -222,8 +224,13 @@ const Projects = () => {
   };
 
   const handleNewProject = () => {
-    console.log('New Project button clicked - ready for implementation');
-    // TODO: Implement project creation modal/form
+    setIsCreateModalOpen(true);
+  };
+
+  const handleProjectCreated = (newProject) => {
+    // Add the new project to the list
+    setProjects(prev => [newProject, ...prev]);
+    setFilteredProjects(prev => [newProject, ...prev]);
   };
 
   return (
@@ -304,6 +311,13 @@ const Projects = () => {
           </div>
         </main>
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleProjectCreated}
+      />
     </>
   );
 };

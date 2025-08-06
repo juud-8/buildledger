@@ -111,7 +111,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
       }
     } catch (error) {
       console.error('Error loading invoice data:', error);
-      alert('Failed to load invoice data. Please try again.');
+      showErrorToast('Failed to load invoice data. Please try again.');
     } finally {
       setIsLoading(false);
     }

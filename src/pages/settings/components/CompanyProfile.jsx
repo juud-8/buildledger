@@ -4,6 +4,7 @@ import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import { showErrorToast } from '../../../utils/toastHelper';
 
 const CompanyProfile = () => {
   const [companyData, setCompanyData] = useState({
@@ -68,7 +69,7 @@ const CompanyProfile = () => {
       if (file.type.startsWith('image/')) {
         uploadLogo(file);
       } else {
-        alert('Please select a valid image file (JPG, PNG, SVG)');
+        showErrorToast('Please select a valid image file (JPG, PNG, SVG)');
       }
     }
   };
@@ -91,7 +92,7 @@ const CompanyProfile = () => {
       
     } catch (error) {
       console.error('Error uploading logo:', error);
-      alert('Failed to upload logo. Please try again.');
+      showErrorToast('Failed to upload logo. Please try again.');
     } finally {
       setUploading(false);
     }

@@ -4,6 +4,7 @@ import { supabase } from '../../../lib/supabase';
 import { clientsService } from '../../../services/clientsService';
 import { projectsService } from '../../../services/projectsService';
 import { quotesService } from '../../../services/quotesService';
+import { showErrorToast } from '../../../utils/toastHelper';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
@@ -173,7 +174,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
       resetForm();
     } catch (error) {
       console.error('Error creating quote:', error);
-      alert('Error creating quote. Please try again.');
+      showErrorToast('Error creating quote. Please try again.');
     } finally {
       setIsLoading(false);
     }
