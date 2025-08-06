@@ -7,6 +7,7 @@ import CategoryFilter from './components/CategoryFilter';
 import RecentlyUsedItems from './components/RecentlyUsedItems';
 import ItemCard from './components/ItemCard';
 import QuantityAdjuster from './components/QuantityAdjuster';
+import { supabase } from '../../lib/supabase';
 
 const ItemSelectionModal = ({ 
   isOpen, 
@@ -22,131 +23,125 @@ const ItemSelectionModal = ({
   const [cartItems, setCartItems] = useState({});
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [sortBy, setSortBy] = useState('name'); // 'name', 'price', 'usage', 'category'
+  const [allItems, setAllItems] = useState([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [itemsError, setItemsError] = useState(null);
 
-  // Mock data for construction items
-  const allItems = [
-    {
-      id: 1,
-      name: 'Concrete Mix - Premium',
-      category: 'foundation',
-      categoryIcon: 'Building',
-      unitPrice: 125.50,
-      unit: 'per cubic yard',
-      stockStatus: 'in-stock',
-      supplier: 'BuildMart Supply',
-      sku: 'CM-PREM-001',
-      taxCategory: 'materials',
-      markup: 15,
-      description: 'High-strength concrete mix for foundations and structural applications',
-      recentlyUsed: true,
-      usageFrequency: 85,
-      seasonalPricing: false
-    },
-    {
-      id: 2,
-      name: 'Rebar #4 - 20ft',
-      category: 'foundation',
-      categoryIcon: 'Building',
-      unitPrice: 45.75,
-      unit: 'per piece',
-      stockStatus: 'low-stock',
-      supplier: 'Steel Supply Co',
-      sku: 'RB-4-20',
-      taxCategory: 'materials',
-      markup: 20,
-      description: 'Grade 60 rebar for concrete reinforcement',
-      recentlyUsed: false,
-      usageFrequency: 65,
-      seasonalPricing: false
-    },
-    {
-      id: 3,
-      name: '2x4 Lumber - Treated',
-      category: 'framing',
-      categoryIcon: 'Home',
-      unitPrice: 8.95,
-      unit: 'per piece',
-      stockStatus: 'in-stock',
-      supplier: 'Lumber Depot',
-      sku: 'LM-2X4-TR',
-      taxCategory: 'materials',
-      markup: 25,
-      description: 'Pressure-treated lumber for framing applications',
-      recentlyUsed: true,
-      usageFrequency: 92,
-      seasonalPricing: true
-    },
-    {
-      id: 4,
-      name: 'Electrical Wire 12AWG',
-      category: 'electrical',
-      categoryIcon: 'Zap',
-      unitPrice: 2.35,
-      unit: 'per foot',
-      stockStatus: 'in-stock',
-      supplier: 'ElectroMax',
-      sku: 'EW-12AWG',
-      taxCategory: 'materials',
-      markup: 30,
-      description: 'THHN/THWN copper wire for residential wiring',
-      recentlyUsed: false,
-      usageFrequency: 45,
-      seasonalPricing: false
-    },
-    {
-      id: 5,
-      name: 'PVC Pipe 4 inch',
-      category: 'plumbing',
-      categoryIcon: 'Wrench',
-      unitPrice: 12.50,
-      unit: 'per foot',
-      stockStatus: 'in-stock',
-      supplier: 'PlumbPro Supply',
-      sku: 'PVC-4IN',
-      taxCategory: 'materials',
-      markup: 22,
-      description: 'Schedule 40 PVC pipe for drainage applications',
-      recentlyUsed: true,
-      usageFrequency: 78,
-      seasonalPricing: false
-    },
-    {
-      id: 6,
-      name: 'Skilled Labor - Electrician',
-      category: 'labor',
-      categoryIcon: 'Users',
-      unitPrice: 75.00,
-      unit: 'per hour',
-      stockStatus: 'available',
-      supplier: 'Internal',
-      sku: 'LAB-ELEC',
-      taxCategory: 'labor',
-      markup: 0,
-      description: 'Licensed electrician for electrical installations',
-      recentlyUsed: true,
-      usageFrequency: 88,
-      seasonalPricing: false
+  // Load items from database
+  useEffect(() => {
+    if (isOpen) {
+      loadItems();
     }
-  ];
+  }, [isOpen]);
 
-  const categories = [
-    { id: 'all', name: 'All Categories', icon: 'Grid3X3' },
-    { id: 'foundation', name: 'Foundation', icon: 'Building' },
-    { id: 'framing', name: 'Framing', icon: 'Home' },
-    { id: 'electrical', name: 'Electrical', icon: 'Zap' },
-    { id: 'plumbing', name: 'Plumbing', icon: 'Wrench' },
-    { id: 'labor', name: 'Labor', icon: 'Users' },
-    { id: 'equipment', name: 'Equipment', icon: 'Truck' }
-  ];
+  const loadItems = async () => {
+    try {
+      setIsLoadingItems(true);
+      setItemsError(null);
 
-  const suppliers = [
-    { id: 'all', name: 'All Suppliers' },
-    { id: 'buildmart', name: 'BuildMart Supply' },
-    { id: 'steel-supply', name: 'Steel Supply Co' },
-    { id: 'lumber-depot', name: 'Lumber Depot' },
-    { id: 'electromax', name: 'ElectroMax' },
-    { id: 'plumbpro', name: 'PlumbPro Supply' }
-  ];
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get user profile to get company_id
+      const { data: userProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError || !userProfile?.company_id) {
+        throw new Error('User profile or company not found');
+      }
+
+      const companyId = userProfile.company_id;
+
+      // Load items from database
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items_database')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('is_active', true)
+        .order('name');
+
+      if (itemsError) throw itemsError;
+
+      // Transform database items to match component expectations
+      const transformedItems = itemsData?.map(item => ({
+        id: item.id,
+        name: item.name,
+        category: item.category || 'general',
+        categoryIcon: getCategoryIcon(item.category),
+        unitPrice: item.unit_price || 0,
+        unit: item.unit || 'each',
+        stockStatus: 'in-stock', // Could be enhanced with real stock data
+        supplier: item.supplier || 'Unknown',
+        sku: item.sku || '',
+        taxCategory: item.tax_category || 'materials',
+        markup: item.markup_percentage || 0,
+        description: item.description || '',
+        recentlyUsed: false, // Could be enhanced with usage tracking
+        usageFrequency: 50, // Default value
+        seasonalPricing: false
+      })) || [];
+
+      setAllItems(transformedItems);
+    } catch (error) {
+      console.error('Error loading items:', error);
+      setItemsError('Failed to load items. Please try again.');
+    } finally {
+      setIsLoadingItems(false);
+    }
+  };
+
+  const getCategoryIcon = (category) => {
+    const categoryIcons = {
+      'foundation': 'Building',
+      'framing': 'Home',
+      'electrical': 'Zap',
+      'plumbing': 'Wrench',
+      'labor': 'Users',
+      'equipment': 'Truck',
+      'materials': 'Package',
+      'general': 'Box'
+    };
+    return categoryIcons[category?.toLowerCase()] || 'Box';
+  };
+
+  // Generate categories and suppliers from loaded items
+  const categories = useMemo(() => {
+    const baseCategories = [{ id: 'all', name: 'All Categories', icon: 'Grid3X3' }];
+    const uniqueCategories = [...new Set(allItems.map(item => item.category))];
+    
+    const categoryMap = {
+      'foundation': { name: 'Foundation', icon: 'Building' },
+      'framing': { name: 'Framing', icon: 'Home' },
+      'electrical': { name: 'Electrical', icon: 'Zap' },
+      'plumbing': { name: 'Plumbing', icon: 'Wrench' },
+      'labor': { name: 'Labor', icon: 'Users' },
+      'equipment': { name: 'Equipment', icon: 'Truck' },
+      'materials': { name: 'Materials', icon: 'Package' },
+      'general': { name: 'General', icon: 'Box' }
+    };
+    
+    const dynamicCategories = uniqueCategories.map(cat => ({
+      id: cat,
+      name: categoryMap[cat]?.name || cat.charAt(0).toUpperCase() + cat.slice(1),
+      icon: categoryMap[cat]?.icon || 'Box'
+    }));
+    
+    return [...baseCategories, ...dynamicCategories];
+  }, [allItems]);
+
+  const suppliers = useMemo(() => {
+    const baseSuppliers = [{ id: 'all', name: 'All Suppliers' }];
+    const uniqueSuppliers = [...new Set(allItems.map(item => item.supplier))];
+    const dynamicSuppliers = uniqueSuppliers.map(supplier => ({
+      id: supplier.toLowerCase().replace(/\s+/g, '-'),
+      name: supplier
+    }));
+    
+    return [...baseSuppliers, ...dynamicSuppliers];
+  }, [allItems]);
 
   // Filter items based on search and filters
   const filteredItems = useMemo(() => {
@@ -381,12 +376,30 @@ const ItemSelectionModal = ({
 
         {/* Items Grid/List */}
         <div className="flex-1 overflow-y-auto max-h-[50vh] p-6">
-          {filteredItems?.length === 0 ? (
+          {isLoadingItems ? (
+            <div className="text-center py-12">
+              <Icon name="Loader2" size={48} className="mx-auto text-muted-foreground mb-4 animate-spin" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Loading items...</h3>
+              <p className="text-muted-foreground">Please wait while we fetch your items</p>
+            </div>
+          ) : itemsError ? (
+            <div className="text-center py-12">
+              <Icon name="AlertCircle" size={48} className="mx-auto text-red-500 mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">Error loading items</h3>
+              <p className="text-muted-foreground mb-4">{itemsError}</p>
+              <Button onClick={loadItems} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          ) : filteredItems?.length === 0 ? (
             <div className="text-center py-12">
               <Icon name="Search" size={48} className="mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No items found</h3>
               <p className="text-muted-foreground">
-                Try adjusting your search or filter criteria
+                {allItems.length === 0 
+                  ? 'No items available in your database. Add items to get started.' 
+                  : 'Try adjusting your search or filter criteria'
+                }
               </p>
             </div>
           ) : (

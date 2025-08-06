@@ -8,6 +8,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import ItemSelectionModal from '../../item-selection-modal';
+import { showErrorToast } from '../../../utils/toastHelper';
 
 const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invoiceId = null }) => {
   const { user } = useAuth();
@@ -16,12 +17,18 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
   const [showItemSelection, setShowItemSelection] = useState(false);
   const [isClientsLoading, setIsClientsLoading] = useState(false);
   const [clientsError, setClientsError] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+  const [validationErrors, setValidationErrors] = useState({});
   
   // Data
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
   const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [projectSearchTerm, setProjectSearchTerm] = useState('');
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false);
   
   // Form data
   const [formData, setFormData] = useState({
@@ -46,6 +53,23 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
     }
   }, [isOpen, user, editMode, invoiceId]);
 
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.client-dropdown')) {
+        setShowClientDropdown(false);
+      }
+      if (!event.target.closest('.project-dropdown')) {
+        setShowProjectDropdown(false);
+      }
+    };
+
+    if (showClientDropdown || showProjectDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showClientDropdown, showProjectDropdown]);
+
   const loadInvoiceData = async () => {
     try {
       setIsLoading(true);
@@ -63,6 +87,16 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
           dueDate: invoice.due_date ? new Date(invoice.due_date).toISOString().split('T')[0] : '',
           notes: invoice.notes || ''
         });
+        
+        // Set search terms for dropdowns
+        if (invoice.client_id) {
+          const client = clients.find(c => c.id === invoice.client_id);
+          if (client) setClientSearchTerm(client.name);
+        }
+        if (invoice.project_id) {
+          const project = projects.find(p => p.id === invoice.project_id);
+          if (project) setProjectSearchTerm(project.name);
+        }
         
         // Load invoice items if they exist
         if (invoice.invoice_items && invoice.invoice_items.length > 0) {
@@ -132,24 +166,39 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
     }
   };
 
-  const handleAddItem = (item, quantity = 1) => {
-    const existingItem = selectedItems?.find(si => si?.item_id === item?.id);
+  const handleItemsSelected = (itemsToAdd) => {
+    // Add items from the selection modal
+    const newItems = itemsToAdd.map(item => ({
+      item_id: item.id,
+      name: item.name,
+      unit_price: item.unitPrice,
+      quantity: item.quantity,
+      total_price: item.totalPrice,
+      description: item.description,
+      unit: item.unit
+    }));
     
-    if (existingItem) {
-      setSelectedItems(prev => prev?.map(si => 
-        si?.item_id === item?.id 
-          ? { ...si, quantity: si?.quantity + quantity, total_price: (si?.quantity + quantity) * si?.unit_price }
-          : si
-      ));
-    } else {
-      setSelectedItems(prev => [...prev, {
-        item_id: item?.id,
-        name: item?.name,
-        unit_price: item?.unit_price,
-        quantity: quantity,
-        total_price: quantity * item?.unit_price
-      }]);
-    }
+    setSelectedItems(prev => {
+      const updatedItems = [...prev];
+      
+      newItems.forEach(newItem => {
+        const existingIndex = updatedItems.findIndex(item => item.item_id === newItem.item_id);
+        
+        if (existingIndex >= 0) {
+          // Update existing item quantity
+          updatedItems[existingIndex] = {
+            ...updatedItems[existingIndex],
+            quantity: updatedItems[existingIndex].quantity + newItem.quantity,
+            total_price: (updatedItems[existingIndex].quantity + newItem.quantity) * updatedItems[existingIndex].unit_price
+          };
+        } else {
+          // Add new item
+          updatedItems.push(newItem);
+        }
+      });
+      
+      return updatedItems;
+    });
     
     setShowItemSelection(false);
   };
@@ -159,28 +208,38 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
   };
 
   const calculateTotals = () => {
-    const subtotal = selectedItems?.reduce((sum, item) => sum + item?.total_price, 0);
+    const subtotal = selectedItems?.reduce((sum, item) => sum + (item?.total_price || 0), 0) || 0;
     const taxAmount = subtotal * (formData?.taxRate / 100);
     const total = subtotal + taxAmount;
     
     return { subtotal, taxAmount, total };
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    
+    if (!validateForm()) {
+      showErrorToast('Please fix the validation errors before submitting');
+      return;
+    }
+    
     setIsLoading(true);
+    setFormErrors({});
+    
     try {
+      const totals = calculateTotals();
       const invoiceData = {
-        client_id: formData?.clientId,
-        project_id: formData?.projectId,
-        invoice_number: formData?.invoiceNumber,
-        title: formData?.title,
-        description: formData?.description,
-        amount: calculateTotals().subtotal,
-        tax_amount: calculateTotals().taxAmount,
-        total_amount: calculateTotals().total,
-        tax_rate: formData?.taxRate,
-        due_date: formData?.dueDate,
-        notes: formData?.notes,
+        client_id: formData.clientId,
+        project_id: formData.projectId || null,
+        invoice_number: formData.invoiceNumber,
+        title: formData.title,
+        description: formData.description,
+        amount: totals.subtotal,
+        tax_amount: totals.taxAmount,
+        total_amount: totals.total,
+        tax_rate: formData.taxRate,
+        due_date: formData.dueDate || null,
+        notes: formData.notes,
         status: 'pending'
       };
 
@@ -197,6 +256,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
         
         if (deleteError) {
           console.error('Error deleting old invoice items:', deleteError);
+          showErrorToast('Warning: Some old invoice items may not have been removed');
         }
       } else {
         // Create new invoice
@@ -205,13 +265,13 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
 
       // Add invoice items (for both create and update)
       if (selectedItems?.length > 0 && invoice?.id) {
-        const invoiceItems = selectedItems?.map((item) => ({
-          invoice_id: invoice?.id,
-          item_id: item?.item_id,
-          name: item?.name, // Store name as backup
-          quantity: item?.quantity,
-          unit_price: item?.unit_price,
-          total_price: item?.total_price
+        const invoiceItems = selectedItems.map((item) => ({
+          invoice_id: invoice.id,
+          item_id: item.item_id,
+          name: item.name, // Store name as backup
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price
         }));
 
         const { error: itemsError } = await supabase
@@ -220,7 +280,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
 
         if (itemsError) {
           console.error('Error adding invoice items:', itemsError);
-          // Don't throw here, invoice is already created/updated
+          showErrorToast('Invoice created but some items may not have been added');
         }
       }
 
@@ -231,7 +291,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
       }
     } catch (error) {
       console.error(`Error ${editMode ? 'updating' : 'creating'} invoice:`, error);
-      alert(`Error ${editMode ? 'updating' : 'creating'} invoice. Please try again.`);
+      setFormErrors({ submit: error.message || `Error ${editMode ? 'updating' : 'creating'} invoice. Please try again.` });
     } finally {
       setIsLoading(false);
     }
@@ -256,23 +316,40 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
 
       const companyId = userProfile.company_id;
 
-      // Get the latest invoice number for this company
-      const { data: latestInvoice } = await supabase
+      // Get all existing invoice numbers to ensure uniqueness
+      const { data: existingInvoices } = await supabase
         .from('invoices')
         .select('invoice_number')
         .eq('company_id', companyId)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .order('created_at', { ascending: false });
 
       let nextNumber = 1;
-      if (latestInvoice?.[0]?.invoice_number) {
-        const currentNumber = parseInt(latestInvoice[0].invoice_number.replace('INV-', ''));
-        nextNumber = currentNumber + 1;
+      let invoiceNumber = '';
+      let isUnique = false;
+      
+      // Keep trying until we find a unique invoice number
+      while (!isUnique) {
+        invoiceNumber = `INV-${nextNumber.toString().padStart(4, '0')}`;
+        
+        // Check if this number already exists
+        const exists = existingInvoices?.some(inv => inv.invoice_number === invoiceNumber);
+        
+        if (!exists) {
+          isUnique = true;
+        } else {
+          nextNumber++;
+        }
+        
+        // Safety valve to prevent infinite loops
+        if (nextNumber > 9999) {
+          console.error('Unable to generate unique invoice number');
+          break;
+        }
       }
 
       setFormData(prev => ({
         ...prev,
-        invoiceNumber: `INV-${nextNumber.toString().padStart(4, '0')}`
+        invoiceNumber
       }));
     } catch (error) {
       console.error('Error generating invoice number:', error);
@@ -292,10 +369,112 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
     });
     setSelectedItems([]);
     setCurrentStep(1);
+    setClientSearchTerm('');
+    setProjectSearchTerm('');
+    setShowClientDropdown(false);
+    setShowProjectDropdown(false);
+  };
+
+  // Filter clients and projects based on search
+  const filteredClients = clients.filter(client => 
+    client.name?.toLowerCase().includes(clientSearchTerm.toLowerCase())
+  );
+  
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.name?.toLowerCase().includes(projectSearchTerm.toLowerCase());
+    const matchesClient = !formData.clientId || project.client_id === formData.clientId;
+    return matchesSearch && matchesClient;
+  });
+
+  const selectedClient = clients.find(c => c.id === formData.clientId);
+  const selectedProject = projects.find(p => p.id === formData.projectId);
+
+  const handleClientSelect = (client) => {
+    handleInputChange('clientId', client.id);
+    setClientSearchTerm(client.name);
+    setShowClientDropdown(false);
+    // Clear project selection if it doesn't belong to the new client
+    if (formData.projectId && selectedProject?.client_id !== client.id) {
+      handleInputChange('projectId', '');
+      setProjectSearchTerm('');
+    }
+  };
+
+  const handleProjectSelect = (project) => {
+    handleInputChange('projectId', project.id);
+    setProjectSearchTerm(project.name);
+    setShowProjectDropdown(false);
   };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear validation error for this field
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    // Required field validation
+    if (!formData.clientId.trim()) {
+      errors.clientId = 'Client is required';
+    }
+    if (!formData.invoiceNumber.trim()) {
+      errors.invoiceNumber = 'Invoice number is required';
+    }
+    if (!formData.title.trim()) {
+      errors.title = 'Invoice title is required';
+    }
+    if (!formData.dueDate) {
+      errors.dueDate = 'Due date is required';
+    }
+    
+    // Business rule validation
+    if (formData.taxRate < 0 || formData.taxRate > 100) {
+      errors.taxRate = 'Tax rate must be between 0 and 100';
+    }
+    
+    if (selectedItems.length === 0) {
+      errors.items = 'At least one item must be added to the invoice';
+    }
+    
+    // Due date validation
+    if (formData.dueDate) {
+      const dueDate = new Date(formData.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (dueDate < today) {
+        errors.dueDate = 'Due date cannot be in the past';
+      }
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateStep = (step) => {
+    const errors = {};
+    
+    if (step === 1) {
+      if (!formData.clientId.trim()) errors.clientId = 'Client is required';
+      if (!formData.invoiceNumber.trim()) errors.invoiceNumber = 'Invoice number is required';
+      if (!formData.title.trim()) errors.title = 'Invoice title is required';
+      if (formData.taxRate < 0 || formData.taxRate > 100) {
+        errors.taxRate = 'Tax rate must be between 0 and 100';
+      }
+    }
+    
+    if (step === 2) {
+      if (selectedItems.length === 0) {
+        errors.items = 'At least one item must be added to the invoice';
+      }
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleLineItemChange = (index, field, value) => {
@@ -326,16 +505,12 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
     setSelectedItems(prev => prev?.filter((_, i) => i !== index));
   };
 
-  const calculateTotal = () => {
-    return selectedItems?.reduce((sum, item) => sum + (item?.total_price || 0), 0);
-  };
-
-  const calculateTax = (subtotal) => {
-    return subtotal * (formData?.taxRate / 100);
-  };
+  // Remove duplicate functions - using calculateTotals() instead
 
   const nextStep = () => {
-    setCurrentStep(prev => Math.min(prev + 1, 3));
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, 3));
+    }
   };
 
   const prevStep = () => {
@@ -389,49 +564,115 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                     onChange={(e) => handleInputChange('invoiceNumber', e.target.value)}
                     placeholder="INV-0001"
                     required
+                    className={validationErrors.invoiceNumber ? 'border-red-500' : ''}
                   />
+                  {validationErrors.invoiceNumber && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.invoiceNumber}</p>
+                  )}
                 </div>
-                <div>
+                <div className="relative client-dropdown">
                   <label className="block text-sm font-medium mb-1 text-foreground">Client</label>
-                  <Select
-                    value={formData.clientId}
-                    onChange={(e) => handleInputChange('clientId', e.target.value)}
-                    required
-                    disabled={isClientsLoading}
-                  >
-                    {isClientsLoading ? (
-                      <option>Loading clients...</option>
-                    ) : clientsError ? (
-                      <option>{clientsError}</option>
-                    ) : clients.length === 0 ? (
-                      <option>No clients available</option>
-                    ) : (
-                      <>
-                        <option value="">Select Client</option>
-                        {clients.map(client => (
-                          <option key={client.id} value={client.id}>
-                            {client.name}
-                          </option>
-                        ))}
-                      </>
-                    )}
-                  </Select>
+                  {isClientsLoading ? (
+                    <Input 
+                      value="Loading clients..." 
+                      disabled 
+                      className="bg-muted"
+                    />
+                  ) : clientsError ? (
+                    <div>
+                      <Input 
+                        value={clientsError} 
+                        disabled 
+                        className="border-red-500 bg-red-50"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <Input
+                        value={clientSearchTerm}
+                        onChange={(e) => {
+                          setClientSearchTerm(e.target.value);
+                          setShowClientDropdown(true);
+                          if (!e.target.value) {
+                            handleInputChange('clientId', '');
+                          }
+                        }}
+                        onFocus={() => setShowClientDropdown(true)}
+                        placeholder={clients.length === 0 ? "No clients available" : "Search or select client..."}
+                        required
+                        className={validationErrors.clientId ? 'border-red-500' : ''}
+                        disabled={clients.length === 0}
+                      />
+                      {showClientDropdown && filteredClients.length > 0 && (
+                        <div className="absolute z-50 w-full bg-card border border-border rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto">
+                          {filteredClients.map(client => (
+                            <div
+                              key={client.id}
+                              className="px-3 py-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                              onClick={() => handleClientSelect(client)}
+                            >
+                              <div className="font-medium">{client.name}</div>
+                              {client.email && (
+                                <div className="text-sm text-muted-foreground">{client.email}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {validationErrors.clientId && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.clientId}</p>
+                  )}
                 </div>
               </div>
 
-              <div>
+              <div className="relative project-dropdown">
                 <label className="block text-sm font-medium mb-1 text-foreground">Project (Optional)</label>
-                <Select
-                  value={formData.projectId}
-                  onChange={(e) => handleInputChange('projectId', e.target.value)}
-                >
-                  <option value="">Select Project</option>
-                  {projects?.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </Select>
+                <div>
+                  <Input
+                    value={projectSearchTerm}
+                    onChange={(e) => {
+                      setProjectSearchTerm(e.target.value);
+                      setShowProjectDropdown(true);
+                      if (!e.target.value) {
+                        handleInputChange('projectId', '');
+                      }
+                    }}
+                    onFocus={() => setShowProjectDropdown(true)}
+                    placeholder={filteredProjects.length === 0 ? "No projects available" : "Search or select project..."}
+                    disabled={!formData.clientId || filteredProjects.length === 0}
+                  />
+                  {showProjectDropdown && filteredProjects.length > 0 && (
+                    <div className="absolute z-40 w-full bg-card border border-border rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto">
+                      <div
+                        className="px-3 py-2 hover:bg-muted cursor-pointer border-b text-muted-foreground"
+                        onClick={() => {
+                          handleInputChange('projectId', '');
+                          setProjectSearchTerm('');
+                          setShowProjectDropdown(false);
+                        }}
+                      >
+                        (No Project)
+                      </div>
+                      {filteredProjects.map(project => (
+                        <div
+                          key={project.id}
+                          className="px-3 py-2 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                          onClick={() => handleProjectSelect(project)}
+                        >
+                          <div className="font-medium">{project.name}</div>
+                          {project.description && (
+                            <div className="text-sm text-muted-foreground truncate">{project.description}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {!formData.clientId && (
+                  <p className="text-muted-foreground text-sm mt-1">Select a client first to choose projects</p>
+                )}
               </div>
 
               <div>
@@ -441,7 +682,11 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Invoice title"
                   required
+                  className={validationErrors.title ? 'border-red-500' : ''}
                 />
+                {validationErrors.title && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.title}</p>
+                )}
               </div>
 
               <div>
@@ -464,7 +709,13 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                     onChange={(e) => handleInputChange('taxRate', parseFloat(e.target.value) || 0)}
                     placeholder="0"
                     step="0.01"
+                    min="0"
+                    max="100"
+                    className={validationErrors.taxRate ? 'border-red-500' : ''}
                   />
+                  {validationErrors.taxRate && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.taxRate}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Due Date</label>
@@ -472,7 +723,11 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => handleInputChange('dueDate', e.target.value)}
+                    className={validationErrors.dueDate ? 'border-red-500' : ''}
                   />
+                  {validationErrors.dueDate && (
+                    <p className="text-red-500 text-sm mt-1">{validationErrors.dueDate}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -493,9 +748,14 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
               </div>
 
               {selectedItems?.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No items added yet. Click "Add Item" to get started.
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    No items added yet. Click "Add Item" to get started.
+                  </p>
+                  {validationErrors.items && (
+                    <p className="text-red-500 text-sm mt-2">{validationErrors.items}</p>
+                  )}
+                </div>
               ) : (
                 <div className="space-y-2">
                   {selectedItems?.map((item, index) => (
@@ -549,10 +809,25 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                 </div>
               )}
 
-              <div className="text-right">
-                <p className="text-lg font-semibold">
-                  Total: ${calculateTotal().toFixed(2)}
-                </p>
+              <div className="text-right space-y-1">
+                <div className="text-sm text-muted-foreground">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${calculateTotals().subtotal.toFixed(2)}</span>
+                  </div>
+                  {formData.taxRate > 0 && (
+                    <div className="flex justify-between">
+                      <span>Tax ({formData.taxRate}%):</span>
+                      <span>${calculateTotals().taxAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-lg font-semibold border-t pt-1">
+                  <div className="flex justify-between">
+                    <span>Total:</span>
+                    <span>${calculateTotals().total.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -592,10 +867,25 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                 </div>
               </div>
 
-              <div className="text-right">
-                <p className="text-xl font-bold">
-                  Total: ${calculateTotal().toFixed(2)}
-                </p>
+              <div className="text-right space-y-2">
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${calculateTotals().subtotal.toFixed(2)}</span>
+                  </div>
+                  {formData.taxRate > 0 && (
+                    <div className="flex justify-between">
+                      <span>Tax ({formData.taxRate}%):</span>
+                      <span>${calculateTotals().taxAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-xl font-bold border-t pt-2">
+                  <div className="flex justify-between">
+                    <span>Total:</span>
+                    <span>${calculateTotals().total.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -620,13 +910,18 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                 Next
               </Button>
             ) : (
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
-              >
-                {isLoading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Invoice' : 'Create Invoice')}
-              </Button>
+              <div className="flex flex-col items-end">
+                {formErrors.submit && (
+                  <p className="text-red-500 text-sm mb-2">{formErrors.submit}</p>
+                )}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
+                >
+                  {isLoading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Invoice' : 'Create Invoice')}
+                </Button>
+              </div>
             )}
           </div>
         </form>
@@ -636,8 +931,9 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
           <ItemSelectionModal
             isOpen={showItemSelection}
             onClose={() => setShowItemSelection(false)}
-            onSelect={handleAddItem}
-            items={items}
+            onItemsSelected={handleItemsSelected}
+            selectedItems={selectedItems}
+            mode="invoice"
           />
         )}
       </div>
