@@ -20,6 +20,7 @@ import RegisterPage from './pages/register/index.jsx';
 import PricingPage from './pages/pricing/index.jsx';
 import NotFoundPage from './pages/NotFound.jsx';
 import BrandingPage from './pages/branding/index.jsx';
+import AdminSetupPage from './pages/admin-setup/index.jsx';
 
 export default function Routes() {
   return (
@@ -44,6 +45,7 @@ export default function Routes() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/admin-setup" element={<AdminSetupPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </RouterRoutes>
       </ErrorBoundary>
