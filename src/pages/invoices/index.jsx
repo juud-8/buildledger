@@ -6,8 +6,13 @@ import InvoiceFilters from './components/InvoiceFilters';
 import InvoiceToolbar from './components/InvoiceToolbar';
 import InvoicesList from './components/InvoicesList';
 import CreateInvoiceModal from './components/CreateInvoiceModal';
+import { downloadInvoicePDF } from '../../utils/invoicePdfGenerator';
+import { invoicesService } from '../../services/invoicesService';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 const InvoicesPage = () => {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [selectedInvoices, setSelectedInvoices] = useState([]);
@@ -371,9 +376,67 @@ const InvoicesPage = () => {
     }));
   };
 
-  const handleDownloadPDF = (invoiceId) => {
-    alert(`PDF Download started! 📄\n\nInvoice ID: ${invoiceId}\n\nIn production, this would generate and download the invoice PDF.`);
-    console.log('Download PDF for invoice:', invoiceId);
+  const handleDownloadPDF = async (invoiceId) => {
+    try {
+      // Find the invoice in our current data
+      const invoice = filteredInvoices.find(inv => inv.id === invoiceId);
+      
+      // Try to get company info from user profile
+      let companyInfo = {
+        name: 'BuildLedger Construction',
+        address: '123 Main Street, Suite 100, Springfield, IL 62701',
+        phone: '(555) 123-4567',
+        email: 'invoices@buildledger.com'
+      };
+      
+      // Try to get actual company information from the database
+      try {
+        if (user) {
+          const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('*, companies(*)')
+            .eq('id', user.id)
+            .single();
+          
+          if (userProfile?.companies) {
+            companyInfo = {
+              name: userProfile.companies.name || companyInfo.name,
+              address: userProfile.companies.address || companyInfo.address,
+              phone: userProfile.companies.phone || companyInfo.phone,
+              email: userProfile.companies.email || companyInfo.email
+            };
+          } else if (userProfile) {
+            // Use user profile info if no company
+            companyInfo = {
+              name: userProfile.full_name || 'BuildLedger Construction',
+              address: userProfile.address || companyInfo.address,
+              phone: userProfile.phone || companyInfo.phone,
+              email: userProfile.email || companyInfo.email
+            };
+          }
+        }
+      } catch (error) {
+        console.log('Using default company info');
+      }
+      
+      if (invoice) {
+        // Use the invoice data we already have
+        downloadInvoicePDF(invoice, companyInfo);
+      } else {
+        // If not found in current data, fetch from database
+        console.log('Fetching invoice from database...');
+        const fullInvoice = await invoicesService.getInvoice(invoiceId);
+        
+        if (fullInvoice) {
+          downloadInvoicePDF(fullInvoice, companyInfo);
+        } else {
+          alert('Invoice not found. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Failed to download PDF. Please try again.');
+    }
   };
 
   return (
