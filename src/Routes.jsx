@@ -3,23 +3,23 @@ import { BrowserRouter, Routes as RouterRoutes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 
-import LandingPage from './pages/landing/index.jsx';
-import DashboardPage from './pages/dashboard/index.jsx';
-import ProjectsPage from './pages/projects/index.jsx';
-import ProjectDetailsPage from './pages/project-details/index.jsx';
-import InvoicesPage from './pages/invoices/index.jsx';
-import QuotesPage from './pages/quotes/index.jsx';
-import ClientsPage from './pages/clients/index.jsx';
-import ItemsPage from './pages/items/index.jsx';
-import AddEditItemPage from './pages/add-edit-item/index.jsx';
-import ItemSelectionModalPage from './pages/item-selection-modal/index.jsx';
-import AnalyticsPage from './pages/analytics/index.jsx';
-import SettingsPage from './pages/settings/index.jsx';
-import LoginPage from './pages/login/index.jsx';
-import RegisterPage from './pages/register/index.jsx';
-import PricingPage from './pages/pricing/index.jsx';
-import NotFoundPage from './pages/NotFound.jsx';
-import BrandingPage from './pages/branding/index.jsx';
+import LandingPage from './pages/landing';
+import DashboardPage from './pages/dashboard';
+import ProjectsPage from './pages/projects';
+import ProjectDetailsPage from './pages/project-details';
+import InvoicesPage from './pages/invoices';
+import QuotesPage from './pages/quotes';
+import ClientsPage from './pages/clients';
+import ItemsPage from './pages/items';
+import AddEditItemPage from './pages/add-edit-item';
+import ItemSelectionModalPage from './pages/item-selection-modal';
+import AnalyticsPage from './pages/analytics';
+import SettingsPage from './pages/settings';
+import LoginPage from './pages/login';
+import RegisterPage from './pages/register';
+import PricingPage from './pages/pricing';
+import NotFoundPage from './pages/NotFound';
+import BrandingPage from './pages/branding';
 
 export default function Routes() {
   return (
