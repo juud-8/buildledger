@@ -242,23 +242,12 @@ const QuotesPage = () => {
     }
   };
 
-  const handleCreateQuote = (quoteData) => {
-    const newQuote = {
-      id: `QT-2024-${String(quotes?.length + 1)?.padStart(3, '0')}`,
-      quoteNumber: `QT-2024-${String(quotes?.length + 1)?.padStart(3, '0')}`,
-      clientName: quoteData?.clientId?.replace('-', ' ')?.replace(/\b\w/g, l => l?.toUpperCase()),
-      projectName: quoteData?.projectName,
-      description: quoteData?.description,
-      amount: quoteData?.total,
-      lineItemsCount: quoteData?.lineItems?.length,
-      status: 'draft',
-      createdDate: new Date()?.toLocaleDateString(),
-      expirationDate: new Date(Date.now() + parseInt(quoteData.expirationDays) * 24 * 60 * 60 * 1000)?.toLocaleDateString(),
-      projectType: quoteData?.projectType
-    };
-
-    setQuotes(prev => [newQuote, ...prev]);
+  const handleCreateQuote = () => {
+    // The CreateQuoteModal handles the actual quote creation
+    // This callback is called when the quote is successfully created
+    console.log('Quote created successfully');
     setIsCreateModalOpen(false);
+    // TODO: Refresh quotes list from database
   };
 
   const handleBulkAction = (actionId, selectedIds) => {
@@ -360,7 +349,7 @@ const QuotesPage = () => {
         <CreateQuoteModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onCreateQuote={handleCreateQuote}
+          onSuccess={handleCreateQuote}
         />
       </div>
     </>
