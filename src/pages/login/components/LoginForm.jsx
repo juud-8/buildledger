@@ -4,6 +4,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
+import Logo from '../../../components/ui/Logo';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import { ENV_CONFIG } from '../../../lib/env';
@@ -104,9 +105,7 @@ const LoginForm = () => {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <div className="flex items-center justify-center mb-4">
-          <div className="flex items-center justify-center w-12 h-12 bg-primary rounded-lg">
-            <Icon name="Building2" size={28} color="white" />
-          </div>
+          <Logo variant="vertical" size="xl" />
         </div>
         <CardTitle className="text-2xl">Welcome to BuildLedger</CardTitle>
         <CardDescription>Sign in to manage your construction business</CardDescription>

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import Icon from '../AppIcon';
 import Button from './Button';
+import Logo from './Logo';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -65,11 +66,9 @@ const Header = () => {
       <header className="bg-card/80 backdrop-blur-sm border-b border-border fixed top-0 left-0 right-0 z-50 shadow-md">
         <div className="flex items-center justify-between h-16 px-4 lg:px-6">
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2 mr-8">
-            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-              <Icon name="Building2" size={20} color="white" />
-            </div>
-            <span className="text-xl font-bold text-foreground">BuildLedger</span>
+          <Link to="/dashboard" className="flex items-center space-x-3 mr-8">
+            <Logo variant="icon" size="md" />
+            <Logo variant="text" size="sm" className="hidden sm:block" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -150,11 +149,9 @@ const Header = () => {
           {/* Mobile Menu Drawer */}
           <div className="fixed top-0 left-0 w-80 h-full bg-card border-r border-border shadow-xl">
             <div className="flex items-center justify-between p-4 border-b border-border">
-              <Link to="/dashboard" className="flex items-center space-x-2" onClick={closeMobileMenu}>
-                <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-                  <Icon name="Building2" size={20} color="white" />
-                </div>
-                <span className="text-xl font-bold text-foreground">BuildLedger</span>
+              <Link to="/dashboard" className="flex items-center space-x-3" onClick={closeMobileMenu}>
+                <Logo variant="icon" size="md" />
+                <Logo variant="text" size="sm" />
               </Link>
               <Button variant="ghost" size="icon" onClick={closeMobileMenu}>
                 <Icon name="X" size={24} />
