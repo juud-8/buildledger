@@ -1,4 +1,4 @@
-export const theme = {
+const theme = {
   colors: {
     light: {
       background: '0 0% 100%',
@@ -76,4 +76,6 @@ export const theme = {
       },
     },
   },
-}; 
+};
+
+module.exports = { theme }; 
