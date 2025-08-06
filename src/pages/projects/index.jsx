@@ -222,9 +222,8 @@ const Projects = () => {
   };
 
   const handleNewProject = () => {
-    // For now, show an alert to confirm the button works
-    alert('New Project functionality would open here! 🚧\n\nThis demonstrates the button is working correctly. In production, this would open a project creation form.');
-    console.log('New Project button clicked - functionality confirmed!');
+    console.log('New Project button clicked - ready for implementation');
+    // TODO: Implement project creation modal/form
   };
 
   return (

@@ -5,6 +5,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { stripeService } from '../../../services/stripeService';
+import { showSuccessToast } from '../../../utils/toastHelper';
 
 const BillingSubscription = () => {
   const { user } = useAuth();
@@ -207,7 +208,7 @@ const BillingSubscription = () => {
         });
         
         setShowChangePlan(false);
-        alert('Plan upgraded successfully!');
+        showSuccessToast('Plan upgraded successfully!', '✅');
       } else {
         setError('Failed to upgrade plan. Please try again.');
       }

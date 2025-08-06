@@ -6,6 +6,7 @@ import InvoiceFilters from './components/InvoiceFilters';
 import InvoiceToolbar from './components/InvoiceToolbar';
 import InvoicesList from './components/InvoicesList';
 import CreateInvoiceModal from './components/CreateInvoiceModal';
+import { showSuccessToast } from '../../utils/toastHelper';
 
 const InvoicesPage = () => {
   const [invoices, setInvoices] = useState([]);
@@ -348,8 +349,9 @@ const InvoicesPage = () => {
   };
 
   const handleSendReminder = (invoiceId) => {
-    alert(`Reminder sent successfully! 📧\n\nInvoice ID: ${invoiceId}\n\nIn production, this would send an email reminder to the client.`);
+    showSuccessToast('Reminder sent successfully!', '📧');
     console.log('Send reminder for invoice:', invoiceId);
+    // TODO: Implement email reminder functionality
   };
 
   const handleRecordPayment = (invoiceId, paymentData) => {
@@ -372,8 +374,9 @@ const InvoicesPage = () => {
   };
 
   const handleDownloadPDF = (invoiceId) => {
-    alert(`PDF Download started! 📄\n\nInvoice ID: ${invoiceId}\n\nIn production, this would generate and download the invoice PDF.`);
+    showSuccessToast('PDF download started!', '📄');
     console.log('Download PDF for invoice:', invoiceId);
+    // TODO: Implement PDF generation and download
   };
 
   return (

@@ -11,6 +11,7 @@ import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { clientsService } from '../../services/clientsService';
 import { useAuth } from '../../contexts/AuthContext';
+import { showInfoToast } from '../../utils/toastHelper';
 
 const ClientsPage = () => {
   const navigate = useNavigate();
@@ -242,8 +243,8 @@ const ClientsPage = () => {
       window.URL.revokeObjectURL(url);
     } else if (format === 'pdf') {
       // For PDF export, you would typically use a library like jsPDF
-      // For now, we'll just show an alert
-      alert('PDF export functionality coming soon!');
+      showInfoToast('PDF export functionality coming soon!', '📄');
+      // TODO: Implement PDF export with jsPDF or similar library
     }
   };
 
