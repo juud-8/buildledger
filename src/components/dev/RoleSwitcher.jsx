@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { ROLES } from '../utils/rbac';
+import { useAuth } from '../../contexts/AuthContext';
+import { ROLES } from '../../utils/rbac';
 
 const RoleSwitcher = () => {
   const { userProfile, updateProfile } = useAuth();
