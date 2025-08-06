@@ -1,16 +1,37 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '../../../components/ui/Card';
 
 const ProjectCard = ({ project }) => {
+  const navigate = useNavigate();
+  
   const progressColor = (() => {
     if (project?.progress >= 80) return 'success';
     if (project?.progress >= 50) return 'primary';
     if (project?.progress >= 25) return 'warning';
     return 'error';
   })();
+
+  const handleViewProject = () => {
+    navigate(`/projects/${project?.id}`);
+  };
+
+  const handleViewPhotos = () => {
+    // Navigate to project details with photos tab active
+    navigate(`/projects/${project?.id}?tab=photos`);
+  };
+
+  const handleUpdateProject = () => {
+    // Navigate to project edit/update page - we'll use project details for now
+    navigate(`/projects/${project?.id}?tab=overview&mode=edit`);
+  };
+
+  const handleCreateInvoice = () => {
+    // Navigate to invoices page with project pre-selected
+    navigate(`/invoices?project=${project?.id}&action=create`);
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -35,7 +56,7 @@ const ProjectCard = ({ project }) => {
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <Link
-              to={`/project-details?id=${project?.id}`}
+              to={`/projects/${project?.id}`}
               className="block group"
             >
               <CardTitle className="group-hover:text-primary transition-colors truncate">
@@ -111,7 +132,7 @@ const ProjectCard = ({ project }) => {
             iconName="Eye"
             iconPosition="left"
             className="text-xs"
-            onClick={() => window.location.href = `/project-details?id=${project?.id}`}
+            onClick={handleViewProject}
           >
             View
           </Button>
@@ -121,6 +142,7 @@ const ProjectCard = ({ project }) => {
             iconName="Camera"
             iconPosition="left"
             className="text-xs"
+            onClick={handleViewPhotos}
           >
             Photos
           </Button>
@@ -130,6 +152,7 @@ const ProjectCard = ({ project }) => {
             iconName="Edit"
             iconPosition="left"
             className="text-xs"
+            onClick={handleUpdateProject}
           >
             Update
           </Button>
@@ -139,6 +162,7 @@ const ProjectCard = ({ project }) => {
             iconName="Receipt"
             iconPosition="left"
             className="text-xs"
+            onClick={handleCreateInvoice}
           >
             Invoice
           </Button>
