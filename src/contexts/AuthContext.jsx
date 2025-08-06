@@ -43,9 +43,11 @@ export const AuthProvider = ({ children }) => {
         console.log('Auth state changed:', event, session?.user?.id);
         
         if (session?.user) {
+          console.log('Setting user state for:', session.user.email);
           setUser(session.user);
           await fetchUserProfile(session.user.id);
         } else {
+          console.log('Clearing user state - no session');
           setUser(null);
           setUserProfile(null);
         }

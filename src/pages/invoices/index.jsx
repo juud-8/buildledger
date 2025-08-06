@@ -8,8 +8,11 @@ import InvoicesList from './components/InvoicesList';
 import CreateInvoiceModal from './components/CreateInvoiceModal';
 import { showSuccessToast } from '../../utils/toastHelper';
 import { pdfService } from '../../services/pdfService';
+import { invoicesService } from '../../services/invoicesService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const InvoicesPage = () => {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [filteredInvoices, setFilteredInvoices] = useState([]);
   const [selectedInvoices, setSelectedInvoices] = useState([]);

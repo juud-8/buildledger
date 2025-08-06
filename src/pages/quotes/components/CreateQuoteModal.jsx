@@ -14,6 +14,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showItemSelection, setShowItemSelection] = useState(false);
+  const [isClientsLoading, setIsClientsLoading] = useState(false);
+  const [clientsError, setClientsError] = useState(null);
   
   // Data
   const [clients, setClients] = useState([]);
@@ -42,11 +44,21 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
 
   const loadData = async () => {
     try {
-      // Load clients using service
+      setIsClientsLoading(true);
+      setClientsError(null);
       const clientsData = await clientsService.getClients();
-      
+      setClients(clientsData || []);
+    } catch (error) {
+      console.error('Error loading clients:', error);
+      setClientsError('Failed to load clients. Please try again.');
+    } finally {
+      setIsClientsLoading(false);
+    }
+
+    try {
       // Load projects using service
       const projectsData = await projectsService.getProjects();
+      setProjects(projectsData || []);
 
       // Load items from items_database table
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -73,11 +85,9 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
         .eq('is_active', true)
         .order('name');
 
-      setClients(clientsData || []);
-      setProjects(projectsData || []);
       setItems(itemsData || []);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error loading projects or items:', error);
     }
   };
 
@@ -320,13 +330,24 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                     value={formData.clientId}
                     onChange={(e) => handleInputChange('clientId', e.target.value)}
                     required
+                    disabled={isClientsLoading}
                   >
-                    <option value="">Select Client</option>
-                    {clients?.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.name}
-                      </option>
-                    ))}
+                    {isClientsLoading ? (
+                      <option>Loading clients...</option>
+                    ) : clientsError ? (
+                      <option>{clientsError}</option>
+                    ) : clients.length === 0 ? (
+                      <option>No clients available</option>
+                    ) : (
+                      <>
+                        <option value="">Select Client</option>
+                        {clients.map(client => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </Select>
                 </div>
               </div>
