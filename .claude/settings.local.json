@@ -6,7 +6,11 @@
       "Bash(npm run start:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(vercel:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:www.buildledger.pro)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
