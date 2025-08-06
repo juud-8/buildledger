@@ -7,6 +7,7 @@ import InvoiceToolbar from './components/InvoiceToolbar';
 import InvoicesList from './components/InvoicesList';
 import CreateInvoiceModal from './components/CreateInvoiceModal';
 import { showSuccessToast } from '../../utils/toastHelper';
+import { pdfService } from '../../services/pdfService';
 
 const InvoicesPage = () => {
   const [invoices, setInvoices] = useState([]);
@@ -373,10 +374,12 @@ const InvoicesPage = () => {
     }));
   };
 
-  const handleDownloadPDF = (invoiceId) => {
-    showSuccessToast('PDF download started!', '📄');
-    console.log('Download PDF for invoice:', invoiceId);
-    // TODO: Implement PDF generation and download
+  const handleDownloadPDF = async (invoiceId) => {
+    try {
+      await pdfService.downloadInvoicePDF(invoiceId);
+    } catch (error) {
+      console.error('PDF download failed:', error);
+    }
   };
 
   return (

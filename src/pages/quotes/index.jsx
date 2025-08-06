@@ -6,6 +6,7 @@ import QuoteFilters from './components/QuoteFilters';
 import QuoteToolbar from './components/QuoteToolbar';
 import QuotesList from './components/QuotesList';
 import CreateQuoteModal from './components/CreateQuoteModal';
+import { pdfService } from '../../services/pdfService';
 
 const QuotesPage = () => {
   const [quotes, setQuotes] = useState([]);
@@ -289,9 +290,12 @@ const QuotesPage = () => {
     // Navigate to invoice creation with quote data
   };
 
-  const handleDownloadPDF = (quoteId) => {
-    console.log('Download PDF for quote:', quoteId);
-    // Implement PDF generation and download
+  const handleDownloadPDF = async (quoteId) => {
+    try {
+      await pdfService.downloadQuotePDF(quoteId);
+    } catch (error) {
+      console.error('PDF download failed:', error);
+    }
   };
 
   return (
