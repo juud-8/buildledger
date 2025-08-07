@@ -3,7 +3,9 @@ import { brandingService } from '../../../services/brandingService';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
-import { Building, Palette, Type, Save } from 'lucide-react';
+import { Card } from '../../../components/ui/Card';
+import Icon from '../../../components/AppIcon';
+import { showSuccessToast, showErrorToast } from '../../../utils/toastHelper';
 
 export function BrandingOverview({ branding, onUpdate, onError }) {
   const [editing, setEditing] = useState(false);
@@ -36,7 +38,9 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
       
       onUpdate?.(updatedBranding);
       setEditing(false);
+      showSuccessToast('Brand settings updated successfully!');
     } catch (err) {
+      showErrorToast('Failed to update branding settings', err);
       onError?.('Failed to update branding settings');
     } finally {
       setSaving(false);
@@ -57,19 +61,25 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      {/* Company Information Card */}
+      <Card className="p-6 bg-card border border-border construction-shadow-sm">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Building className="w-6 h-6 text-blue-600" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+              <Icon name="Building2" size={24} className="text-primary" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Company Information</h2>
-              <p className="text-gray-600">Basic company branding settings</p>
+              <h2 className="text-xl font-semibold text-foreground">Company Information</h2>
+              <p className="text-muted-foreground">Basic company branding settings</p>
             </div>
           </div>
           {!editing && (
-            <Button onClick={() => setEditing(true)} variant="outline">
+            <Button 
+              onClick={() => setEditing(true)} 
+              variant="outline"
+              iconName="Edit"
+              iconPosition="left"
+            >
               Edit Settings
             </Button>
           )}
@@ -77,7 +87,7 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Company Name
             </label>
             {editing ? (
@@ -87,12 +97,14 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
                 placeholder="Enter company name"
               />
             ) : (
-              <p className="text-gray-900 font-medium">{branding?.company_name || 'Not set'}</p>
+              <div className="p-3 bg-muted/50 rounded-md border">
+                <p className="text-foreground font-medium">{branding?.company_name || 'Not set'}</p>
+              </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Font Family
             </label>
             {editing ? (
@@ -102,166 +114,255 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
                 options={fontOptions}
               />
             ) : (
-              <p className="text-gray-900 font-medium" style={{ fontFamily: branding?.font_family }}>
-                {branding?.font_family || 'Inter'}
-              </p>
+              <div className="p-3 bg-muted/50 rounded-md border">
+                <p className="text-foreground font-medium" style={{ fontFamily: branding?.font_family }}>
+                  {branding?.font_family || 'Inter'}
+                </p>
+              </div>
             )}
           </div>
         </div>
 
         {editing && (
-          <div className="mt-6 flex gap-3">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Changes
-                </>
-              )}
+          <div className="mt-6 flex gap-3 pt-4 border-t border-border">
+            <Button 
+              onClick={handleSave} 
+              disabled={saving}
+              iconName={saving ? "Loader2" : "Save"}
+              iconPosition="left"
+              className={saving ? "animate-spin" : ""}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
             </Button>
             <Button onClick={handleCancel} variant="outline" disabled={saving}>
               Cancel
             </Button>
           </div>
         )}
-      </div>
-      {/* Color Preview Section */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Palette className="w-6 h-6 text-purple-600" />
+      </Card>
+      {/* Color Palette Card */}
+      <Card className="p-6 bg-card border border-border construction-shadow-sm">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-construction/10 rounded-xl flex items-center justify-center">
+            <Icon name="Palette" size={24} className="text-construction" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Color Palette</h2>
-            <p className="text-gray-600">Current brand colors</p>
+            <h2 className="text-xl font-semibold text-foreground">Color Palette</h2>
+            <p className="text-muted-foreground">Your brand colors for documents and templates</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-3">
               Primary Color
             </label>
             {editing ? (
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={formData?.primary_color}
-                  onChange={(e) => setFormData({ ...formData, primary_color: e?.target?.value })}
-                  className="w-12 h-10 rounded border"
-                />
-                <Input
-                  value={formData?.primary_color}
-                  onChange={(e) => setFormData({ ...formData, primary_color: e?.target?.value })}
-                  placeholder="#3B82F6"
-                  className="flex-1"
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={formData?.primary_color}
+                    onChange={(e) => setFormData({ ...formData, primary_color: e?.target?.value })}
+                    className="w-12 h-10 rounded-md border border-border cursor-pointer"
+                  />
+                  <Input
+                    value={formData?.primary_color}
+                    onChange={(e) => setFormData({ ...formData, primary_color: e?.target?.value })}
+                    placeholder="#3B82F6"
+                    className="flex-1 font-mono text-sm"
+                  />
+                </div>
+                <div 
+                  className="w-full h-12 rounded-md border border-border construction-shadow-sm"
+                  style={{ backgroundColor: formData?.primary_color }}
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-md border">
+                  <div 
+                    className="w-8 h-8 rounded-md border border-border construction-shadow-sm"
+                    style={{ backgroundColor: branding?.primary_color }}
+                  />
+                  <span className="font-mono text-sm text-foreground">{branding?.primary_color}</span>
+                </div>
                 <div 
-                  className="w-8 h-8 rounded border"
+                  className="w-full h-12 rounded-md border border-border construction-shadow-sm"
                   style={{ backgroundColor: branding?.primary_color }}
-                ></div>
-                <span className="font-mono text-sm">{branding?.primary_color}</span>
+                />
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-3">
               Secondary Color
             </label>
             {editing ? (
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={formData?.secondary_color}
-                  onChange={(e) => setFormData({ ...formData, secondary_color: e?.target?.value })}
-                  className="w-12 h-10 rounded border"
-                />
-                <Input
-                  value={formData?.secondary_color}
-                  onChange={(e) => setFormData({ ...formData, secondary_color: e?.target?.value })}
-                  placeholder="#1E40AF"
-                  className="flex-1"
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={formData?.secondary_color}
+                    onChange={(e) => setFormData({ ...formData, secondary_color: e?.target?.value })}
+                    className="w-12 h-10 rounded-md border border-border cursor-pointer"
+                  />
+                  <Input
+                    value={formData?.secondary_color}
+                    onChange={(e) => setFormData({ ...formData, secondary_color: e?.target?.value })}
+                    placeholder="#1E40AF"
+                    className="flex-1 font-mono text-sm"
+                  />
+                </div>
+                <div 
+                  className="w-full h-12 rounded-md border border-border construction-shadow-sm"
+                  style={{ backgroundColor: formData?.secondary_color }}
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-md border">
+                  <div 
+                    className="w-8 h-8 rounded-md border border-border construction-shadow-sm"
+                    style={{ backgroundColor: branding?.secondary_color }}
+                  />
+                  <span className="font-mono text-sm text-foreground">{branding?.secondary_color}</span>
+                </div>
                 <div 
-                  className="w-8 h-8 rounded border"
+                  className="w-full h-12 rounded-md border border-border construction-shadow-sm"
                   style={{ backgroundColor: branding?.secondary_color }}
-                ></div>
-                <span className="font-mono text-sm">{branding?.secondary_color}</span>
+                />
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-3">
               Accent Color
             </label>
             {editing ? (
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={formData?.accent_color}
-                  onChange={(e) => setFormData({ ...formData, accent_color: e?.target?.value })}
-                  className="w-12 h-10 rounded border"
-                />
-                <Input
-                  value={formData?.accent_color}
-                  onChange={(e) => setFormData({ ...formData, accent_color: e?.target?.value })}
-                  placeholder="#F59E0B"
-                  className="flex-1"
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <input
+                    type="color"
+                    value={formData?.accent_color}
+                    onChange={(e) => setFormData({ ...formData, accent_color: e?.target?.value })}
+                    className="w-12 h-10 rounded-md border border-border cursor-pointer"
+                  />
+                  <Input
+                    value={formData?.accent_color}
+                    onChange={(e) => setFormData({ ...formData, accent_color: e?.target?.value })}
+                    placeholder="#F59E0B"
+                    className="flex-1 font-mono text-sm"
+                  />
+                </div>
+                <div 
+                  className="w-full h-12 rounded-md border border-border construction-shadow-sm"
+                  style={{ backgroundColor: formData?.accent_color }}
                 />
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-md border">
+                  <div 
+                    className="w-8 h-8 rounded-md border border-border construction-shadow-sm"
+                    style={{ backgroundColor: branding?.accent_color }}
+                  />
+                  <span className="font-mono text-sm text-foreground">{branding?.accent_color}</span>
+                </div>
                 <div 
-                  className="w-8 h-8 rounded border"
+                  className="w-full h-12 rounded-md border border-border construction-shadow-sm"
                   style={{ backgroundColor: branding?.accent_color }}
-                ></div>
-                <span className="font-mono text-sm">{branding?.accent_color}</span>
+                />
               </div>
             )}
           </div>
         </div>
-      </div>
-      {/* Typography Preview */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-            <Type className="w-6 h-6 text-green-600" />
+      </Card>
+      {/* Typography Preview Card */}
+      <Card className="p-6 bg-card border border-border construction-shadow-sm">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
+            <Icon name="Type" size={24} className="text-success" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Typography Preview</h2>
-            <p className="text-gray-600">How your brand fonts will look</p>
+            <h2 className="text-xl font-semibold text-foreground">Typography Preview</h2>
+            <p className="text-muted-foreground">How your brand fonts will look in documents</p>
           </div>
         </div>
 
-        <div className="space-y-4" style={{ fontFamily: editing ? formData?.font_family : branding?.font_family }}>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {editing ? formData?.company_name || 'Your Company' : branding?.company_name}
+        <div 
+          className="space-y-6 p-6 bg-background border border-border rounded-lg construction-shadow-sm" 
+          style={{ fontFamily: editing ? formData?.font_family : branding?.font_family }}
+        >
+          {/* Company Header Preview */}
+          <div className="space-y-3">
+            <h1 
+              className="text-4xl font-bold"
+              style={{ color: (editing ? formData?.primary_color : branding?.primary_color) || '#3B82F6' }}
+            >
+              {editing ? formData?.company_name || 'Your Company Name' : branding?.company_name || 'Your Company Name'}
             </h1>
-            <p className="text-lg text-gray-600 mt-2">Professional invoicing and project management</p>
-          </div>
-          
-          <div className="pt-4 border-t">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Sample Document Header</h3>
-            <p className="text-base text-gray-800">
-              This is how your company name and content will appear in invoices, quotes, and other business documents.
+            <p className="text-lg text-muted-foreground">
+              Professional construction services and project management
             </p>
           </div>
+          
+          {/* Document Sample */}
+          <div className="pt-6 border-t border-border space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 
+                className="text-xl font-semibold"
+                style={{ color: (editing ? formData?.secondary_color : branding?.secondary_color) || '#1E40AF' }}
+              >
+                INVOICE #12345
+              </h3>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Date: {new Date().toLocaleDateString()}</p>
+                <p className="text-sm text-muted-foreground">Due: {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-2">Bill To:</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p>Sample Client Name</p>
+                  <p>123 Client Street</p>
+                  <p>City, State 12345</p>
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-2">Services:</h4>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex justify-between">
+                    <span>Construction Services</span>
+                    <span>$2,500.00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Materials</span>
+                    <span>$1,200.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-border">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-foreground">Total:</span>
+                <span 
+                  className="text-2xl font-bold"
+                  style={{ color: (editing ? formData?.accent_color : branding?.accent_color) || '#F59E0B' }}
+                >
+                  $3,700.00
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
