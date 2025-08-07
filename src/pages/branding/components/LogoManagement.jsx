@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { brandingService } from '../../../services/brandingService';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
-import { Upload, Image, Trash2, Star, Download, Eye } from 'lucide-react';
+import { Card } from '../../../components/ui/Card';
+import Icon from '../../../components/AppIcon';
+import { showSuccessToast, showErrorToast } from '../../../utils/toastHelper';
 
 export function LogoManagement({ branding, userId, onError }) {
   const [logos, setLogos] = useState([]);
@@ -126,32 +128,32 @@ export function LogoManagement({ branding, userId, onError }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="ml-3 text-gray-600">Loading logos...</p>
+          <Icon name="Loader2" size={32} className="animate-spin text-primary mr-3" />
+          <p className="text-muted-foreground">Loading logos...</p>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Upload className="w-6 h-6 text-blue-600" />
+      <Card className="p-6 bg-card border border-border construction-shadow-sm">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+            <Icon name="Upload" size={24} className="text-primary" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Upload New Logo</h2>
-            <p className="text-gray-600">Add logos for different use cases</p>
+            <h2 className="text-xl font-semibold text-foreground">Upload New Logo</h2>
+            <p className="text-muted-foreground">Add logos for different use cases and document types</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-3">
               Logo Type
             </label>
             <Select
@@ -159,15 +161,20 @@ export function LogoManagement({ branding, userId, onError }) {
               onValueChange={setSelectedLogoType}
               options={logoTypeOptions}
             />
+            <p className="text-xs text-muted-foreground mt-2">
+              Choose the appropriate type for your logo's intended use
+            </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload Logo
+            <label className="block text-sm font-medium text-foreground mb-3">
+              Upload Logo File
             </label>
             <div
-              className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+              className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
+                dragActive 
+                  ? 'border-primary bg-primary/5 scale-105' 
+                  : 'border-border hover:border-primary/50 hover:bg-muted/50'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
@@ -183,110 +190,125 @@ export function LogoManagement({ branding, userId, onError }) {
               />
               
               {uploading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-gray-600">Uploading...</span>
+                <div className="flex flex-col items-center">
+                  <Icon name="Loader2" size={32} className="animate-spin text-primary mb-3" />
+                  <span className="text-foreground font-medium">Uploading logo...</span>
+                  <span className="text-muted-foreground text-sm">Please wait while we process your file</span>
                 </div>
               ) : (
-                <>
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">
-                    Drop your logo here or{' '}
-                    <button
-                      onClick={() => fileInputRef?.current?.click()}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      browse files
-                    </button>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PNG, JPG, SVG, WebP up to 10MB
-                  </p>
-                </>
+                <div className="space-y-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                    <Icon name="Upload" size={32} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-foreground font-medium mb-1">
+                      Drop your logo here or{' '}
+                      <button
+                        onClick={() => fileInputRef?.current?.click()}
+                        className="text-primary hover:text-primary/80 font-semibold underline transition-colors"
+                      >
+                        browse files
+                      </button>
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                      PNG, JPG, SVG, WebP up to 10MB • High resolution recommended
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
         </div>
-      </div>
+      </Card>
       {/* Logo Gallery */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Image className="w-6 h-6 text-purple-600" />
+      <Card className="p-6 bg-card border border-border construction-shadow-sm">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 bg-construction/10 rounded-xl flex items-center justify-center">
+            <Icon name="Image" size={24} className="text-construction" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Logo Gallery</h2>
-            <p className="text-gray-600">Manage all your logo variations</p>
+            <h2 className="text-xl font-semibold text-foreground">Logo Gallery</h2>
+            <p className="text-muted-foreground">Manage all your logo variations and set primary logos</p>
           </div>
         </div>
 
         {logos?.length === 0 ? (
-          <div className="text-center py-12">
-            <Image className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No logos uploaded</h3>
-            <p className="text-gray-600">Upload your first logo to get started with branding.</p>
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Icon name="Image" size={48} className="text-muted-foreground/50" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No logos uploaded yet</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Upload your first logo using the form above to start building your brand identity. 
+              You can upload different variations for different use cases.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {logos?.map((logo) => (
-              <div key={logo?.id} className="border rounded-lg overflow-hidden">
-                <div className="aspect-video bg-gray-50 flex items-center justify-center p-4">
+              <div key={logo?.id} className="group border border-border rounded-xl overflow-hidden construction-shadow-sm hover:construction-shadow-md transition-all duration-200">
+                <div className="aspect-video bg-muted/20 flex items-center justify-center p-6 relative">
                   <img
                     src={logo?.public_url}
                     alt={logo?.file_name}
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-full object-contain drop-shadow-sm"
                   />
+                  {logo?.is_primary && (
+                    <div className="absolute top-3 right-3 bg-warning text-warning-foreground px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                      <Icon name="Star" size={12} />
+                      Primary
+                    </div>
+                  )}
                 </div>
                 
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h3 className="font-medium text-gray-900 truncate">
-                        {logo?.file_name}
-                      </h3>
-                      <p className="text-sm text-gray-600 capitalize">
-                        {logo?.logo_type?.replace('_', ' ')}
-                      </p>
-                    </div>
-                    {logo?.is_primary && (
-                      <div className="flex items-center text-yellow-600">
-                        <Star className="w-4 h-4 fill-current" />
-                      </div>
-                    )}
+                <div className="p-4 bg-card">
+                  <div className="mb-4">
+                    <h3 className="font-semibold text-foreground truncate mb-1">
+                      {logo?.file_name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground capitalize">
+                      {logo?.logo_type?.replace('_', ' ')} • {logo?.file_size ? `${Math.round(logo.file_size / 1024)}KB` : 'Unknown size'}
+                    </p>
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => window.open(logo?.public_url, '_blank')}
+                      iconName="Eye"
+                      className="flex-1 min-w-0"
                     >
-                      <Eye className="w-4 h-4" />
+                      View
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => downloadLogo(logo)}
+                      iconName="Download"
+                      className="flex-1 min-w-0"
                     >
-                      <Download className="w-4 h-4" />
+                      Download
                     </Button>
                     {!logo?.is_primary && (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleSetPrimary(logo?.id)}
-                        className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
+                        iconName="Star"
+                        className="text-warning hover:bg-warning/10 hover:border-warning/50"
                       >
-                        <Star className="w-4 h-4" />
+                        Set Primary
                       </Button>
                     )}
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleDeleteLogo(logo?.id, logo?.file_path)}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      iconName="Trash2"
+                      className="text-destructive hover:bg-destructive/10 hover:border-destructive/50"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      Delete
                     </Button>
                   </div>
                 </div>
@@ -294,7 +316,7 @@ export function LogoManagement({ branding, userId, onError }) {
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

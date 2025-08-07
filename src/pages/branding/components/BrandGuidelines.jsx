@@ -4,7 +4,9 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
-import { Book, Plus, Edit, Trash2, Shield } from 'lucide-react';
+import { Card } from '../../../components/ui/Card';
+import Icon from '../../../components/AppIcon';
+import { showSuccessToast, showErrorToast } from '../../../utils/toastHelper';
 
 export function BrandGuidelines({ branding, userId, onError }) {
   const [guidelines, setGuidelines] = useState([]);
@@ -60,7 +62,9 @@ export function BrandGuidelines({ branding, userId, onError }) {
       setGuidelines(prev => [newGuideline, ...prev]);
       setShowCreateModal(false);
       resetForm();
+      showSuccessToast('Brand guideline created successfully!');
     } catch (err) {
+      showErrorToast('Failed to create brand guideline', err);
       onError?.('Failed to create brand guideline');
     }
   };
@@ -75,7 +79,9 @@ export function BrandGuidelines({ branding, userId, onError }) {
       setGuidelines(prev => prev?.map(g => g?.id === editingGuideline?.id ? updatedGuideline : g));
       setEditingGuideline(null);
       resetForm();
+      showSuccessToast('Guideline updated successfully!');
     } catch (err) {
+      showErrorToast('Failed to update brand guideline', err);
       onError?.('Failed to update brand guideline');
     }
   };
@@ -87,7 +93,9 @@ export function BrandGuidelines({ branding, userId, onError }) {
       onError?.(null);
       await brandingService?.deleteBrandGuideline(guidelineId);
       setGuidelines(prev => prev?.filter(g => g?.id !== guidelineId));
+      showSuccessToast('Guideline deleted successfully!');
     } catch (err) {
+      showErrorToast('Failed to delete brand guideline', err);
       onError?.('Failed to delete brand guideline');
     }
   };
@@ -115,118 +123,140 @@ export function BrandGuidelines({ branding, userId, onError }) {
 
   const getGuidelineIcon = (type) => {
     const icons = {
-      color_palette: '🎨',
-      typography: '📝',
-      logo_usage: '🏢',
-      spacing: '📐',
-      imagery: '🖼️',
-      tone_voice: '🗣️'
+      color_palette: 'Palette',
+      typography: 'Type',
+      logo_usage: 'Building2',
+      spacing: 'Ruler',
+      imagery: 'Image',
+      tone_voice: 'MessageSquare'
     };
-    return icons?.[type] || '📋';
+    return icons?.[type] || 'FileText';
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="ml-3 text-gray-600">Loading guidelines...</p>
+          <Icon name="Loader2" size={32} className="animate-spin text-primary mr-3" />
+          <p className="text-muted-foreground">Loading guidelines...</p>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <Card className="p-6 bg-card border border-border construction-shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <Book className="w-6 h-6 text-indigo-600" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
+              <Icon name="Book" size={24} className="text-warning" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Brand Guidelines</h2>
-              <p className="text-gray-600">Define and enforce your brand standards</p>
+              <h2 className="text-xl font-semibold text-foreground">Brand Guidelines</h2>
+              <p className="text-muted-foreground">Define and enforce your brand standards across all materials</p>
             </div>
           </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
+          <Button onClick={() => setShowCreateModal(true)} iconName="Plus" iconPosition="left">
             New Guideline
           </Button>
         </div>
-      </div>
+      </Card>
       {/* Guidelines List */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <Card className="bg-card border border-border construction-shadow-sm">
         {guidelines?.length === 0 ? (
-          <div className="p-12 text-center">
-            <Book className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No guidelines created</h3>
-            <p className="text-gray-600 mb-4">Create brand guidelines to maintain consistency across all materials.</p>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Guideline
+          <div className="p-16 text-center">
+            <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Icon name="Book" size={48} className="text-muted-foreground/50" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No guidelines created yet</h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">
+              Create brand guidelines to maintain consistency across all materials and communications. 
+              Guidelines help ensure your brand is represented properly at all times.
+            </p>
+            <Button onClick={() => setShowCreateModal(true)} iconName="Plus" iconPosition="left">
+              Create Your First Guideline
             </Button>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {guidelines?.map((guideline) => (
-              <div key={guideline?.id} className="p-6">
+              <div key={guideline?.id} className="p-6 hover:bg-muted/20 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{getGuidelineIcon(guideline?.guideline_type)}</span>
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {guideline?.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 capitalize">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <Icon name={getGuidelineIcon(guideline?.guideline_type)} size={24} className="text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="text-lg font-semibold text-foreground">
+                            {guideline?.title}
+                          </h3>
+                          {guideline?.is_enforced && (
+                            <div className="flex items-center text-success bg-success/10 px-2 py-1 rounded-full border border-success/20">
+                              <Icon name="Shield" size={12} className="mr-1" />
+                              <span className="text-xs font-medium">Enforced</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground capitalize">
                           {guideline?.guideline_type?.replace('_', ' ')}
                         </p>
                       </div>
-                      {guideline?.is_enforced && (
-                        <div className="flex items-center text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                          <Shield className="w-4 h-4 mr-1" />
-                          <span className="text-xs font-medium">Enforced</span>
-                        </div>
-                      )}
                     </div>
                     
                     {guideline?.description && (
-                      <p className="text-gray-700 mb-3">{guideline?.description}</p>
+                      <p className="text-foreground mb-4 ml-16">{guideline?.description}</p>
                     )}
                     
                     {/* Display settings based on type */}
-                    {guideline?.guideline_type === 'color_palette' && guideline?.settings?.primary && (
-                      <div className="flex gap-2 mb-3">
-                        <div 
-                          className="w-6 h-6 rounded border"
-                          style={{ backgroundColor: guideline?.settings?.primary }}
-                          title={`Primary: ${guideline?.settings?.primary}`}
-                        ></div>
-                        {guideline?.settings?.secondary && (
-                          <div 
-                            className="w-6 h-6 rounded border"
-                            style={{ backgroundColor: guideline?.settings?.secondary }}
-                            title={`Secondary: ${guideline?.settings?.secondary}`}
-                          ></div>
-                        )}
+                    <div className="ml-16 space-y-3">
+                      {guideline?.guideline_type === 'color_palette' && guideline?.settings?.primary && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-muted-foreground font-medium">Colors:</span>
+                          <div className="flex gap-2">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-6 h-6 rounded-md border border-border construction-shadow-sm"
+                                style={{ backgroundColor: guideline?.settings?.primary }}
+                              />
+                              <span className="text-xs font-mono text-muted-foreground">{guideline?.settings?.primary}</span>
+                            </div>
+                            {guideline?.settings?.secondary && (
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-6 h-6 rounded-md border border-border construction-shadow-sm"
+                                  style={{ backgroundColor: guideline?.settings?.secondary }}
+                                />
+                                <span className="text-xs font-mono text-muted-foreground">{guideline?.settings?.secondary}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {guideline?.guideline_type === 'typography' && guideline?.settings?.font_family && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-muted-foreground font-medium">Font:</span>
+                          <p 
+                            className="text-sm text-foreground font-medium"
+                            style={{ fontFamily: guideline?.settings?.font_family }}
+                          >
+                            {guideline?.settings?.font_family}
+                            {guideline?.settings?.heading_size && (
+                              <span className="text-muted-foreground ml-2">• {guideline?.settings?.heading_size}</span>
+                            )}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Icon name="Calendar" size={12} />
+                        <span>Created {new Date(guideline.created_at)?.toLocaleDateString()}</span>
                       </div>
-                    )}
-                    
-                    {guideline?.guideline_type === 'typography' && guideline?.settings?.font_family && (
-                      <p 
-                        className="text-sm text-gray-700 mb-3"
-                        style={{ fontFamily: guideline?.settings?.font_family }}
-                      >
-                        Font: {guideline?.settings?.font_family} 
-                        {guideline?.settings?.heading_size && ` | Heading: ${guideline?.settings?.heading_size}`}
-                      </p>
-                    )}
-                    
-                    <p className="text-xs text-gray-500">
-                      Created {new Date(guideline.created_at)?.toLocaleDateString()}
-                    </p>
+                    </div>
                   </div>
                   
                   <div className="flex gap-2">
@@ -234,24 +264,22 @@ export function BrandGuidelines({ branding, userId, onError }) {
                       size="sm" 
                       variant="outline"
                       onClick={() => openEditModal(guideline)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                      iconName="Edit"
+                    />
                     <Button 
                       size="sm" 
                       variant="outline"
                       onClick={() => handleDeleteGuideline(guideline?.id)}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      iconName="Trash2"
+                      className="text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+                    />
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
       {/* Create/Edit Modal */}
       {(showCreateModal || editingGuideline) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

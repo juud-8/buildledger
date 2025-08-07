@@ -4,7 +4,9 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
-import { FileText, Plus, Edit, Trash2, Copy, Eye } from 'lucide-react';
+import { Card } from '../../../components/ui/Card';
+import Icon from '../../../components/AppIcon';
+import { showSuccessToast, showErrorToast } from '../../../utils/toastHelper';
 
 export function DocumentTemplates({ branding, userId, onError }) {
   const [templates, setTemplates] = useState([]);
@@ -75,7 +77,9 @@ export function DocumentTemplates({ branding, userId, onError }) {
       setTemplates(prev => [newTemplate, ...prev]);
       setShowCreateModal(false);
       resetForm();
+      showSuccessToast('Document template created successfully!');
     } catch (err) {
+      showErrorToast('Failed to create document template', err);
       onError?.('Failed to create document template');
     }
   };
@@ -91,7 +95,9 @@ export function DocumentTemplates({ branding, userId, onError }) {
       setTemplates(prev => prev?.map(t => t?.id === editingTemplate?.id ? updatedTemplate : t));
       setEditingTemplate(null);
       resetForm();
+      showSuccessToast('Template updated successfully!');
     } catch (err) {
+      showErrorToast('Failed to update document template', err);
       onError?.('Failed to update document template');
     }
   };
@@ -103,7 +109,9 @@ export function DocumentTemplates({ branding, userId, onError }) {
       onError?.(null);
       await brandingService?.deleteDocumentTemplate(templateId);
       setTemplates(prev => prev?.filter(t => t?.id !== templateId));
+      showSuccessToast('Template deleted successfully!');
     } catch (err) {
+      showErrorToast('Failed to delete document template', err);
       onError?.('Failed to delete document template');
     }
   };
@@ -124,7 +132,9 @@ export function DocumentTemplates({ branding, userId, onError }) {
       
       const newTemplate = await brandingService?.createDocumentTemplate(duplicateData);
       setTemplates(prev => [newTemplate, ...prev]);
+      showSuccessToast('Template duplicated successfully!');
     } catch (err) {
+      showErrorToast('Failed to duplicate template', err);
       onError?.('Failed to duplicate template');
     }
   };
@@ -156,202 +166,265 @@ export function DocumentTemplates({ branding, userId, onError }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <Card className="p-6">
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="ml-3 text-gray-600">Loading templates...</p>
+          <Icon name="Loader2" size={32} className="animate-spin text-primary mr-3" />
+          <p className="text-muted-foreground">Loading templates...</p>
         </div>
-      </div>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <Card className="p-6 bg-card border border-border construction-shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-green-600" />
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center">
+              <Icon name="FileText" size={24} className="text-success" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">Document Templates</h2>
-              <p className="text-gray-600">Create branded templates for your documents</p>
+              <h2 className="text-xl font-semibold text-foreground">Document Templates</h2>
+              <p className="text-muted-foreground">Create branded templates for your documents and communications</p>
             </div>
           </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
+          <Button onClick={() => setShowCreateModal(true)} iconName="Plus" iconPosition="left">
             New Template
           </Button>
         </div>
-      </div>
+      </Card>
       {/* Templates List */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <Card className="bg-card border border-border construction-shadow-sm">
         {templates?.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No templates created</h3>
-            <p className="text-gray-600 mb-4">Create your first document template to get started.</p>
-            <Button onClick={() => setShowCreateModal(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Template
+          <div className="p-16 text-center">
+            <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Icon name="FileText" size={48} className="text-muted-foreground/50" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No templates created yet</h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-6">
+              Create your first document template to establish consistent branding across all your business communications.
+            </p>
+            <Button onClick={() => setShowCreateModal(true)} iconName="Plus" iconPosition="left">
+              Create Your First Template
             </Button>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-border">
             {templates?.map((template) => (
-              <div key={template?.id} className="p-6">
+              <div key={template?.id} className="p-6 hover:bg-muted/20 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-medium text-gray-900">
-                        {template?.template_name}
-                      </h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        template?.status === 'active' ?'bg-green-100 text-green-800' :'bg-gray-100 text-gray-800'
-                      }`}>
-                        {template?.status}
-                      </span>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Icon 
+                          name={template?.document_type === 'invoice' ? 'Receipt' : 
+                                template?.document_type === 'quote' ? 'Calculator' :
+                                template?.document_type === 'letterhead' ? 'FileText' :
+                                template?.document_type === 'business_card' ? 'CreditCard' :
+                                'Mail'} 
+                          size={20} 
+                          className="text-primary" 
+                        />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {template?.template_name}
+                        </h3>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            template?.status === 'active' 
+                              ? 'bg-success/10 text-success border border-success/20' 
+                              : 'bg-muted text-muted-foreground border border-border'
+                          }`}>
+                            {template?.status}
+                          </span>
+                          <span className="text-sm text-muted-foreground capitalize">
+                            {template?.document_type?.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span className="capitalize">{template?.document_type?.replace('_', ' ')}</span>
-                      <span>Logo: {template?.logo_position}</span>
-                      <span>{template?.show_logo ? 'Logo visible' : 'No logo'}</span>
-                      {template?.show_watermark && <span>Watermark enabled</span>}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Icon name="MapPin" size={14} />
+                        <span>Logo: {template?.logo_position?.replace('-', ' ')}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Icon name={template?.show_logo ? 'Eye' : 'EyeOff'} size={14} />
+                        <span>{template?.show_logo ? 'Logo visible' : 'No logo'}</span>
+                      </div>
+                      {template?.show_watermark && (
+                        <div className="flex items-center gap-1">
+                          <Icon name="Layers" size={14} />
+                          <span>Watermark enabled</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
-                      <Eye className="w-4 h-4" />
-                    </Button>
+                    <Button size="sm" variant="outline" iconName="Eye" />
                     <Button 
                       size="sm" 
                       variant="outline"
                       onClick={() => handleDuplicateTemplate(template)}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
+                      iconName="Copy"
+                    />
                     <Button 
                       size="sm" 
                       variant="outline"
                       onClick={() => openEditModal(template)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                      iconName="Edit"
+                    />
                     <Button 
                       size="sm" 
                       variant="outline"
                       onClick={() => handleDeleteTemplate(template?.id)}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      iconName="Trash2"
+                      className="text-destructive hover:bg-destructive/10 hover:border-destructive/50"
+                    />
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </Card>
       {/* Create/Edit Modal */}
       {(showCreateModal || editingTemplate) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingTemplate ? 'Edit Template' : 'Create New Template'}
-              </h3>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Template Name
-                  </label>
-                  <Input
-                    value={formData?.template_name}
-                    onChange={(e) => setFormData({ ...formData, template_name: e?.target?.value })}
-                    placeholder="Enter template name"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Document Type
-                  </label>
-                  <Select
-                    value={formData?.document_type}
-                    onValueChange={(value) => setFormData({ ...formData, document_type: value })}
-                    options={documentTypeOptions}
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-card border-border construction-shadow-lg">
+              <div className="p-6 border-b border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Icon name={editingTemplate ? 'Edit' : 'Plus'} size={20} className="text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {editingTemplate ? 'Edit Template' : 'Create New Template'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {editingTemplate ? 'Update your template settings' : 'Configure your new document template'}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    iconName="X"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setEditingTemplate(null);
+                      resetForm();
+                    }}
                   />
                 </div>
               </div>
+              
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Template Name
+                    </label>
+                    <Input
+                      value={formData?.template_name}
+                      onChange={(e) => setFormData({ ...formData, template_name: e?.target?.value })}
+                      placeholder="Enter template name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Document Type
+                    </label>
+                    <Select
+                      value={formData?.document_type}
+                      onValueChange={(value) => setFormData({ ...formData, document_type: value })}
+                      options={documentTypeOptions}
+                    />
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Logo Position
-                  </label>
-                  <Select
-                    value={formData?.logo_position}
-                    onValueChange={(value) => setFormData({ ...formData, logo_position: value })}
-                    options={logoPositionOptions}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Logo Position
+                    </label>
+                    <Select
+                      value={formData?.logo_position}
+                      onValueChange={(value) => setFormData({ ...formData, logo_position: value })}
+                      options={logoPositionOptions}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Logo Size
+                    </label>
+                    <Select
+                      value={formData?.logo_size}
+                      onValueChange={(value) => setFormData({ ...formData, logo_size: value })}
+                      options={logoSizeOptions}
+                    />
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Logo Size
-                  </label>
-                  <Select
-                    value={formData?.logo_size}
-                    onValueChange={(value) => setFormData({ ...formData, logo_size: value })}
-                    options={logoSizeOptions}
-                  />
-                </div>
-              </div>
 
-              <div className="flex gap-6">
-                <div className="flex items-center">
-                  <Checkbox
-                    checked={formData?.show_logo}
-                    onCheckedChange={(checked) => setFormData({ ...formData, show_logo: checked })}
-                  />
-                  <label className="ml-2 text-sm text-gray-700">Show logo</label>
-                </div>
-                
-                <div className="flex items-center">
-                  <Checkbox
-                    checked={formData?.show_watermark}
-                    onCheckedChange={(checked) => setFormData({ ...formData, show_watermark: checked })}
-                  />
-                  <label className="ml-2 text-sm text-gray-700">Show watermark</label>
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-foreground">Display Options</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-3 p-3 border border-border rounded-lg">
+                      <Checkbox
+                        checked={formData?.show_logo}
+                        onCheckedChange={(checked) => setFormData({ ...formData, show_logo: checked })}
+                      />
+                      <div>
+                        <label className="text-sm font-medium text-foreground">Show logo</label>
+                        <p className="text-xs text-muted-foreground">Include company logo in template</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3 p-3 border border-border rounded-lg">
+                      <Checkbox
+                        checked={formData?.show_watermark}
+                        onCheckedChange={(checked) => setFormData({ ...formData, show_watermark: checked })}
+                      />
+                      <div>
+                        <label className="text-sm font-medium text-foreground">Show watermark</label>
+                        <p className="text-xs text-muted-foreground">Add subtle background watermark</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="p-6 border-t flex gap-3">
-              <Button 
-                onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
-                disabled={!formData?.template_name}
-              >
-                {editingTemplate ? 'Update Template' : 'Create Template'}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingTemplate(null);
-                  resetForm();
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
+              
+              <div className="p-6 border-t border-border flex gap-3">
+                <Button 
+                  onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
+                  disabled={!formData?.template_name}
+                  iconName={editingTemplate ? 'Save' : 'Plus'}
+                  iconPosition="left"
+                >
+                  {editingTemplate ? 'Update Template' : 'Create Template'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingTemplate(null);
+                    resetForm();
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </Card>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
