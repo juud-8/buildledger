@@ -8,11 +8,15 @@ import ActivityFeed from './components/ActivityFeed';
 import QuickActions from './components/QuickActions';
 import WeatherWidget from './components/WeatherWidget';
 import RevenueChart from './components/RevenueChart';
+import OnboardingProgress from '../../components/onboarding/OnboardingProgress';
+import WelcomeTour from '../../components/onboarding/WelcomeTour';
 import { dashboardService } from '../../services/dashboardService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const Dashboard = () => {
   const { userProfile } = useAuth();
+  const { isOnboardingComplete } = useOnboarding();
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [kpiData, setKpiData] = useState([]);
@@ -159,8 +163,15 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* Onboarding Progress */}
+          {!isOnboardingComplete && (
+            <div className="mb-8">
+              <OnboardingProgress />
+            </div>
+          )}
+
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-tour="kpi-cards">
             {kpiData?.map((kpi, index) => (
               <KPICard
                 key={index}
@@ -183,18 +194,18 @@ const Dashboard = () => {
             </div>
 
             {/* Right Column - Activity Feed */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2" data-tour="activity-feed">
               <ActivityFeed activities={recentActivity} />
             </div>
           </div>
 
           {/* Revenue Chart */}
-          <div className="mb-8">
+          <div className="mb-8" data-tour="revenue-chart">
             <RevenueChart data={revenueData} />
           </div>
 
           {/* Quick Actions */}
-          <div className="mb-8">
+          <div className="mb-8" data-tour="quick-actions">
             <QuickActions />
           </div>
 
@@ -209,6 +220,9 @@ const Dashboard = () => {
           </div>
         </main>
       </div>
+      
+      {/* Welcome Tour Overlay */}
+      <WelcomeTour />
     </div>
   );
 };

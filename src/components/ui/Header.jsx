@@ -17,6 +17,8 @@ const Header = () => {
     { label: 'Projects', path: '/projects', icon: 'Building2' },
     { label: 'Clients', path: '/clients', icon: 'Users' },
     { label: 'Items', path: '/items', icon: 'Package' },
+    { label: 'Vendors', path: '/vendors', icon: 'Store' },
+    { label: 'Materials', path: '/materials', icon: 'Box' },
     { label: 'Quotes', path: '/quotes', icon: 'FileText' },
     { label: 'Invoices', path: '/invoices', icon: 'Receipt' },
     { label: 'Analytics', path: '/analytics', icon: 'BarChart3' },

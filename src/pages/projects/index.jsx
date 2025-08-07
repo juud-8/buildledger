@@ -7,11 +7,14 @@ import ProjectFilters from './components/ProjectFilters';
 import ProjectToolbar from './components/ProjectToolbar';
 import ProjectGrid from './components/ProjectGrid';
 import CreateProjectModal from './components/CreateProjectModal';
+import OnboardingStep from '../../components/onboarding/OnboardingStep';
 
 import Button from '../../components/ui/Button';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const Projects = () => {
   const navigate = useNavigate();
+  const { currentStep, completeStep } = useOnboarding();
   const [projects, setProjects] = useState([]);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]);
@@ -132,6 +135,12 @@ const Projects = () => {
   }, []);
 
   useEffect(() => {
+    if (currentStep === 'firstProject' && projects.length === 0) {
+      setIsCreateModalOpen(true);
+    }
+  }, [currentStep, projects.length]);
+
+  useEffect(() => {
     // Apply filters
     let filtered = [...projects];
 
@@ -231,9 +240,14 @@ const Projects = () => {
     // Add the new project to the list
     setProjects(prev => [newProject, ...prev]);
     setFilteredProjects(prev => [newProject, ...prev]);
+    
+    // Complete onboarding step if this is the first project
+    if (currentStep === 'firstProject') {
+      completeStep('firstProject');
+    }
   };
 
-  return (
+  const content = (
     <>
       <Helmet>
         <title>Projects - BuildLedger</title>
@@ -320,6 +334,12 @@ const Projects = () => {
       />
     </>
   );
+
+  return currentStep === 'firstProject' ? (
+    <OnboardingStep stepKey="firstProject">
+      {content}
+    </OnboardingStep>
+  ) : content;
 };
 
 export default Projects;

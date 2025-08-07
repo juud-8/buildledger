@@ -1,5 +1,6 @@
 import Routes from './Routes';
 import { AuthProvider } from './contexts/AuthContext';
+import { OnboardingProvider } from './contexts/OnboardingContext';
 import ChatWidget from './components/ai-assistant/ChatWidget';
 import { Toaster } from 'react-hot-toast';
 import RoleSwitcher from './components/dev/RoleSwitcher';
@@ -9,11 +10,12 @@ function App() {
 
   return (
     <AuthProvider>
-      <div className="dark font-sans bg-background text-foreground">
-        <Routes />
-        <ChatWidget />
-        {isDevelopment && <RoleSwitcher />}
-        <Toaster 
+      <OnboardingProvider>
+        <div className="dark font-sans bg-background text-foreground">
+          <Routes />
+          <ChatWidget />
+          {isDevelopment && <RoleSwitcher />}
+          <Toaster 
           position="top-right"
           reverseOrder={false}
           gutter={8}
@@ -41,7 +43,8 @@ function App() {
             },
           }}
         />
-      </div>
+        </div>
+      </OnboardingProvider>
     </AuthProvider>
   );
 }

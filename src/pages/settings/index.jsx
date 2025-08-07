@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../../components/ui/Header';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import Icon from '../../components/AppIcon';
@@ -10,9 +10,18 @@ import IntegrationSettings from './components/IntegrationSettings';
 import SecuritySettings from './components/SecuritySettings';
 import BillingSubscription from './components/BillingSubscription';
 import BrandingSettings from './components/BrandingSettings';
+import OnboardingStep from '../../components/onboarding/OnboardingStep';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const Settings = () => {
+  const { currentStep } = useOnboarding();
   const [activeTab, setActiveTab] = useState('company');
+
+  useEffect(() => {
+    if (currentStep === 'companyInfo') {
+      setActiveTab('company');
+    }
+  }, [currentStep]);
 
   const settingsTabs = [
     {
@@ -68,7 +77,13 @@ const Settings = () => {
   const renderActiveComponent = () => {
     switch (activeTab) {
       case 'company':
-        return <CompanyProfile />;
+        return currentStep === 'companyInfo' ? (
+          <OnboardingStep stepKey="companyInfo">
+            <CompanyProfile />
+          </OnboardingStep>
+        ) : (
+          <CompanyProfile />
+        );
       case 'branding':
         return <BrandingSettings />;
       case 'users':

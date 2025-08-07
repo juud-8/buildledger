@@ -20,6 +20,8 @@ import RegisterPage from './pages/register/index.jsx';
 import PricingPage from './pages/pricing/index.jsx';
 import NotFoundPage from './pages/NotFound.jsx';
 import BrandingPage from './pages/branding/index.jsx';
+import VendorsPage from './pages/vendors/index.jsx';
+import MaterialsPage from './pages/materials/index.jsx';
 import AdminSetupPage from './pages/admin-setup/index.jsx';
 import AdminCleanupPage from './pages/admin-cleanup/index.jsx';
 
@@ -43,6 +45,8 @@ export default function Routes() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/branding" element={<BrandingPage />} />
+          <Route path="/vendors" element={<VendorsPage />} />
+          <Route path="/materials" element={<MaterialsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/pricing" element={<PricingPage />} />

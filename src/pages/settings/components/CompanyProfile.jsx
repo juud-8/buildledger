@@ -1,12 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
-import { showErrorToast } from '../../../utils/toastHelper';
+import { showErrorToast, showSuccessToast } from '../../../utils/toastHelper';
+import { useOnboarding } from '../../../contexts/OnboardingContext';
 
 const CompanyProfile = () => {
+  const { currentStep, steps, completeStep } = useOnboarding();
   const [companyData, setCompanyData] = useState({
     companyName: "BuildLedger Construction Co.",
     businessType: "general-contractor",
@@ -25,6 +27,12 @@ const CompanyProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (currentStep === 'companyInfo' && !steps.companyInfo) {
+      setIsEditing(true);
+    }
+  }, [currentStep, steps.companyInfo]);
 
   const businessTypes = [
     { value: "general-contractor", label: "General Contractor" },
@@ -51,7 +59,13 @@ const CompanyProfile = () => {
 
   const handleSave = () => {
     setIsEditing(false);
-    // Save logic here
+    
+    if (currentStep === 'companyInfo') {
+      completeStep('companyInfo');
+      showSuccessToast('Company profile updated! Ready for the next step.');
+    } else {
+      showSuccessToast('Company profile updated successfully!');
+    }
   };
 
   const handleCancel = () => {

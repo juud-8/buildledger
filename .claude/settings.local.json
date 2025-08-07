@@ -26,7 +26,8 @@
       "Bash(npm uninstall:*)",
       "Bash(grep:*)",
       "Bash(npx supabase:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

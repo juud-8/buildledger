@@ -7,15 +7,18 @@ import ClientCard from './components/ClientCard';
 import ClientToolbar from './components/ClientToolbar';
 import ClientDetailModal from './components/ClientDetailModal';
 import CreateClientModal from './components/CreateClientModal';
+import OnboardingStep from '../../components/onboarding/OnboardingStep';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { clientsService } from '../../services/clientsService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 import { showInfoToast, showErrorToast } from '../../utils/toastHelper';
 
 const ClientsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentStep, completeStep } = useOnboarding();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
   const [selectedClients, setSelectedClients] = useState([]);
@@ -28,6 +31,12 @@ const ClientsPage = () => {
   const [clients, setClients] = useState([]);
   const [filteredClients, setFilteredClients] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (currentStep === 'firstClient' && clients.length === 0) {
+      setIsCreateModalOpen(true);
+    }
+  }, [currentStep, clients.length]);
 
   // Fetch clients from Supabase
   useEffect(() => {
@@ -179,6 +188,11 @@ const ClientsPage = () => {
     setIsCreateModalOpen(false);
     // Refresh the clients list
     setRefreshKey(prev => prev + 1);
+    
+    // Complete onboarding step if this is the first client
+    if (currentStep === 'firstClient') {
+      completeStep('firstClient');
+    }
   };
 
   const handleClientUpdated = () => {
@@ -308,7 +322,7 @@ const ClientsPage = () => {
     );
   }
 
-  return (
+  const content = (
     <div className="min-h-screen bg-background">
       <Header />
       <div className="pt-16">
@@ -465,6 +479,12 @@ const ClientsPage = () => {
       )}
     </div>
   );
+
+  return currentStep === 'firstClient' ? (
+    <OnboardingStep stepKey="firstClient">
+      {content}
+    </OnboardingStep>
+  ) : content;
 };
 
 export default ClientsPage;

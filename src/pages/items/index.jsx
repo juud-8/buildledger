@@ -8,13 +8,16 @@ import ItemCard from './components/ItemCard';
 import ItemToolbar from './components/ItemToolbar';
 import BarcodeScanner from '../../components/barcode/BarcodeScanner';
 import FloatingActionButton from '../../components/ui/FloatingActionButton';
+import OnboardingStep from '../../components/onboarding/OnboardingStep';
 import { useBarcodeScanning } from '../../hooks/useBarcodeScanning';
 import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { showInfoToast } from '../../utils/toastHelper';
+import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const ItemsPage = () => {
   const navigate = useNavigate();
+  const { currentStep, completeStep } = useOnboarding();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
   const [selectedItems, setSelectedItems] = useState([]);
@@ -228,6 +231,12 @@ const ItemsPage = () => {
     filterItems();
   }, [searchQuery, activeFilters, items]);
 
+  useEffect(() => {
+    if (currentStep === 'firstItem' && items.length === 0) {
+      // Show welcome message or automatically trigger add item flow
+    }
+  }, [currentStep, items.length]);
+
   const filterItems = () => {
     let filtered = items;
 
@@ -280,6 +289,11 @@ const ItemsPage = () => {
 
   const handleAddItem = () => {
     navigate('/items/add');
+    
+    // Complete onboarding step if this is the first item
+    if (currentStep === 'firstItem') {
+      completeStep('firstItem');
+    }
   };
 
   const handleEditItem = (itemId) => {
@@ -364,7 +378,7 @@ const ItemsPage = () => {
     );
   }
 
-  return (
+  const content = (
     <div className="min-h-screen bg-background">
       <Helmet>
         <title>Items - BuildLedger</title>
@@ -565,6 +579,12 @@ const ItemsPage = () => {
       />
     </div>
   );
+
+  return currentStep === 'firstItem' ? (
+    <OnboardingStep stepKey="firstItem">
+      {content}
+    </OnboardingStep>
+  ) : content;
 };
 
 export default ItemsPage;
