@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ENV_CONFIG } from '../lib/env';
+import { ENV_CONFIG, getAIKey } from '../lib/env';
 
 class MultiProviderAI {
   constructor() {
@@ -10,41 +10,51 @@ class MultiProviderAI {
   }
 
   initializeProviders() {
+    // Determine which keys to use based on environment
+    const useProductionKeys = ENV_CONFIG.USE_PRODUCTION_AI || ENV_CONFIG.IS_PRODUCTION;
+    
     // OpenAI Provider
-    if (ENV_CONFIG.OPENAI_API_KEY) {
+    const openAIKey = getAIKey('openai');
+    if (openAIKey) {
       this.providers.push({
         name: 'openai',
         client: new OpenAI({
-          apiKey: ENV_CONFIG.OPENAI_API_KEY,
+          apiKey: openAIKey,
           dangerouslyAllowBrowser: true,
         }),
         model: 'gpt-3.5-turbo',
-        type: 'openai'
+        type: 'openai',
+        environment: useProductionKeys ? 'production' : 'development'
       });
     }
 
     // Google Gemini Provider
-    if (ENV_CONFIG.GEMINI_API_KEY) {
-      const genAI = new GoogleGenerativeAI(ENV_CONFIG.GEMINI_API_KEY);
+    const geminiKey = getAIKey('gemini');
+    if (geminiKey) {
+      const genAI = new GoogleGenerativeAI(geminiKey);
       this.providers.push({
         name: 'gemini',
         client: genAI.getGenerativeModel({ model: 'gemini-pro' }),
         model: 'gemini-pro',
-        type: 'gemini'
+        type: 'gemini',
+        environment: useProductionKeys ? 'production' : 'development'
       });
     }
 
     // Anthropic Claude Provider (note: requires server-side proxy for browser usage)
-    if (ENV_CONFIG.ANTHROPIC_API_KEY) {
+    const anthropicKey = getAIKey('anthropic');
+    if (anthropicKey) {
       this.providers.push({
         name: 'anthropic',
         client: null, // Would need server-side proxy
         model: 'claude-3-haiku-20240307',
-        type: 'anthropic'
+        type: 'anthropic',
+        environment: useProductionKeys ? 'production' : 'development'
       });
     }
 
-    console.log(`Initialized ${this.providers.length} AI providers:`, this.providers.map(p => p.name));
+    console.log(`Initialized ${this.providers.length} AI providers in ${useProductionKeys ? 'PRODUCTION' : 'DEVELOPMENT'} mode:`, 
+      this.providers.map(p => `${p.name} (${p.environment})`));
   }
 
   async testProvider(provider) {
