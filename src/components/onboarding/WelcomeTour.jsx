@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../AppIcon';
 import Button from '../ui/Button';
-import Card from '../ui/Card';
+import { Card } from '../ui/Card';
 import { useOnboarding } from '../../contexts/OnboardingContext';
 
 const WelcomeTour = () => {
