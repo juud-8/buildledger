@@ -526,12 +526,13 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
           <h2 className="text-2xl font-bold text-foreground">
             {editMode ? 'Edit Invoice' : 'Create New Invoice'}
           </h2>
-          <button
+          <Button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ✕
-          </button>
+            variant="ghost"
+            size="icon"
+            iconName="X"
+            className="text-muted-foreground hover:text-foreground"
+          />
         </div>
 
         {/* Progress Steps */}
@@ -690,11 +691,11 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground"
                   rows={3}
                   placeholder="Invoice description"
                 />
@@ -702,7 +703,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Tax Rate (%)</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Tax Rate (%)</label>
                   <Input
                     type="number"
                     value={formData.taxRate}
@@ -718,12 +719,13 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Due Date</label>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Due Date</label>
                   <Input
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => handleInputChange('dueDate', e.target.value)}
                     className={validationErrors.dueDate ? 'border-red-500' : ''}
+                    required
                   />
                   {validationErrors.dueDate && (
                     <p className="text-red-500 text-sm mt-1">{validationErrors.dueDate}</p>
@@ -741,7 +743,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                 <Button
                   type="button"
                   onClick={() => setShowItemSelection(true)}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
+                  variant="default"
+                  iconName="Plus"
                 >
                   Add Item
                 </Button>
@@ -761,49 +764,50 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                   {selectedItems?.map((item, index) => (
                     <div key={index} className="flex items-center space-x-2 p-2 border rounded">
                       <div className="flex-1">
-                        <input
+                        <Input
                           value={item.name}
                           onChange={(e) => handleLineItemChange(index, 'name', e.target.value)}
-                          className="w-full p-1 border rounded"
+                          className="w-full"
                           placeholder="Item name"
                         />
                       </div>
                       <div className="w-20">
-                        <input
+                        <Input
                           type="number"
                           value={item.quantity}
                           onChange={(e) => handleLineItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="w-full p-1 border rounded"
+                          className="w-full"
                           placeholder="Qty"
                           step="0.01"
                         />
                       </div>
                       <div className="w-24">
-                        <input
+                        <Input
                           type="number"
                           value={item.unit_price}
                           onChange={(e) => handleLineItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                          className="w-full p-1 border rounded"
+                          className="w-full"
                           placeholder="Price"
                           step="0.01"
                         />
                       </div>
                       <div className="w-24">
-                        <input
+                        <Input
                           type="number"
                           value={item.total_price}
-                          className="w-full p-1 border rounded bg-muted"
+                          className="w-full bg-muted"
                           placeholder="Total"
                           readOnly
                         />
                       </div>
-                      <button
+                      <Button
                         type="button"
                         onClick={() => removeLineItem(index)}
+                        variant="ghost"
+                        size="sm"
+                        iconName="X"
                         className="text-red-500 hover:text-red-700"
-                      >
-                        ✕
-                      </button>
+                      />
                     </div>
                   ))}
                 </div>
@@ -896,7 +900,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
               type="button"
               onClick={prevStep}
               disabled={currentStep === 1}
-              className="bg-muted text-muted-foreground px-4 py-2 rounded disabled:opacity-50 hover:bg-muted/80"
+              variant="outline"
             >
               Previous
             </Button>
@@ -905,7 +909,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
               <Button
                 type="button"
                 onClick={nextStep}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
+                variant="default"
               >
                 Next
               </Button>
@@ -917,9 +921,10 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
+                  variant="success"
+                  loading={isLoading}
                 >
-                  {isLoading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Invoice' : 'Create Invoice')}
+                  {editMode ? 'Update Invoice' : 'Create Invoice'}
                 </Button>
               </div>
             )}
