@@ -254,14 +254,14 @@ class PDFService {
         this.getLogoUrl()
       ]);
 
-      // Generate PDF blob
+      // Generate PDF blob (react-pdf expects a React element)
       const blob = await pdf(
-        PDFTemplate({
-          data: quoteData,
-          type: 'quote',
-          companyInfo,
-          logoUrl
-        })
+        <PDFTemplate
+          data={quoteData}
+          type="quote"
+          companyInfo={companyInfo}
+          logoUrl={logoUrl}
+        />
       ).toBlob();
 
       // Generate mobile-friendly filename
@@ -297,14 +297,14 @@ class PDFService {
         this.getLogoUrl()
       ]);
 
-      // Generate PDF blob
+      // Generate PDF blob (react-pdf expects a React element)
       const blob = await pdf(
-        PDFTemplate({
-          data: invoiceData,
-          type: 'invoice',
-          companyInfo,
-          logoUrl
-        })
+        <PDFTemplate
+          data={invoiceData}
+          type="invoice"
+          companyInfo={companyInfo}
+          logoUrl={logoUrl}
+        />
       ).toBlob();
 
       // Generate mobile-friendly filename
@@ -334,12 +334,12 @@ class PDFService {
       ]);
 
       return await pdf(
-        PDFTemplate({
-          data,
-          type,
-          companyInfo,
-          logoUrl
-        })
+        <PDFTemplate
+          data={data}
+          type={type}
+          companyInfo={companyInfo}
+          logoUrl={logoUrl}
+        />
       ).toBlob();
     } catch (error) {
       console.error('Error generating PDF blob:', error);

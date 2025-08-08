@@ -1,6 +1,48 @@
 import { supabase } from '../lib/supabase';
 
 export const brandingService = {
+  // Compatibility wrappers used by UI components
+  getLogoAssets: async (userId) => brandingService.getCompanyLogos(userId),
+  getLogoUrl: (filePath) => {
+    if (!filePath) return null;
+    const { data } = supabase.storage.from('company-assets').getPublicUrl(filePath);
+    return data?.publicUrl || null;
+  },
+  optimizeImage: async (file) => file,
+  uploadLogo: async (file, logoType, userId, brandingId) => {
+    // Upload to storage then insert record
+    const { data: userProfile } = await supabase
+      .from('user_profiles').select('company_id').eq('id', userId).single();
+    if (!userProfile?.company_id) throw new Error('Company not found');
+    const companyId = userProfile.company_id;
+
+    const ext = file.name?.split('.').pop() || 'png';
+    const storagePath = `company-logos/${companyId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('company-assets')
+      .upload(storagePath, file, { upsert: false, cacheControl: '3600' });
+    if (uploadError) throw uploadError;
+
+    const { data, error } = await supabase.from('company_logos').insert({
+      company_id: companyId,
+      logo_type: logoType || 'full_logo',
+      file_name: file.name,
+      file_path: storagePath,
+      file_size: file.size,
+      is_primary: false
+    }).select().single();
+    if (error) throw error;
+    return data;
+  },
+  deleteLogo: async (logoId, filePath) => {
+    if (filePath) {
+      await supabase.storage.from('company-assets').remove([filePath]);
+    }
+    const { error } = await supabase.from('company_logos').delete().eq('id', logoId);
+    if (error) throw error;
+    return true;
+  },
+  setPrimaryLogo: async (logoId, userId) => brandingService.setPrimaryLogo(userId, logoId),
   // Get company branding settings
   async getCompanyBranding(userId) {
     try {

@@ -6,29 +6,60 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { showErrorToast, showSuccessToast } from '../../../utils/toastHelper';
 import { useOnboarding } from '../../../contexts/OnboardingContext';
+import { companyService } from '../../../services/companyService';
+import { supabase } from '../../../lib/supabase';
 
 const CompanyProfile = () => {
   const { currentStep, steps, completeStep } = useOnboarding();
   const [companyData, setCompanyData] = useState({
-    companyName: "BuildLedger Construction Co.",
-    businessType: "general-contractor",
-    licenseNumber: "CL-2024-789456",
-    taxId: "12-3456789",
-    phone: "(555) 123-4567",
-    email: "info@buildledger.com",
-    website: "www.buildledger.com",
-    address: "1234 Construction Ave",
-    city: "Austin",
-    state: "TX",
-    zipCode: "78701",
-    logo: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=200&h=200&fit=crop&crop=center"
+    companyName: '',
+    businessType: '',
+    licenseNumber: '',
+    taxId: '',
+    phone: '',
+    email: '',
+    website: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    logo: ''
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
 
+  // Load from DB and enter edit mode for onboarding
   useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const company = await companyService.getCompanyForCurrentUser();
+        if (company) {
+          setCompanyData({
+            companyName: company?.name || '',
+            businessType: company?.settings?.business_type || '',
+            licenseNumber: company?.settings?.license_number || '',
+            taxId: company?.tax_id || '',
+            phone: company?.phone || '',
+            email: company?.email || '',
+            website: company?.website || '',
+            address: company?.address?.street || '',
+            city: company?.address?.city || '',
+            state: company?.address?.state || '',
+            zipCode: company?.address?.zip || '',
+            logo: company?.logo_url || ''
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load company', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
     if (currentStep === 'companyInfo' && !steps.companyInfo) {
       setIsEditing(true);
     }
@@ -57,14 +88,22 @@ const CompanyProfile = () => {
     }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    
-    if (currentStep === 'companyInfo') {
-      completeStep('companyInfo');
-      showSuccessToast('Company profile updated! Ready for the next step.');
-    } else {
-      showSuccessToast('Company profile updated successfully!');
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      await companyService.upsertCompanyForCurrentUser(companyData);
+      setIsEditing(false);
+      if (currentStep === 'companyInfo') {
+        completeStep('companyInfo');
+        showSuccessToast('Company profile updated! Ready for the next step.');
+      } else {
+        showSuccessToast('Company profile updated successfully!');
+      }
+    } catch (e) {
+      console.error(e);
+      showErrorToast('Failed to save company profile');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -91,19 +130,17 @@ const CompanyProfile = () => {
   const uploadLogo = async (file) => {
     try {
       setUploading(true);
-      
-      // Create a temporary URL for the uploaded image
-      const imageUrl = URL.createObjectURL(file);
-      
-      // Update the company data with the new logo
-      setCompanyData(prev => ({
-        ...prev,
-        logo: imageUrl
-      }));
-      
-      // In a real app, you would upload to a server here
-      console.log('Logo uploaded:', file.name);
-      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const ext = file.name?.split('.')?.pop() || 'png';
+      const storagePath = `company-logos/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('company-assets')
+        .upload(storagePath, file, { upsert: true, cacheControl: '3600' });
+      if (uploadError) throw uploadError;
+      await companyService.setCompanyLogoPath(storagePath);
+      setCompanyData(prev => ({ ...prev, logo: storagePath }));
+      showSuccessToast('Logo uploaded');
     } catch (error) {
       console.error('Error uploading logo:', error);
       showErrorToast('Failed to upload logo. Please try again.');
@@ -152,15 +189,18 @@ const CompanyProfile = () => {
         </div>
       </div>
       <div className="p-6 space-y-6">
+        {loading && (
+          <div className="text-sm text-muted-foreground">Loading company profile…</div>
+        )}
         {/* Company Logo */}
         <div className="flex items-start space-x-6">
           <div className="flex-shrink-0">
             <div className="w-24 h-24 rounded-lg overflow-hidden border border-border">
-              <Image
-                src={companyData?.logo}
-                alt="Company Logo"
-                className="w-full h-full object-cover"
-              />
+              {companyData?.logo ? (
+                <Image src={companyData?.logo} alt="Company Logo" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">No logo</div>
+              )}
             </div>
             {isEditing && (
               <>
