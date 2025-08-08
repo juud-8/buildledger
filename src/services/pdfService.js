@@ -1,3 +1,4 @@
+import React from 'react';
 import { pdf } from '@react-pdf/renderer';
 import PDFTemplate from '../components/pdf/PDFTemplate';
 import { supabase } from '../lib/supabase';
@@ -254,14 +255,19 @@ class PDFService {
         this.getLogoUrl()
       ]);
 
+      // Validate required data
+      if (!quoteData) {
+        throw new Error('Quote data not found');
+      }
+
       // Generate PDF blob (react-pdf expects a React element)
       const blob = await pdf(
-        <PDFTemplate
-          data={quoteData}
-          type="quote"
-          companyInfo={companyInfo}
-          logoUrl={logoUrl}
-        />
+        React.createElement(PDFTemplate, {
+          data: quoteData,
+          type: 'quote',
+          companyInfo: companyInfo || this.defaultCompanyInfo,
+          logoUrl: logoUrl || null
+        })
       ).toBlob();
 
       // Generate mobile-friendly filename
@@ -297,14 +303,19 @@ class PDFService {
         this.getLogoUrl()
       ]);
 
+      // Validate required data
+      if (!invoiceData) {
+        throw new Error('Invoice data not found');
+      }
+
       // Generate PDF blob (react-pdf expects a React element)
       const blob = await pdf(
-        <PDFTemplate
-          data={invoiceData}
-          type="invoice"
-          companyInfo={companyInfo}
-          logoUrl={logoUrl}
-        />
+        React.createElement(PDFTemplate, {
+          data: invoiceData,
+          type: 'invoice',
+          companyInfo: companyInfo || this.defaultCompanyInfo,
+          logoUrl: logoUrl || null
+        })
       ).toBlob();
 
       // Generate mobile-friendly filename
@@ -334,12 +345,12 @@ class PDFService {
       ]);
 
       return await pdf(
-        <PDFTemplate
-          data={data}
-          type={type}
-          companyInfo={companyInfo}
-          logoUrl={logoUrl}
-        />
+        React.createElement(PDFTemplate, {
+          data,
+          type,
+          companyInfo,
+          logoUrl
+        })
       ).toBlob();
     } catch (error) {
       console.error('Error generating PDF blob:', error);
