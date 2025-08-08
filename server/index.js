@@ -1,20 +1,40 @@
-require('dotenv').config();
+// Ensure CommonJS in case the platform tries ESM/deno
+try { require('dotenv').config(); } catch (e) { /* ignore if not available */ }
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { createClient } = require('@supabase/supabase-js');
+const AIProxyService = require('./middleware/aiProxy');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// CORS middleware
+app.use(cors({
+  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+  credentials: true
+}));
 // IMPORTANT: Do NOT register express.json() before the Stripe webhook. The webhook
 // requires raw body parsing for signature verification.
 
-// Mount Stripe webhook router BEFORE json body parsing
+// Mount webhook routers BEFORE json body parsing
 const createStripeWebhookRouter = require('./middleware/stripeWebhook');
-// Pass initialized clients into the webhook router
+const createTwilioWebhookRouter = require('./middleware/twilioWebhook');
+const logger = require('./utils/logger');
 
 
 // Check required environment variables
@@ -34,14 +54,37 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-console.log('✅ Supabase client initialized');
-console.log('✅ Server starting on port:', process.env.PORT || 3001);
+// Initialize AI Proxy Service
+const aiProxy = new AIProxyService();
+
+logger.info('Supabase client initialized', {
+  url: process.env.SUPABASE_URL?.substring(0, 30) + '...',
+  serviceRoleConfigured: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+});
+
+logger.info('Server starting', {
+  port: process.env.PORT || 3001,
+  environment: process.env.NODE_ENV || 'development',
+  corsOrigins: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000']
+});
 
 // Mount webhook routes at /api/stripe (exposes POST /api/stripe/webhook)
 app.use('/api/stripe', createStripeWebhookRouter({ stripe, supabase }));
 
+// Mount Twilio webhook routes at /api/twilio (exposes POST /api/twilio/sms/status, etc)
+app.use('/api/twilio', createTwilioWebhookRouter({ supabase }));
+
 // Register JSON body parser AFTER webhook mount
 app.use(express.json());
+
+// Make Supabase available to middleware
+app.use((req, res, next) => {
+  req.supabase = supabase;
+  next();
+});
+
+// Mount AI proxy routes
+app.use('/api/ai', aiProxy.createRouter(express));
 
 // Create customer
 app.post('/api/stripe/create-customer', async (req, res) => {
@@ -228,5 +271,15 @@ app.post('/api/stripe/attach-payment-method', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Stripe API server running on port ${PORT}`);
-}); 
+  logger.info('Server started successfully', {
+    port: PORT,
+    endpoints: [
+      'POST /api/stripe/webhook',
+      'POST /api/twilio/sms/status',
+      'POST /api/twilio/voice/status',
+      'POST /api/ai/chat',
+      'GET /api/ai/health',
+      'GET /api/twilio/health'
+    ]
+  });
+});
