@@ -15,6 +15,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showItemSelection, setShowItemSelection] = useState(false);
+  const [itemEntryMode, setItemEntryMode] = useState('manual'); // 'manual' | 'library'
   const [isClientsLoading, setIsClientsLoading] = useState(false);
   const [clientsError, setClientsError] = useState(null);
   const [formErrors, setFormErrors] = useState({});
@@ -39,7 +40,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
     description: '',
     taxRate: 0,
     dueDate: '',
-    notes: ''
+    notes: '',
+    customerView: 'detailed' // 'detailed' | 'summary'
   });
 
   useEffect(() => {
@@ -239,7 +241,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
         total_amount: totals.total,
         tax_rate: formData.taxRate,
         due_date: formData.dueDate || null,
-        notes: formData.notes,
+        notes: `${formData.notes || ''}\n[customer_view=${formData.customerView}]`,
+        show_summary_only: formData.customerView === 'summary',
         status: 'pending'
       };
 
@@ -365,7 +368,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
       description: '',
       taxRate: 0,
       dueDate: '',
-      notes: ''
+      notes: '',
+      customerView: 'detailed'
     });
     setSelectedItems([]);
     setCurrentStep(1);
@@ -738,22 +742,44 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
           {/* Step 2: Items */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Invoice Items</h3>
-                <Button
-                  type="button"
-                  onClick={() => setShowItemSelection(true)}
-                  variant="default"
-                  iconName="Plus"
-                >
-                  Add Item
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={itemEntryMode === 'manual' ? 'default' : 'outline'}
+                    onClick={() => setItemEntryMode('manual')}
+                  >
+                    Manual Entry
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={itemEntryMode === 'library' ? 'default' : 'outline'}
+                    onClick={() => setItemEntryMode('library')}
+                  >
+                    Item Library
+                  </Button>
+                </div>
               </div>
+
+              {itemEntryMode === 'library' && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">Quick add items from your library.</p>
+                  <Button
+                    type="button"
+                    onClick={() => setShowItemSelection(true)}
+                    variant="default"
+                    iconName="Plus"
+                  >
+                    Add from Library
+                  </Button>
+                </div>
+              )}
 
               {selectedItems?.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">
-                    No items added yet. Click "Add Item" to get started.
+                    No items added yet. {itemEntryMode === 'library' ? 'Click "Add from Library" to get started.' : 'Click "Add Line" to add items manually or use the Item Library.'}
                   </p>
                   {validationErrors.items && (
                     <p className="text-red-500 text-sm mt-2">{validationErrors.items}</p>
@@ -813,6 +839,23 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                 </div>
               )}
 
+              {/* Manual entry actions */}
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  {itemEntryMode === 'manual' ? 'Type directly into the list or use Item Library to quick-fill.' : 'Selected items appear below; you can edit quantities and prices.'}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" onClick={addLineItem}>
+                    Add Line
+                  </Button>
+                  {itemEntryMode === 'manual' && (
+                    <Button type="button" onClick={() => setShowItemSelection(true)}>
+                      Quick Add from Library
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               <div className="text-right space-y-1">
                 <div className="text-sm text-muted-foreground">
                   <div className="flex justify-between">
@@ -852,6 +895,34 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
                   <p><strong>Tax Rate:</strong> {formData.taxRate}%</p>
                   <p><strong>Due Date:</strong> {formData.dueDate}</p>
                 </div>
+              </div>
+
+              {/* Customer-facing view selector */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">Customer View</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="customerView"
+                      checked={formData.customerView === 'detailed'}
+                      onChange={() => handleInputChange('customerView', 'detailed')}
+                      className="rounded border-border text-primary focus:ring-primary"
+                    />
+                    Detailed (line items)
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="customerView"
+                      checked={formData.customerView === 'summary'}
+                      onChange={() => handleInputChange('customerView', 'summary')}
+                      className="rounded border-border text-primary focus:ring-primary"
+                    />
+                    Summary only (Grand Total)
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">This preference will be saved and used for customer-facing documents.</p>
               </div>
 
               <div>
