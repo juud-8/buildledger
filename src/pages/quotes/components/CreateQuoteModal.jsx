@@ -22,7 +22,6 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
   // Data
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [items, setItems] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   
   // Form data
@@ -62,35 +61,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
       // Load projects using service
       const projectsData = await projectsService.getProjects();
       setProjects(projectsData || []);
-
-      // Load items from items_database table
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) return;
-
-      // Get user profile to get company_id
-      const { data: userProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('company_id')
-        .eq('id', currentUser.id)
-        .single();
-      
-      if (profileError || !userProfile?.company_id) {
-        console.error('User profile or company not found');
-        return;
-      }
-
-      const companyId = userProfile.company_id;
-
-      const { data: itemsData } = await supabase
-        .from('items_database')
-        .select('*')
-        .eq('company_id', companyId)
-        .eq('is_active', true)
-        .order('name');
-
-      setItems(itemsData || []);
     } catch (error) {
-      console.error('Error loading projects or items:', error);
+      console.error('Error loading projects:', error);
     }
   };
 
@@ -118,6 +90,36 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleRemoveItem = (itemId) => {
     setSelectedItems(prev => prev?.filter(si => si?.item_id !== itemId));
+  };
+
+  // Handle items returned from ItemSelectionModal (multiple items)
+  const handleItemsSelected = (itemsToAdd = []) => {
+    setSelectedItems(prev => {
+      const existingById = new Map(prev.map(i => [i.item_id, i]));
+      itemsToAdd.forEach(it => {
+        const id = it?.id;
+        const unitPrice = (it?.unitPrice ?? it?.unit_price ?? 0) * 1;
+        const qty = (it?.quantity ?? 1) * 1;
+        if (!id) return;
+        if (existingById.has(id)) {
+          const existing = existingById.get(id);
+          const newQty = (existing.quantity || 0) + qty;
+          existing.quantity = newQty;
+          existing.unit_price = unitPrice || existing.unit_price || 0;
+          existing.total_price = newQty * (existing.unit_price || 0);
+        } else {
+          existingById.set(id, {
+            item_id: id,
+            name: it?.name || '',
+            unit_price: unitPrice,
+            quantity: qty,
+            total_price: qty * unitPrice,
+          });
+        }
+      });
+      return Array.from(existingById.values());
+    });
+    setShowItemSelection(false);
   };
 
   const calculateTotals = () => {
@@ -360,26 +362,15 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                   ) : (
                     <Select
                       value={formData.clientId}
-                      onChange={(e) => handleInputChange('clientId', e.target.value)}
+                      onChange={(value) => handleInputChange('clientId', value)}
+                      options={[{ label: 'Select Client (Optional)', value: '' }, ...(clients || []).map(c => ({ label: c.name, value: c.id }))]}
                       disabled={isClientsLoading}
-                    >
-                      {isClientsLoading ? (
-                        <option>Loading clients...</option>
-                      ) : clientsError ? (
-                        <option>{clientsError}</option>
-                      ) : clients.length === 0 ? (
-                        <option>No clients available</option>
-                      ) : (
-                        <>
-                          <option value="">Select Client (Optional)</option>
-                          {clients.map(client => (
-                            <option key={client.id} value={client.id}>
-                              {client.name}
-                            </option>
-                          ))}
-                        </>
-                      )}
-                    </Select>
+                      loading={isClientsLoading}
+                      searchable
+                    />
+                  )}
+                  {clientsError && (
+                    <p className="text-sm text-destructive mt-1">{clientsError}</p>
                   )}
                 </div>
               </div>
@@ -388,15 +379,10 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                 <label className="block text-sm font-medium mb-1 text-foreground">Project (Optional)</label>
                 <Select
                   value={formData.projectId}
-                  onChange={(e) => handleInputChange('projectId', e.target.value)}
-                >
-                  <option value="">Select Project</option>
-                  {projects?.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </Select>
+                  onChange={(value) => handleInputChange('projectId', value)}
+                  options={[{ label: 'Select Project', value: '' }, ...(projects || []).map(p => ({ label: p.name, value: p.id }))]}
+                  searchable
+                />
               </div>
 
               <div>
@@ -584,6 +570,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
               <Button
                 type="button"
                 onClick={nextStep}
+                disabled={currentStep === 1 && (!formData.quoteNumber || !formData.title)}
                 className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
               >
                 Next
@@ -605,8 +592,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
           <ItemSelectionModal
             isOpen={showItemSelection}
             onClose={() => setShowItemSelection(false)}
-            onSelect={handleAddItem}
-            items={items}
+            onItemsSelected={handleItemsSelected}
+            mode="quote"
           />
         )}
       </div>
