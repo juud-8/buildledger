@@ -3,11 +3,11 @@ import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveC
 import Button from '../../../components/ui/Button';
 import Icon from '../../../components/AppIcon';
 
-const RevenueAnalytics = ({ dateRange, filters }) => {
+const RevenueAnalytics = ({ dateRange, filters, data: injectedData }) => {
   const [chartType, setChartType] = useState('line');
   const [showComparison, setShowComparison] = useState(false);
 
-  const revenueData = [
+  const defaultData = [
     { period: 'Jan 2025', revenue: 68000, projects: 12, target: 70000, previousYear: 58000 },
     { period: 'Feb 2025', revenue: 72000, projects: 14, target: 70000, previousYear: 62000 },
     { period: 'Mar 2025', revenue: 65000, projects: 11, target: 70000, previousYear: 59000 },
@@ -17,6 +17,9 @@ const RevenueAnalytics = ({ dateRange, filters }) => {
     { period: 'Jul 2025', revenue: 94000, projects: 22, target: 85000, previousYear: 79000 },
     { period: 'Aug 2025', revenue: 87000, projects: 19, target: 85000, previousYear: 73000 }
   ];
+
+  // Use injected data if provided (even if empty). Fallback to defaults only when prop is undefined.
+  const revenueData = Array.isArray(injectedData) ? injectedData : defaultData;
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload?.length) {
@@ -181,18 +184,43 @@ const RevenueAnalytics = ({ dateRange, filters }) => {
 
       {/* Revenue Insights */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="text-center">
-          <p className="text-2xl font-bold text-foreground">$672,000</p>
-          <p className="text-sm text-muted-foreground">Total Revenue YTD</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-green-600">+18.5%</p>
-          <p className="text-sm text-muted-foreground">Growth vs Previous Year</p>
-        </div>
-        <div className="text-center">
-          <p className="text-2xl font-bold text-foreground">$84,000</p>
-          <p className="text-sm text-muted-foreground">Average Monthly Revenue</p>
-        </div>
+        {revenueData && revenueData.length > 0 ? (
+          <>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">{
+                `$${revenueData.reduce((sum, d) => sum + (d.revenue || 0), 0).toLocaleString()}`
+              }</p>
+              <p className="text-sm text-muted-foreground">Total Revenue (period)</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">{
+                `$${Math.round(
+                  revenueData.reduce((sum, d) => sum + (d.revenue || 0), 0) / revenueData.length
+                ).toLocaleString()}`
+              }</p>
+              <p className="text-sm text-muted-foreground">Average Monthly Revenue</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">{revenueData.length}</p>
+              <p className="text-sm text-muted-foreground">Months</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">$0</p>
+              <p className="text-sm text-muted-foreground">Total Revenue (period)</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">$0</p>
+              <p className="text-sm text-muted-foreground">Average Monthly Revenue</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-foreground">0</p>
+              <p className="text-sm text-muted-foreground">Months</p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

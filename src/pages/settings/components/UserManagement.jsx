@@ -5,6 +5,7 @@ import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import toast from 'react-hot-toast';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -60,10 +61,19 @@ const UserManagement = () => {
     return status === "active" ?"bg-success text-success-foreground" :"bg-muted text-muted-foreground";
   };
 
-  const handleInviteUser = () => {
-    // Add invite logic here
-    setShowInviteModal(false);
-    setInviteData({ email: "", role: "", name: "" });
+  const handleInviteUser = async () => {
+    try {
+      if (!inviteData?.email || !inviteData?.role || !inviteData?.name) {
+        toast.error('Please complete name, email, and role');
+        return;
+      }
+      // TODO: send invite via backend
+      toast.success('Invitation sent');
+      setShowInviteModal(false);
+      setInviteData({ email: "", role: "", name: "" });
+    } catch (e) {
+      toast.error('Failed to send invite');
+    }
   };
 
   const handleRemoveUser = (userId) => {
@@ -100,7 +110,7 @@ const UserManagement = () => {
         {/* Users List */}
         <div className="space-y-4">
           {users?.map((user) => (
-            <div key={user?.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+            <div key={user?.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 rounded-full overflow-hidden">
                   <Image
@@ -124,7 +134,7 @@ const UserManagement = () => {
         {users && !loading && (
           <div className="space-y-4">
             {users.map((user) => (
-              <div key={user.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div key={user.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 rounded-full overflow-hidden">
                     <Image
@@ -136,7 +146,41 @@ const UserManagement = () => {
                   <div>
                     <h4 className="text-sm font-medium text-foreground">{user.full_name}</h4>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <div className="mt-1 inline-flex items-center text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                      {roleOptions.find(r => r.value === user.role)?.label || 'Member'}
+                    </div>
                   </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Select
+                    options={roleOptions.map(r => ({ value: r.value, label: (
+                      <div className="flex flex-col">
+                        <span className="text-sm text-foreground">{r.label}</span>
+                        <span className="text-xs text-muted-foreground">{r.description}</span>
+                      </div>
+                    ) }))}
+                    value={user?.role}
+                    onChange={(value) => handleRoleChange(user?.id, value)}
+                    className="w-56"
+                    searchable
+                    clearable
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    iconName="MoreVertical"
+                    aria-label="More actions"
+                  />
+                  {user?.role !== "owner" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      iconName="Trash2"
+                      onClick={() => handleRemoveUser(user?.id)}
+                      className="text-error hover:text-error"
+                      aria-label="Remove user"
+                    />
+                  )}
                 </div>
               </div>
             ))}
@@ -295,6 +339,7 @@ const UserManagement = () => {
                 value={inviteData?.role}
                 onChange={(value) => setInviteData({...inviteData, role: value})}
                 placeholder="Select role"
+                searchable
                 required
               />
             </div>

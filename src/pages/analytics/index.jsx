@@ -18,6 +18,7 @@ import FilterSidebar from './components/FilterSidebar';
 import { useAuth } from '../../contexts/AuthContext';
 import { hasPermission, FEATURES, getEffectiveRoleFromProfile } from '../../utils/rbac';
 import Icon from '../../components/AppIcon';
+import { analyticsService } from '../../services/analyticsService';
 
 const Analytics = () => {
   const { userProfile } = useAuth();
@@ -30,14 +31,109 @@ const Analytics = () => {
     regions: []
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [kpis, setKpis] = useState([]);
+  const [revenueSeries, setRevenueSeries] = useState([]);
+  const [invoiceStatusSeries, setInvoiceStatusSeries] = useState([]);
+  const [invoiceMonthlySeries, setInvoiceMonthlySeries] = useState([]);
+  const [projectMetrics, setProjectMetrics] = useState([]);
 
   useEffect(() => {
-    // Simulate loading analytics data
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
+    const load = async () => {
+      try {
+        setIsLoading(true);
+        // Minimal real-data wiring for KPIs, revenue, invoices, project profitability
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+        const analyticsData = await analyticsService.getAnalyticsData(user.id, {});
+        const revenue = analyticsService.calculateRevenueAnalytics(analyticsData);
+        const projects = analyticsService.calculateProjectProfitability(analyticsData);
 
-    return () => clearTimeout(timer);
+        // KPIs
+        const kpiComputed = [
+          {
+            title: 'Total Revenue',
+            value: `$${(revenue.totalRevenue || 0).toLocaleString()}`,
+            change: '',
+            changeType: 'positive',
+            icon: 'DollarSign',
+            color: 'primary',
+            description: 'paid invoices'
+          },
+          {
+            title: 'Pending Revenue',
+            value: `$${(revenue.pendingRevenue || 0).toLocaleString()}`,
+            change: '',
+            changeType: 'neutral',
+            icon: 'FileText',
+            color: 'construction',
+            description: 'sent, unpaid'
+          },
+          {
+            title: 'Overdue Revenue',
+            value: `$${(revenue.overdueRevenue || 0).toLocaleString()}`,
+            change: '',
+            changeType: 'negative',
+            icon: 'AlertTriangle',
+            color: 'warning',
+            description: 'past due'
+          },
+          {
+            title: 'Active Projects',
+            value: String(analyticsData.projects?.filter(p => p.status === 'active')?.length || 0),
+            change: '',
+            changeType: 'neutral',
+            icon: 'Building2',
+            color: 'success',
+            description: 'currently active'
+          }
+        ];
+        setKpis(kpiComputed);
+
+        // Revenue series from monthlyRevenue map
+        const revenueSeriesComputed = Object.entries(revenue.monthlyRevenue || {})
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([ym, total]) => ({ period: ym, revenue: total }));
+        setRevenueSeries(revenueSeriesComputed);
+
+        // Invoice status breakdown
+        const paid = analyticsData.invoices?.filter(i => i.status === 'paid') || [];
+        const sent = analyticsData.invoices?.filter(i => i.status === 'sent') || [];
+        const overdue = analyticsData.invoices?.filter(i => i.status === 'overdue') || [];
+        const totalAmount = (arr) => arr.reduce((s, i) => s + (i.total_amount || 0), 0);
+        const totalAll = totalAmount(paid) + totalAmount(sent) + totalAmount(overdue);
+        const pct = (amt) => totalAll > 0 ? Math.round((amt / totalAll) * 100) : 0;
+        const statusSeries = [
+          { name: 'Paid', value: pct(totalAmount(paid)), amount: totalAmount(paid), color: '#22c55e' },
+          { name: 'Pending', value: pct(totalAmount(sent)), amount: totalAmount(sent), color: '#f59e0b' },
+          { name: 'Overdue', value: pct(totalAmount(overdue)), amount: totalAmount(overdue), color: '#ef4444' }
+        ];
+        setInvoiceStatusSeries(statusSeries);
+
+        // Monthly invoices aggregation by created_at month
+        const monthlyAgg = {};
+        (analyticsData.invoices || []).forEach(inv => {
+          const m = (inv.created_at || '').substring(0, 7) || 'Unknown';
+          if (!monthlyAgg[m]) monthlyAgg[m] = { month: m, paid: 0, pending: 0, overdue: 0 };
+          const amt = inv.total_amount || 0;
+          if (inv.status === 'paid') monthlyAgg[m].paid += amt;
+          else if (inv.status === 'sent') monthlyAgg[m].pending += amt;
+          else if (inv.status === 'overdue') monthlyAgg[m].overdue += amt;
+        });
+        const monthlySeries = Object.values(monthlyAgg).sort((a, b) => String(a.month).localeCompare(String(b.month)));
+        setInvoiceMonthlySeries(monthlySeries);
+
+        // Project profitability dataset
+        setProjectMetrics(projects.projects || []);
+      } catch (e) {
+        console.error('Failed loading analytics:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
   }, []);
 
   const handleDateRangeChange = (range) => {
@@ -122,15 +218,15 @@ const Analytics = () => {
             {/* Main Content */}
             <div className={`flex-1 space-y-8 ${isSidebarOpen ? 'lg:ml-80' : ''} transition-all duration-300`}>
               {/* KPI Summary Cards */}
-              <KPISummary dateRange={dateRange} filters={filters} />
+              <KPISummary dateRange={dateRange} filters={filters} kpiData={kpis} />
 
               {/* Revenue Analytics */}
-              <RevenueAnalytics dateRange={dateRange} filters={filters} />
+              <RevenueAnalytics dateRange={dateRange} filters={filters} data={revenueSeries} />
 
               {/* Two Column Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <InvoiceBreakdown dateRange={dateRange} filters={filters} />
-                <ProjectProfitability dateRange={dateRange} filters={filters} />
+                <InvoiceBreakdown dateRange={dateRange} filters={filters} statusData={invoiceStatusSeries} monthlyData={invoiceMonthlySeries} />
+                <ProjectProfitability dateRange={dateRange} filters={filters} projectsMetrics={projectMetrics} />
               </div>
 
               {/* Client Performance */}

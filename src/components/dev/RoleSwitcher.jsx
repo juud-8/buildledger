@@ -6,6 +6,11 @@ const RoleSwitcher = () => {
 
   if (!userProfile) return null;
 
+  // Only show for true admins
+  const normalizedRole = String(userProfile.role || '').toLowerCase();
+  const isAdmin = ['admin', 'super_admin'].includes(normalizedRole);
+  if (!isAdmin) return null;
+
   const currentPlan = String(userProfile.subscription_plan || '').toLowerCase();
   const currentRole = String(userProfile.role || 'member');
 

@@ -2,14 +2,14 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import Icon from '../../../components/AppIcon';
 
-const InvoiceBreakdown = ({ dateRange, filters }) => {
-  const invoiceStatusData = [
+const InvoiceBreakdown = ({ dateRange, filters, statusData, monthlyData }) => {
+  const defaultStatusData = [
     { name: 'Paid', value: 65, amount: 423750, color: '#22c55e' },
     { name: 'Pending', value: 25, amount: 162500, color: '#f59e0b' },
     { name: 'Overdue', value: 10, amount: 65000, color: '#ef4444' }
   ];
 
-  const monthlyInvoiceData = [
+  const defaultMonthlyData = [
     { month: 'Jan', paid: 45000, pending: 15000, overdue: 8000 },
     { month: 'Feb', paid: 52000, pending: 18000, overdue: 5000 },
     { month: 'Mar', paid: 48000, pending: 12000, overdue: 7000 },
@@ -17,6 +17,10 @@ const InvoiceBreakdown = ({ dateRange, filters }) => {
     { month: 'May', paid: 55000, pending: 16000, overdue: 6000 },
     { month: 'Jun', paid: 67000, pending: 22000, overdue: 8000 }
   ];
+
+  // Use provided arrays if defined (even if empty). Only fallback when prop is undefined.
+  const invoiceStatusData = Array.isArray(statusData) ? statusData : defaultStatusData;
+  const monthlyInvoiceData = Array.isArray(monthlyData) ? monthlyData : defaultMonthlyData;
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload?.length) {

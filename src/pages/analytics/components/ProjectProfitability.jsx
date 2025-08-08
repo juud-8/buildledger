@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter } from 'recharts';
 import Button from '../../../components/ui/Button';
 import Icon from '../../../components/AppIcon';
 
-const ProjectProfitability = ({ dateRange, filters }) => {
+const ProjectProfitability = ({ dateRange, filters, projectsMetrics }) => {
   const [viewType, setViewType] = useState('comparison');
 
-  const projectData = [
+  const defaultProjectData = [
     { 
       name: 'Residential Complex A', 
       budget: 450000, 
@@ -53,6 +53,21 @@ const ProjectProfitability = ({ dateRange, filters }) => {
       duration: 4
     }
   ];
+
+  // Allow injection of real metrics: expect array of { name, budget, actual, profit, margin }
+  const projectData = useMemo(() => (
+    Array.isArray(projectsMetrics)
+      ? projectsMetrics.map(p => ({
+          name: p.name,
+          budget: p.totalCost ?? p.budget ?? 0,
+          actual: p.totalCost ?? 0,
+          profit: p.profit ?? 0,
+          margin: typeof p.profitMargin === 'number' ? Number(p.profitMargin.toFixed(1)) : 0,
+          status: p.status ?? 'active',
+          duration: p.duration ?? 0,
+        }))
+      : defaultProjectData
+  ), [projectsMetrics]);
 
   const profitabilityData = projectData?.map(project => ({
     name: project?.name?.split(' ')?.[0] + ' ' + project?.name?.split(' ')?.[1],

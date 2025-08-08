@@ -1,8 +1,8 @@
 import React from 'react';
 import Icon from '../../../components/AppIcon';
 
-const KPISummary = ({ dateRange, filters }) => {
-  const kpiData = [
+const KPISummary = ({ dateRange, filters, kpiData }) => {
+  const defaultKpiData = [
     {
       title: 'Total Revenue',
       value: '$847,250',
@@ -41,6 +41,9 @@ const KPISummary = ({ dateRange, filters }) => {
     }
   ];
 
+  // Use provided kpiData if defined (even if empty). Fallback only when prop is undefined.
+  const data = Array.isArray(kpiData) ? kpiData : defaultKpiData;
+
   const getColorClasses = (color) => {
     const colorMap = {
       primary: 'bg-primary/10 text-primary',
@@ -57,7 +60,7 @@ const KPISummary = ({ dateRange, filters }) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {kpiData?.map((kpi, index) => (
+      {data?.map((kpi, index) => (
         <div key={index} className="bg-card border border-border rounded-lg p-6 construction-shadow-sm hover:construction-shadow-md construction-transition">
           <div className="flex items-start justify-between mb-4">
             <div className={`p-3 rounded-lg ${getColorClasses(kpi?.color)}`}>
