@@ -285,7 +285,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
         }
       }
 
-      onSuccess?.();
+      onSuccess?.(invoice);
       onClose();
       if (!editMode) {
         resetForm();

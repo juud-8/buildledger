@@ -188,9 +188,41 @@ const InvoicesPage = () => {
     }
   ];
 
+  // Load real invoices from DB
   useEffect(() => {
-    setInvoices(mockInvoices);
-    setFilteredInvoices(mockInvoices);
+    let isMounted = true;
+    (async () => {
+      try {
+        const dbInvoices = await invoicesService.getInvoices();
+        if (!isMounted) return;
+        const uiInvoices = (dbInvoices || []).map(inv => ({
+          id: inv.id,
+          invoiceNumber: inv.invoice_number,
+          clientName: inv.client?.name || '—',
+          projectName: inv.project?.name || '—',
+          projectReference: inv.quote?.quote_number || '',
+          description: inv.description || '',
+          amount: Number(inv.total_amount || 0),
+          paidAmount: Number(inv.paid_amount || 0),
+          dueDate: inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '',
+          issuedDate: inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '',
+          paymentStatus: inv.payment_status || inv.status || 'pending',
+          paymentMethod: inv.payment_method || 'stripe',
+          agingDays: 0,
+          lineItemsCount: inv.invoice_items?.length || 0,
+          progressBilling: false,
+          milestoneId: null
+        }));
+        setInvoices(uiInvoices);
+        setFilteredInvoices(uiInvoices);
+      } catch (e) {
+        console.error('Failed to load invoices', e);
+        // Fallback to mocks if needed
+        setInvoices(mockInvoices);
+        setFilteredInvoices(mockInvoices);
+      }
+    })();
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
@@ -299,28 +331,29 @@ const InvoicesPage = () => {
     }
   };
 
-  const handleCreateInvoice = (invoiceData) => {
-    const newInvoice = {
-      id: `INV-2024-${String(invoices?.length + 1)?.padStart(3, '0')}`,
-      invoiceNumber: `INV-2024-${String(invoices?.length + 1)?.padStart(3, '0')}`,
-      clientName: invoiceData?.clientId?.replace('-', ' ')?.replace(/\b\w/g, l => l?.toUpperCase()),
-      projectName: invoiceData?.projectName,
-      projectReference: invoiceData?.projectReference,
-      description: invoiceData?.description,
-      amount: invoiceData?.total,
-      paidAmount: 0,
-      dueDate: new Date(Date.now() + parseInt(invoiceData.paymentTerms) * 24 * 60 * 60 * 1000)?.toLocaleDateString(),
-      issuedDate: new Date()?.toLocaleDateString(),
-      paymentStatus: 'pending',
-      paymentMethod: invoiceData?.paymentMethod,
-      paymentDate: null,
-      agingDays: 0,
-      lineItemsCount: invoiceData?.lineItems?.length,
-      progressBilling: invoiceData?.progressBilling || false,
-      milestoneId: invoiceData?.milestoneId || null
-    };
-
-    setInvoices(prev => [newInvoice, ...prev]);
+  const handleCreateInvoice = (newInvoice) => {
+    if (newInvoice) {
+      const ui = {
+        id: newInvoice.id,
+        invoiceNumber: newInvoice.invoice_number,
+        clientName: newInvoice.client?.name || '—',
+        projectName: newInvoice.project?.name || '—',
+        projectReference: newInvoice.quote?.quote_number || '',
+        description: newInvoice.description || '',
+        amount: Number(newInvoice.total_amount || 0),
+        paidAmount: Number(newInvoice.paid_amount || 0),
+        dueDate: newInvoice.due_date ? new Date(newInvoice.due_date).toLocaleDateString() : '',
+        issuedDate: newInvoice.created_at ? new Date(newInvoice.created_at).toLocaleDateString() : '',
+        paymentStatus: newInvoice.payment_status || newInvoice.status || 'pending',
+        paymentMethod: newInvoice.payment_method || 'stripe',
+        agingDays: 0,
+        lineItemsCount: newInvoice.invoice_items?.length || 0,
+        progressBilling: false,
+        milestoneId: null
+      };
+      setInvoices(prev => [ui, ...prev]);
+      setFilteredInvoices(prev => [ui, ...prev]);
+    }
     setIsCreateModalOpen(false);
   };
 
@@ -440,10 +473,7 @@ const InvoicesPage = () => {
         <CreateInvoiceModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={() => {
-            setIsCreateModalOpen(false);
-            // In production, refresh the invoices list here
-          }}
+          onSuccess={handleCreateInvoice}
         />
 
         {/* Edit Invoice Modal */}
