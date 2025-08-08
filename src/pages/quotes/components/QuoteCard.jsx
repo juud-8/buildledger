@@ -22,16 +22,22 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
   })();
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-border/60 hover:border-border construction-transition shadow-sm hover:shadow-md">
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle>{quote?.quoteNumber}</CardTitle>
-            <CardDescription>{quote?.clientName}</CardDescription>
+            <CardTitle className="text-lg tracking-tight">{quote?.quoteNumber}</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">{quote?.clientName}</CardDescription>
           </div>
           <div className="flex items-center space-x-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium bg-${quote?.status}/10 text-${quote?.status} border border-${quote?.status}/20`}>
-              {quote?.status?.charAt(0)?.toUpperCase() + quote?.status?.slice(1)}
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${
+              quote?.status === 'draft' ? 'bg-muted text-muted-foreground border-muted-foreground/20' :
+              quote?.status === 'sent' ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' :
+              quote?.status === 'approved' ? 'bg-green-500/10 text-green-300 border-green-500/20' :
+              quote?.status === 'expired' ? 'bg-red-500/10 text-red-300 border-red-500/20' :
+              'bg-amber-500/10 text-amber-300 border-amber-500/20'
+            }`}>
+              {quote?.status}
             </span>
             <div className="relative">
               <Button
@@ -107,15 +113,15 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <p className="text-sm text-foreground font-medium mb-1">{quote?.projectName}</p>
-          <p className="text-sm text-muted-foreground line-clamp-2">{quote?.description}</p>
+      <CardContent className="pt-0">
+        <div className="mb-3 space-y-1">
+          <p className="text-sm text-foreground font-medium">{quote?.projectName}</p>
+          <p className="text-[13px] text-muted-foreground line-clamp-2 leading-snug">{quote?.description}</p>
         </div>
 
-        <div className="mb-4">
-          <p className="text-2xl font-bold text-foreground">${quote?.amount?.toLocaleString()}</p>
-          <p className="text-sm text-muted-foreground">{quote?.lineItemsCount} line items</p>
+        <div className="mb-3">
+          <p className="text-xl font-semibold text-foreground">${quote?.amount?.toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">{quote?.lineItemsCount} line items</p>
         </div>
 
         <div className="flex items-center justify-between text-sm">
@@ -123,7 +129,9 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
             <p className="text-muted-foreground">Created: {quote?.createdDate}</p>
           </div>
           <div className="text-right">
-            <p className={`font-medium text-${expirationStatus?.color}`}>
+            <p className={`text-xs font-medium ${
+              expirationStatus?.urgent ? 'text-amber-300' : 'text-muted-foreground'
+            }`}>
               {expirationStatus?.text}
               {expirationStatus?.urgent && (
                 <Icon name="AlertTriangle" size={14} className="inline ml-1" />
@@ -133,14 +141,14 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
         </div>
       </CardContent>
       <CardFooter>
-        <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-border w-full">
+        <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/70 w-full">
           <Button
             variant="default"
             size="sm"
             onClick={() => onEdit(quote?.id)}
             iconName="Edit"
             iconPosition="left"
-            className="bg-primary hover:bg-primary/90 flex-shrink-0"
+            className="bg-primary hover:bg-primary/90 flex-shrink-0 h-8 px-3"
           >
             Edit
           </Button>
@@ -151,7 +159,7 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
               onClick={() => onSend(quote?.id)}
               iconName="Send"
               iconPosition="left"
-              className="bg-primary hover:bg-primary/90 flex-shrink-0"
+              className="bg-primary hover:bg-primary/90 flex-shrink-0 h-8 px-3"
             >
               Send
             </Button>
@@ -163,7 +171,7 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
               onClick={() => onConvertToInvoice(quote?.id)}
               iconName="ArrowRight"
               iconPosition="right"
-              className="flex-shrink-0 whitespace-nowrap"
+              className="flex-shrink-0 whitespace-nowrap h-8 px-3"
             >
               To Invoice
             </Button>

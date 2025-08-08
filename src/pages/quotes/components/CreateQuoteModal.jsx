@@ -143,11 +143,10 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
     setIsLoading(true);
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
-      
-      // Create quote using service
+
+      // Create quote using service (omit unsupported DB columns)
       const quoteData = {
         client_id: useCustomClient ? null : (formData?.clientId || null),
-        custom_client_name: useCustomClient ? formData?.customClientName : null,
         project_id: formData?.projectId || null,
         quote_number: formData?.quoteNumber,
         title: formData?.title,
@@ -157,29 +156,30 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
         tax_amount: taxAmount,
         total_amount: total,
         valid_until: formData?.validUntil,
-        // Persist customer-facing view as a tag in notes for now
-        notes: `${formData?.notes || ''}\n[customer_view=${formData?.customerView}]`,
+        // Persist preferences and optional custom client name in notes as tags
+        notes: `${formData?.notes || ''}\n[customer_view=${formData?.customerView}]${useCustomClient && formData?.customClientName ? `\n[custom_client_name=${formData.customClientName}]` : ''}`,
         show_summary_only: formData?.customerView === 'summary'
       };
 
       const quote = await quotesService.createQuote(quoteData);
 
-      // Add quote items
+      // Add quote items (support manual lines without item_id; include required name)
       if (selectedItems?.length > 0) {
         const quoteItems = selectedItems?.map(item => ({
           quote_id: quote?.id,
-          item_id: item?.item_id,
-          quantity: item?.quantity,
-          unit_price: item?.unit_price,
-          total_price: item?.total_price
+          item_id: item?.item_id || null,
+          name: item?.name || 'Item',
+          description: item?.description || null,
+          quantity: Number(item?.quantity ?? 0),
+          unit_price: Number(item?.unit_price ?? 0),
+          total_price: Number(item?.total_price ?? 0)
         }));
 
-        const { error: itemsError } = await supabase?.from('quote_items')?.insert(quoteItems);
-
+        const { error: itemsError } = await supabase.from('quote_items').insert(quoteItems);
         if (itemsError) throw itemsError;
       }
 
-      onSuccess?.();
+      onSuccess?.(quote);
       onClose();
       resetForm();
     } catch (error) {

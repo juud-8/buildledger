@@ -6,6 +6,7 @@ import Breadcrumb from '../../components/ui/Breadcrumb';
 import QuoteFilters from './components/QuoteFilters';
 import QuoteToolbar from './components/QuoteToolbar';
 import QuotesList from './components/QuotesList';
+import { quotesService } from '../../services/quotesService';
 import CreateQuoteModal from './components/CreateQuoteModal';
 import { pdfService } from '../../services/pdfService';
 
@@ -28,117 +29,34 @@ const QuotesPage = () => {
     search: ''
   });
 
-  // Mock quotes data
-  const mockQuotes = [
-    {
-      id: 'QT-2024-001',
-      quoteNumber: 'QT-2024-001',
-      clientName: 'Residential Homes LLC',
-      projectName: 'Kitchen Renovation',
-      description: 'Complete kitchen remodel including cabinets, countertops, appliances, and flooring. Modern design with energy-efficient features.',
-      amount: 45000,
-      lineItemsCount: 12,
-      status: 'approved',
-      createdDate: '01/15/2024',
-      expirationDate: '02/14/2024',
-      projectType: 'renovation'
-    },
-    {
-      id: 'QT-2024-002',
-      quoteNumber: 'QT-2024-002',
-      clientName: 'Commercial Builders Inc',
-      projectName: 'Office Complex Foundation',
-      description: 'Foundation work for new 3-story office building including excavation, concrete pouring, and waterproofing systems.',
-      amount: 125000,
-      lineItemsCount: 8,
-      status: 'sent',
-      createdDate: '01/20/2024',
-      expirationDate: '02/19/2024',
-      projectType: 'commercial'
-    },
-    {
-      id: 'QT-2024-003',
-      quoteNumber: 'QT-2024-003',
-      clientName: 'Green Construction Co',
-      projectName: 'Bathroom Remodel',
-      description: 'Master bathroom renovation with luxury fixtures, tile work, and modern plumbing upgrades.',
-      amount: 28500,
-      lineItemsCount: 15,
-      status: 'draft',
-      createdDate: '01/25/2024',
-      expirationDate: '02/24/2024',
-      projectType: 'renovation'
-    },
-    {
-      id: 'QT-2024-004',
-      quoteNumber: 'QT-2024-004',
-      clientName: 'Urban Developers Group',
-      projectName: 'Warehouse Construction',
-      description: 'New warehouse facility construction including steel frame, roofing, electrical, and loading dock installation.',
-      amount: 285000,
-      lineItemsCount: 20,
-      status: 'sent',
-      createdDate: '01/28/2024',
-      expirationDate: '02/27/2024',
-      projectType: 'new-construction'
-    },
-    {
-      id: 'QT-2024-005',
-      quoteNumber: 'QT-2024-005',
-      clientName: 'Heritage Builders',
-      projectName: 'Roof Repair',
-      description: 'Emergency roof repair and replacement of damaged shingles, gutters, and flashing after storm damage.',
-      amount: 12500,
-      lineItemsCount: 6,
-      status: 'expired',
-      createdDate: '12/15/2023',
-      expirationDate: '01/14/2024',
-      projectType: 'repair'
-    },
-    {
-      id: 'QT-2024-006',
-      quoteNumber: 'QT-2024-006',
-      clientName: 'Residential Homes LLC',
-      projectName: 'Deck Construction',
-      description: 'Custom deck construction with composite materials, built-in seating, and LED lighting system.',
-      amount: 18750,
-      lineItemsCount: 9,
-      status: 'approved',
-      createdDate: '01/30/2024',
-      expirationDate: '03/01/2024',
-      projectType: 'new-construction'
-    },
-    {
-      id: 'QT-2024-007',
-      quoteNumber: 'QT-2024-007',
-      clientName: 'Commercial Builders Inc',
-      projectName: 'HVAC Installation',
-      description: 'Complete HVAC system installation for office building including ductwork, units, and smart controls.',
-      amount: 67500,
-      lineItemsCount: 11,
-      status: 'sent',
-      createdDate: '02/01/2024',
-      expirationDate: '03/03/2024',
-      projectType: 'commercial'
-    },
-    {
-      id: 'QT-2024-008',
-      quoteNumber: 'QT-2024-008',
-      clientName: 'Green Construction Co',
-      projectName: 'Solar Panel Installation',
-      description: 'Residential solar panel system installation with battery backup and smart monitoring system.',
-      amount: 35000,
-      lineItemsCount: 7,
-      status: 'draft',
-      createdDate: '02/03/2024',
-      expirationDate: '03/05/2024',
-      projectType: 'residential'
-    }
-  ];
-
+  // Load real quotes from DB
   useEffect(() => {
-    setQuotes(mockQuotes);
-    setFilteredQuotes(mockQuotes);
+    let isMounted = true;
+    (async () => {
+      try {
+        const dbQuotes = await quotesService.getQuotes();
+        if (!isMounted) return;
+        // map DB rows -> UI model expected by cards/list
+        const uiQuotes = (dbQuotes || []).map(q => ({
+          id: q.id,
+          quoteNumber: q.quote_number,
+          clientName: q.client?.name || '—',
+          projectName: q.project?.name || '—',
+          description: q.description || '',
+          amount: Number(q.total_amount || 0),
+          lineItemsCount: q.quote_items?.length || q.items_count || 0,
+          status: q.status || 'draft',
+          createdDate: new Date(q.created_at).toLocaleDateString(),
+          expirationDate: q.valid_until ? new Date(q.valid_until).toLocaleDateString() : '',
+          projectType: q.project?.type || 'general'
+        }));
+        setQuotes(uiQuotes);
+        setFilteredQuotes(uiQuotes);
+      } catch (e) {
+        console.error('Failed to load quotes', e);
+      }
+    })();
+    return () => { isMounted = false; };
   }, []);
 
   useEffect(() => {
@@ -249,8 +167,22 @@ const QuotesPage = () => {
     // The CreateQuoteModal handles the actual quote creation
     // This callback is called when the quote is successfully created
     if (newQuote) {
-      setQuotes(prev => [newQuote, ...prev]);
-      setFilteredQuotes(prev => [newQuote, ...prev]);
+      // Map created DB row -> UI model and prepend
+      const ui = {
+        id: newQuote.id,
+        quoteNumber: newQuote.quote_number,
+        clientName: newQuote.client?.name || '—',
+        projectName: newQuote.project?.name || '—',
+        description: newQuote.description || '',
+        amount: Number(newQuote.total_amount || 0),
+        lineItemsCount:  newQuote.quote_items?.length || 0,
+        status: newQuote.status || 'draft',
+        createdDate: new Date(newQuote.created_at).toLocaleDateString(),
+        expirationDate: newQuote.valid_until ? new Date(newQuote.valid_until).toLocaleDateString() : '',
+        projectType: newQuote.project?.type || 'general'
+      };
+      setQuotes(prev => [ui, ...prev]);
+      setFilteredQuotes(prev => [ui, ...prev]);
     }
     setIsCreateModalOpen(false);
   };
