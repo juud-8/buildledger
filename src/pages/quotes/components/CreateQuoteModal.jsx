@@ -15,6 +15,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [showItemSelection, setShowItemSelection] = useState(false);
+  const [itemEntryMode, setItemEntryMode] = useState('manual'); // 'manual' | 'library'
   const [isClientsLoading, setIsClientsLoading] = useState(false);
   const [clientsError, setClientsError] = useState(null);
   const [useCustomClient, setUseCustomClient] = useState(false);
@@ -34,7 +35,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
     description: '',
     taxRate: 0,
     validUntil: '',
-    notes: ''
+    notes: '',
+    customerView: 'detailed' // 'detailed' | 'summary'
   });
 
   useEffect(() => {
@@ -151,7 +153,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
         tax_amount: taxAmount,
         total_amount: total,
         valid_until: formData?.validUntil,
-        notes: formData?.notes
+        // Persist customer-facing view as a tag in notes for now
+        notes: `${formData?.notes || ''}\n[customer_view=${formData?.customerView}]`
       };
 
       const quote = await quotesService.createQuote(quoteData);
@@ -400,7 +403,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
+                  className="w-full p-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   rows={3}
                   placeholder="Quote description"
                 />
@@ -432,20 +435,42 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
           {/* Step 2: Items */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Quote Items</h3>
-                <Button
-                  type="button"
-                  onClick={() => setShowItemSelection(true)}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
-                >
-                  Add Item
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={itemEntryMode === 'manual' ? 'default' : 'outline'}
+                    onClick={() => setItemEntryMode('manual')}
+                  >
+                    Manual Entry
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={itemEntryMode === 'library' ? 'default' : 'outline'}
+                    onClick={() => setItemEntryMode('library')}
+                  >
+                    Item Library
+                  </Button>
+                </div>
               </div>
+
+              {itemEntryMode === 'library' && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">Quick add items from your library.</p>
+                  <Button
+                    type="button"
+                    onClick={() => setShowItemSelection(true)}
+                    className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90"
+                  >
+                    Add from Library
+                  </Button>
+                </div>
+              )}
 
               {selectedItems?.length === 0 ? (
                 <p className="text-muted-foreground text-center py-8">
-                  No items added yet. Click "Add Item" to get started.
+                  No items added yet. {itemEntryMode === 'library' ? 'Click "Add from Library" to get started.' : 'Click "Add Line" to add items manually or use the Item Library.'}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -455,7 +480,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                         <input
                           value={item.name}
                           onChange={(e) => handleLineItemChange(index, 'name', e.target.value)}
-                          className="w-full p-1 border rounded"
+                          className="w-full p-1 border rounded bg-background text-foreground"
                           placeholder="Item name"
                         />
                       </div>
@@ -464,7 +489,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                           type="number"
                           value={item.quantity}
                           onChange={(e) => handleLineItemChange(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="w-full p-1 border rounded"
+                          className="w-full p-1 border rounded bg-background text-foreground"
                           placeholder="Qty"
                           step="0.01"
                         />
@@ -474,7 +499,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                           type="number"
                           value={item.unit_price}
                           onChange={(e) => handleLineItemChange(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                          className="w-full p-1 border rounded"
+                          className="w-full p-1 border rounded bg-background text-foreground"
                           placeholder="Price"
                           step="0.01"
                         />
@@ -483,7 +508,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                         <input
                           type="number"
                           value={item.total_price}
-                          className="w-full p-1 border rounded bg-muted"
+                          className="w-full p-1 border rounded bg-muted text-foreground"
                           placeholder="Total"
                           readOnly
                         />
@@ -499,6 +524,23 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                   ))}
                 </div>
               )}
+
+              {/* Manual entry actions */}
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  {itemEntryMode === 'manual' ? 'Type directly into the list or use Item Library to quick-fill.' : 'Selected items appear below; you can edit quantities and prices.'}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" onClick={addLineItem}>
+                    Add Line
+                  </Button>
+                  {itemEntryMode === 'manual' && (
+                    <Button type="button" onClick={() => setShowItemSelection(true)}>
+                      Quick Add from Library
+                    </Button>
+                  )}
+                </div>
+              </div>
 
               <div className="text-right">
                 <p className="text-lg font-semibold">
@@ -528,6 +570,34 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
                   <p><strong>Tax Rate:</strong> {formData.taxRate}%</p>
                   <p><strong>Valid Until:</strong> {formData.validUntil}</p>
                 </div>
+              </div>
+
+              {/* Customer-facing view selector */}
+              <div>
+                <label className="block text-sm font-medium mb-1 text-foreground">Customer View</label>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="customerView"
+                      checked={formData.customerView === 'detailed'}
+                      onChange={() => handleInputChange('customerView', 'detailed')}
+                      className="rounded border-border text-primary focus:ring-primary"
+                    />
+                    Detailed (line items)
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="customerView"
+                      checked={formData.customerView === 'summary'}
+                      onChange={() => handleInputChange('customerView', 'summary')}
+                      className="rounded border-border text-primary focus:ring-primary"
+                    />
+                    Summary only (Grand Total)
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">This preference will be saved with the quote and used for customer-facing documents.</p>
               </div>
 
               <div>
