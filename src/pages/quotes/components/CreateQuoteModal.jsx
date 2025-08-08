@@ -154,7 +154,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
         total_amount: total,
         valid_until: formData?.validUntil,
         // Persist customer-facing view as a tag in notes for now
-        notes: `${formData?.notes || ''}\n[customer_view=${formData?.customerView}]`
+        notes: `${formData?.notes || ''}\n[customer_view=${formData?.customerView}]`,
+        show_summary_only: formData?.customerView === 'summary'
       };
 
       const quote = await quotesService.createQuote(quoteData);
