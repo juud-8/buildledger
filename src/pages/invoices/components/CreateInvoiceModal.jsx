@@ -236,14 +236,12 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
         invoice_number: formData.invoiceNumber,
         title: formData.title,
         description: formData.description,
-        amount: totals.subtotal,
         tax_amount: totals.taxAmount,
         total_amount: totals.total,
-        tax_rate: formData.taxRate,
         due_date: formData.dueDate || null,
         notes: `${formData.notes || ''}\n[customer_view=${formData.customerView}]`,
         show_summary_only: formData.customerView === 'summary',
-        status: 'pending'
+        status: 'draft'
       };
 
       let invoice;
