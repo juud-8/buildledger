@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/ui/Header';
 import Breadcrumb from '../../components/ui/Breadcrumb';
@@ -9,6 +10,7 @@ import CreateQuoteModal from './components/CreateQuoteModal';
 import { pdfService } from '../../services/pdfService';
 
 const QuotesPage = () => {
+  const location = useLocation();
   const [quotes, setQuotes] = useState([]);
   const [filteredQuotes, setFilteredQuotes] = useState([]);
   const [selectedQuotes, setSelectedQuotes] = useState([]);
@@ -300,6 +302,13 @@ const QuotesPage = () => {
     }
   };
 
+  // Open create modal if navigated with { state: { action: 'create', clientId } }
+  useEffect(() => {
+    if (location?.state?.action === 'create') {
+      setIsCreateModalOpen(true);
+    }
+  }, [location?.state]);
+
   return (
     <>
       <Helmet>
@@ -356,6 +365,7 @@ const QuotesPage = () => {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSuccess={handleCreateQuote}
+          initialClientId={location?.state?.clientId || ''}
         />
       </div>
     </>

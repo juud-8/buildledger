@@ -10,7 +10,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import ItemSelectionModal from '../../item-selection-modal';
 
-const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
+const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -43,8 +43,12 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess }) => {
     if (isOpen && user) {
       loadData();
       generateQuoteNumber();
+      if (initialClientId) {
+        setUseCustomClient(false);
+        setFormData(prev => ({ ...prev, clientId: initialClientId }));
+      }
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, initialClientId]);
 
   const loadData = async () => {
     try {
