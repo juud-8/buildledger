@@ -9,7 +9,13 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+// IMPORTANT: Do NOT register express.json() before the Stripe webhook. The webhook
+// requires raw body parsing for signature verification.
+
+// Mount Stripe webhook router BEFORE json body parsing
+const createStripeWebhookRouter = require('./middleware/stripeWebhook');
+// Pass initialized clients into the webhook router
+
 
 // Check required environment variables
 if (!process.env.SUPABASE_URL) {
@@ -31,55 +37,11 @@ const supabase = createClient(
 console.log('✅ Supabase client initialized');
 console.log('✅ Server starting on port:', process.env.PORT || 3001);
 
-// Stripe webhook endpoint
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+// Mount webhook routes at /api/stripe (exposes POST /api/stripe/webhook)
+app.use('/api/stripe', createStripeWebhookRouter({ stripe, supabase }));
 
-  let event;
-
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
-
-  try {
-    // Store webhook event
-    await supabase
-      .from('webhook_events')
-      .insert({
-        stripe_event_id: event.id,
-        event_type: event.type,
-        event_data: event.data
-      });
-
-    // Handle the event
-    switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-        await handleSubscriptionChange(event.data.object);
-        break;
-      case 'customer.subscription.deleted':
-        await handleSubscriptionCancellation(event.data.object);
-        break;
-      case 'invoice.payment_succeeded':
-        await handlePaymentSuccess(event.data.object);
-        break;
-      case 'invoice.payment_failed':
-        await handlePaymentFailure(event.data.object);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-    }
-
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Error processing webhook:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
-});
+// Register JSON body parser AFTER webhook mount
+app.use(express.json());
 
 // Create customer
 app.post('/api/stripe/create-customer', async (req, res) => {
@@ -115,8 +77,8 @@ app.post('/api/stripe/create-subscription', async (req, res) => {
     });
 
     // Store subscription in database
-    const { data: price } = await stripe.prices.retrieve(priceId);
-    const { data: product } = await stripe.products.retrieve(price.product);
+    const price = await stripe.prices.retrieve(priceId);
+    const product = await stripe.products.retrieve(price.product);
 
     await supabase
       .from('subscriptions')
@@ -264,78 +226,6 @@ app.post('/api/stripe/attach-payment-method', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// Webhook handlers
-async function handleSubscriptionChange(subscription) {
-  const { data: price } = await stripe.prices.retrieve(subscription.items.data[0].price.id);
-  const { data: product } = await stripe.products.retrieve(price.product);
-
-  await supabase
-    .from('subscriptions')
-    .upsert({
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
-      stripe_price_id: subscription.items.data[0].price.id,
-      plan_name: product.name,
-      plan_price: price.unit_amount / 100,
-      status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000),
-      current_period_end: new Date(subscription.current_period_end * 1000),
-      cancel_at_period_end: subscription.cancel_at_period_end
-    });
-}
-
-async function handleSubscriptionCancellation(subscription) {
-  await supabase
-    .from('subscriptions')
-    .update({ 
-      status: 'canceled',
-      cancel_at_period_end: true
-    })
-    .eq('stripe_subscription_id', subscription.id);
-}
-
-async function handlePaymentSuccess(invoice) {
-  if (invoice.subscription) {
-    // Update subscription status
-    await supabase
-      .from('subscriptions')
-      .update({ status: 'active' })
-      .eq('stripe_subscription_id', invoice.subscription);
-  }
-
-  // Update invoice status if it exists in our system
-  if (invoice.metadata?.invoiceId) {
-    await supabase
-      .from('invoices')
-      .update({
-        status: 'paid',
-        paid_date: new Date().toISOString(),
-        stripe_invoice_id: invoice.id,
-        payment_status: 'succeeded'
-      })
-      .eq('id', invoice.metadata.invoiceId);
-  }
-}
-
-async function handlePaymentFailure(invoice) {
-  if (invoice.subscription) {
-    await supabase
-      .from('subscriptions')
-      .update({ status: 'past_due' })
-      .eq('stripe_subscription_id', invoice.subscription);
-  }
-
-  if (invoice.metadata?.invoiceId) {
-    await supabase
-      .from('invoices')
-      .update({
-        status: 'overdue',
-        payment_status: 'failed'
-      })
-      .eq('id', invoice.metadata.invoiceId);
-  }
-}
 
 app.listen(PORT, () => {
   console.log(`Stripe API server running on port ${PORT}`);
