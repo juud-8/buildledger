@@ -228,6 +228,46 @@ const PDFTemplate = ({
   const numberLabel = isQuote ? 'Quote #:' : 'Invoice #:';
   const dateLabel = isQuote ? 'Quote Date:' : 'Invoice Date:';
   
+  // Precompute concatenated strings to avoid boolean/null children in <Text>
+  const clientDetailsText = (() => {
+    const clientName = data?.client?.name || 'Client Name';
+    const companyName = data?.client?.company_name ? String(data.client.company_name) : '';
+    const street = data?.client?.address?.street || 'Client Address';
+    const city = data?.client?.address?.city || 'City';
+    const state = data?.client?.address?.state || 'ST';
+    const zip = data?.client?.address?.zip || '12345';
+    const email = data?.client?.email ? `Email: ${data.client.email}` : '';
+    const phone = data?.client?.phone ? `Phone: ${data.client.phone}` : '';
+
+    return [
+      clientName,
+      companyName,
+      street,
+      `${city}, ${state} ${zip}`,
+      email,
+      phone,
+    ]
+      .filter((line) => Boolean(line) && line !== 'undefined')
+      .join('\n');
+  })();
+
+  const projectDetailsText = (() => {
+    if (!data?.project) return '';
+    const name = data.project.name || '';
+    const address = data.project.address || '';
+    const description = data.project.description || '';
+    return [name, address, description]
+      .filter((line) => Boolean(line) && line !== 'undefined')
+      .join('\n');
+  })();
+  
+  // Safeguard primitive-only strings for react-pdf <Text>
+  const safeText = (value) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') return '';
+    return String(value);
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -238,32 +278,32 @@ const PDFTemplate = ({
               <Image style={styles.logo} src={logoUrl} />
             )}
             <Text style={styles.companyName}>
-              {companyInfo?.name || 'BuildLedger'}
+              {safeText(companyInfo?.name || 'BuildLedger')}
             </Text>
             <Text style={styles.companyDetails}>
-              {companyInfo?.address || '123 Construction St'}{'\n'}
-              {companyInfo?.city || 'Builder City'}, {companyInfo?.state || 'ST'} {companyInfo?.zip || '12345'}{'\n'}
-              Phone: {companyInfo?.phone || '(555) 123-4567'}{'\n'}
-              Email: {companyInfo?.email || 'contact@buildledger.com'}
+              {safeText(companyInfo?.address || '123 Construction St')}{'\n'}
+              {safeText(companyInfo?.city || 'Builder City')}, {safeText(companyInfo?.state || 'ST')} {safeText(companyInfo?.zip || '12345')}{'\n'}
+              {`Phone: ${safeText(companyInfo?.phone || '(555) 123-4567')}`}{'\n'}
+              {`Email: ${safeText(companyInfo?.email || 'contact@buildledger.com')}`}
             </Text>
           </View>
           
           <View style={styles.documentInfo}>
-            <Text style={styles.documentTitle}>{title}</Text>
+            <Text style={styles.documentTitle}>{safeText(title)}</Text>
             <Text style={styles.documentNumber}>
-              {numberLabel} {data?.quote_number || data?.invoice_number}
+              {`${numberLabel} ${data?.quote_number || data?.invoice_number || ''}`}
             </Text>
             <Text style={styles.documentDate}>
-              {dateLabel} {formatDate(data?.created_at)}
+              {`${dateLabel} ${formatDate(data?.created_at)}`}
             </Text>
             {!isQuote && data?.due_date && (
               <Text style={styles.documentDate}>
-                Due Date: {formatDate(data?.due_date)}
+                {`Due Date: ${formatDate(data?.due_date)}`}
               </Text>
             )}
             {isQuote && data?.valid_until && (
               <Text style={styles.documentDate}>
-                Valid Until: {formatDate(data?.valid_until)}
+                {`Valid Until: ${formatDate(data?.valid_until)}`}
               </Text>
             )}
           </View>
@@ -280,26 +320,14 @@ const PDFTemplate = ({
         <View style={styles.clientSection}>
           <View style={styles.clientInfo}>
             <Text style={styles.sectionTitle}>Bill To:</Text>
-            <Text style={styles.clientDetails}>
-              {data?.client?.name || 'Client Name'}{'\n'}
-              {data?.client?.company_name && `${data.client.company_name}\n`}
-              {data?.client?.address?.street || 'Client Address'}{'\n'}
-              {data?.client?.address?.city || 'City'}, {data?.client?.address?.state || 'ST'} {data?.client?.address?.zip || '12345'}{'\n'}
-              {data?.client?.email && `Email: ${data.client.email}\n`}
-              {data?.client?.phone && `Phone: ${data.client.phone}`}
-            </Text>
+            <Text style={styles.clientDetails}>{safeText(clientDetailsText)}</Text>
           </View>
-          
-          {data?.project && (
+          {projectDetailsText ? (
             <View style={styles.clientInfo}>
               <Text style={styles.sectionTitle}>Project:</Text>
-              <Text style={styles.clientDetails}>
-                {data.project.name}{'\n'}
-                {data.project.address && `${data.project.address}\n`}
-                {data.project.description}
-              </Text>
+              <Text style={styles.clientDetails}>{safeText(projectDetailsText)}</Text>
             </View>
-          )}
+          ) : null}
         </View>
 
         {/* Project Title and Description */}
@@ -335,7 +363,7 @@ const PDFTemplate = ({
           </View>
 
           {/* Table Rows */}
-          {data?.items?.map((item, index) => (
+          {(data?.items || []).filter(Boolean).map((item, index) => (
             <View key={index} style={styles.tableRow}>
               <View style={styles.itemDescription}>
                 <Text style={styles.tableCellText}>{item.name || item.description}</Text>
@@ -381,8 +409,8 @@ const PDFTemplate = ({
             </Text>
           </View>
 
-          {!isQuote && data?.paid_amount > 0 && (
-            <>
+          {!isQuote && data?.paid_amount > 0 ? (
+            <View>
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Paid:</Text>
                 <Text style={styles.totalValue}>-{formatCurrency(data?.paid_amount)}</Text>
@@ -393,8 +421,8 @@ const PDFTemplate = ({
                   {formatCurrency((data?.total_amount || data?.amount) - (data?.paid_amount || 0))}
                 </Text>
               </View>
-            </>
-          )}
+            </View>
+          ) : null}
         </View>
 
         {/* Notes Section */}

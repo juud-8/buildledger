@@ -2,6 +2,9 @@ import React from "react";
 import { BrowserRouter, Routes as RouterRoutes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
+import PrivateRoute from './components/auth/PrivateRoute';
+import SessionWarning from './components/auth/SessionWarning';
+import { FEATURES } from './utils/rbac';
 
 import LandingPage from './pages/landing/index.jsx';
 import DashboardPage from './pages/dashboard/index.jsx';
@@ -30,28 +33,118 @@ export default function Routes() {
     <BrowserRouter>
       <ErrorBoundary>
         <ScrollToTop />
+        <SessionWarning />
         <RouterRoutes>
+          {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/:id" element={<ProjectDetailsPage />} />
-          <Route path="/invoices" element={<InvoicesPage />} />
-          <Route path="/quotes" element={<QuotesPage />} />
-          <Route path="/clients" element={<ClientsPage />} />
-          <Route path="/items" element={<ItemsPage />} />
-          <Route path="/items/add" element={<AddEditItemPage />} />
-          <Route path="/items/edit/:id" element={<AddEditItemPage />} />
-          <Route path="/item-selection" element={<ItemSelectionModalPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/branding" element={<BrandingPage />} />
-          <Route path="/vendors" element={<VendorsPage />} />
-          <Route path="/materials" element={<MaterialsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/admin-setup" element={<AdminSetupPage />} />
-          <Route path="/admin-cleanup" element={<AdminCleanupPage />} />
+          
+          {/* Protected routes */}
+          <Route path="/dashboard" element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/projects" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_PROJECTS}>
+              <ProjectsPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/projects/:id" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_PROJECTS}>
+              <ProjectDetailsPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/invoices" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_INVOICES}>
+              <InvoicesPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/quotes" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_QUOTES}>
+              <QuotesPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/clients" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_CLIENTS}>
+              <ClientsPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/items" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_ITEMS}>
+              <ItemsPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/items/add" element={
+            <PrivateRoute requiredFeature={FEATURES.CREATE_EDIT_ITEMS} requiredPlan="Pro">
+              <AddEditItemPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/items/edit/:id" element={
+            <PrivateRoute requiredFeature={FEATURES.CREATE_EDIT_ITEMS} requiredPlan="Pro">
+              <AddEditItemPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/item-selection" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_ITEMS}>
+              <ItemSelectionModalPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/analytics" element={
+            <PrivateRoute requiredFeature={FEATURES.VIEW_ANALYTICS} requiredPlan="Pro">
+              <AnalyticsPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/settings" element={
+            <PrivateRoute>
+              <SettingsPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/branding" element={
+            <PrivateRoute requiredFeature={FEATURES.CUSTOM_BRANDING} requiredPlan="Pro">
+              <BrandingPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/vendors" element={
+            <PrivateRoute requiredFeature={FEATURES.VENDOR_MANAGEMENT} requiredPlan="Pro">
+              <VendorsPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/materials" element={
+            <PrivateRoute requiredFeature={FEATURES.MATERIAL_MANAGEMENT} requiredPlan="Pro">
+              <MaterialsPage />
+            </PrivateRoute>
+          } />
+          
+          {/* Admin routes */}
+          <Route path="/admin-setup" element={
+            <PrivateRoute requiredFeature={FEATURES.ADMIN_PANEL}>
+              <AdminSetupPage />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/admin-cleanup" element={
+            <PrivateRoute requiredFeature={FEATURES.ADMIN_PANEL}>
+              <AdminCleanupPage />
+            </PrivateRoute>
+          } />
+          
           <Route path="*" element={<NotFoundPage />} />
         </RouterRoutes>
       </ErrorBoundary>

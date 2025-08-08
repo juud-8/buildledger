@@ -52,11 +52,17 @@ export const authService = {
   async signIn(email, password) {
     try {
       console.log('Attempting to sign in with email:', email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Add timeout to prevent hanging login
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 30000)
+      );
+
+      const signInPromise = supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
+
+      const { data, error } = await Promise.race([signInPromise, timeoutPromise]);
 
       if (error) {
         console.error('Supabase sign in error:', error);
@@ -67,6 +73,13 @@ export const authService = {
       return { data, error: null };
     } catch (error) {
       console.error('Error signing in:', error);
+      // Normalize common error messages
+      if (error.message === 'Request timeout') {
+        throw new Error('Login timed out. Please check your internet connection and try again.');
+      }
+      if (error.message?.includes('upstream connect error')) {
+        throw new Error('Connection error. Please try again in a moment.');
+      }
       throw error;
     }
   },

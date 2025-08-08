@@ -268,7 +268,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
       if (selectedItems?.length > 0 && invoice?.id) {
         const invoiceItems = selectedItems.map((item) => ({
           invoice_id: invoice.id,
-          item_id: item.item_id,
+          // item_id may be null for manually entered items; avoid empty string which breaks UUID type
+          item_id: item.item_id || null,
           name: item.name, // Store name as backup
           quantity: item.quantity,
           unit_price: item.unit_price,
@@ -495,7 +496,7 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
 
   const addLineItem = () => {
     setSelectedItems(prev => [...prev, {
-      item_id: '',
+      item_id: null,
       name: '',
       unit_price: 0,
       quantity: 1,

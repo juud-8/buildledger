@@ -6,18 +6,7 @@ export const ENV_CONFIG = {
   // Stripe Configuration
   STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
   
-  // AI Provider Configuration - Production (for users)
-  OPENAI_API_KEY: import.meta.env.VITE_OPENAI_API_KEY,
-  OPENAI_API_KEY_PROD: import.meta.env.VITE_OPENAI_API_KEY_PROD,
-  OPENAI_API_KEY_DEV: import.meta.env.VITE_OPENAI_API_KEY_DEV,
-  
-  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY,
-  GEMINI_API_KEY_PROD: import.meta.env.VITE_GEMINI_API_KEY_PROD,
-  GEMINI_API_KEY_DEV: import.meta.env.VITE_GEMINI_API_KEY_DEV,
-  
-  ANTHROPIC_API_KEY: import.meta.env.VITE_ANTHROPIC_API_KEY,
-  ANTHROPIC_API_KEY_PROD: import.meta.env.VITE_ANTHROPIC_API_KEY_PROD,
-  ANTHROPIC_API_KEY_DEV: import.meta.env.VITE_ANTHROPIC_API_KEY_DEV,
+  // AI services now handled via secure server proxy - no keys exposed to client
   
   // Supabase Configuration
   SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
@@ -31,32 +20,10 @@ export const ENV_CONFIG = {
   USE_PRODUCTION_AI: import.meta.env.VITE_USE_PRODUCTION_AI === 'true',
 };
 
-// Helper function to get the appropriate AI key based on environment
+// AI keys are no longer exposed to frontend - all AI requests go through secure server proxy
 export function getAIKey(service, fallbackToLegacy = true) {
-  const useProductionKeys = ENV_CONFIG.USE_PRODUCTION_AI || ENV_CONFIG.IS_PRODUCTION;
-  
-  let key = null;
-  
-  if (service === 'openai') {
-    key = useProductionKeys 
-      ? (ENV_CONFIG.OPENAI_API_KEY_PROD || ENV_CONFIG.OPENAI_API_KEY)
-      : (ENV_CONFIG.OPENAI_API_KEY_DEV || ENV_CONFIG.OPENAI_API_KEY);
-  } else if (service === 'gemini') {
-    key = useProductionKeys
-      ? (ENV_CONFIG.GEMINI_API_KEY_PROD || ENV_CONFIG.GEMINI_API_KEY)
-      : (ENV_CONFIG.GEMINI_API_KEY_DEV || ENV_CONFIG.GEMINI_API_KEY);
-  } else if (service === 'anthropic') {
-    key = useProductionKeys
-      ? (ENV_CONFIG.ANTHROPIC_API_KEY_PROD || ENV_CONFIG.ANTHROPIC_API_KEY)
-      : (ENV_CONFIG.ANTHROPIC_API_KEY_DEV || ENV_CONFIG.ANTHROPIC_API_KEY);
-  }
-  
-  if (!key && fallbackToLegacy) {
-    // Fallback to legacy naming for backward compatibility
-    key = ENV_CONFIG[`${service.toUpperCase()}_API_KEY`];
-  }
-  
-  return key;
+  console.warn('getAIKey() is deprecated - AI services now use secure server proxy');
+  return null;
 }
 
 // Validation function to check required environment variables
@@ -76,14 +43,12 @@ export function validateEnvironment() {
     }
   }
   
-  // Log AI key configuration for debugging
+  // AI services now managed securely via server proxy
   if (ENV_CONFIG.DEBUG_MODE) {
-    console.log('AI Key Configuration:', {
+    console.log('Environment Configuration:', {
       environment: ENV_CONFIG.ENVIRONMENT,
-      useProductionAI: ENV_CONFIG.USE_PRODUCTION_AI,
-      openai: getAIKey('openai') ? 'CONFIGURED' : 'MISSING',
-      gemini: getAIKey('gemini') ? 'CONFIGURED' : 'MISSING',
-      anthropic: getAIKey('anthropic') ? 'CONFIGURED' : 'MISSING',
+      apiBaseUrl: ENV_CONFIG.API_BASE_URL,
+      aiProxy: 'Server-side proxy configured'
     });
   }
   

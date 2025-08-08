@@ -29,8 +29,8 @@
     --color-primary: #FF6B00; /* Bright construction orange */
     --color-primary-foreground: #FFFFFF; /* White text on orange */
     
-    /* Secondary Colors - Navy Blue */
-    --color-secondary: #1E3A5F; /* Navy blue */
+    /* Secondary Colors - Navy Blue (lightened) */
+    --color-secondary: #2B4C7E; /* Lighter navy */
     --color-secondary-foreground: #FFFFFF; /* White text on navy */
     
     /* Accent Colors - Safety Yellow */
@@ -55,7 +55,7 @@
     --color-construction-orange: #FF6B00; /* Primary construction orange */
     --color-construction-orange-foreground: #FFFFFF; /* White text */
     --color-construction-black: #1A1A1A; /* Construction black */
-    --color-construction-navy: #1E3A5F; /* Construction navy blue */
+    --color-construction-navy: #2B4C7E; /* Lightened construction navy blue */
     --color-construction-yellow: #FFD700; /* Construction safety yellow */
   }
 
@@ -67,8 +67,8 @@
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
     background-image: 
-      radial-gradient(circle at 25% 25%, rgba(255, 107, 0, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 75% 75%, rgba(30, 58, 95, 0.1) 0%, transparent 50%);
+      radial-gradient(circle at 25% 25%, rgba(255, 107, 0, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 75% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
   }
   
   h1, h2, h3, h4, h5, h6 {

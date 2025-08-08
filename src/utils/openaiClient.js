@@ -1,12 +1,36 @@
-import OpenAI from 'openai';
+// DEPRECATED: Direct OpenAI client replaced with secure server proxy
+// Import aiClient from './aiClient.js' instead
+
+import { multiAI } from './aiClient';
 
 /**
- * Initializes the OpenAI client with the API key from environment variables.
- * @returns {OpenAI} Configured OpenAI client instance.
+ * @deprecated Use aiClient instead for secure server-proxied AI requests
  */
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true, // Required for client-side usage in React
-});
+const openai = {
+  chat: {
+    completions: {
+      create: async (options) => {
+        console.warn('Direct OpenAI client deprecated - using secure proxy instead');
+        const response = await multiAI.generateResponse(options.messages, {
+          model: options.model,
+          max_tokens: options.max_tokens,
+          temperature: options.temperature,
+          stream: options.stream
+        });
+        
+        // Convert to OpenAI-compatible format for backward compatibility
+        return {
+          choices: [{
+            message: {
+              content: response.content
+            }
+          }],
+          model: response.provider,
+          usage: response.usage
+        };
+      }
+    }
+  }
+};
 
 export default openai;

@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: gitleaks
+        entry: gitleaks detect --source="." --no-git -v --redact
+        language: golang
+        types: [text]

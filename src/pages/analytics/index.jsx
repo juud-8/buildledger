@@ -16,7 +16,7 @@ import CostAnalysis from './components/CostAnalysis';
 import GeographicRevenue from './components/GeographicRevenue';
 import FilterSidebar from './components/FilterSidebar';
 import { useAuth } from '../../contexts/AuthContext';
-import { hasPermission, FEATURES } from '../../utils/rbac';
+import { hasPermission, FEATURES, getEffectiveRoleFromProfile } from '../../utils/rbac';
 import Icon from '../../components/AppIcon';
 
 const Analytics = () => {
@@ -52,7 +52,8 @@ const Analytics = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  if (!hasPermission(userProfile?.role, FEATURES.VIEW_ANALYTICS)) {
+  const effectiveRole = getEffectiveRoleFromProfile(userProfile);
+  if (!hasPermission(effectiveRole, FEATURES.VIEW_ANALYTICS)) {
     return (
       <div className="min-h-screen bg-background">
         <Header />

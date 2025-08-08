@@ -165,7 +165,7 @@ const LoginForm = () => {
               id="remember-me"
               label="Remember me"
               checked={rememberMe}
-              onCheckedChange={setRememberMe}
+              onChange={(e) => setRememberMe(e?.target?.checked)}
               disabled={isLoading}
             />
             <Link

@@ -380,7 +380,7 @@ export function DocumentTemplates({ branding, userId, onError }) {
                     <div className="flex items-center space-x-3 p-3 border border-border rounded-lg">
                       <Checkbox
                         checked={formData?.show_logo}
-                        onCheckedChange={(checked) => setFormData({ ...formData, show_logo: checked })}
+                       onChange={(e) => setFormData({ ...formData, show_logo: e?.target?.checked })}
                       />
                       <div>
                         <label className="text-sm font-medium text-foreground">Show logo</label>
@@ -391,7 +391,7 @@ export function DocumentTemplates({ branding, userId, onError }) {
                     <div className="flex items-center space-x-3 p-3 border border-border rounded-lg">
                       <Checkbox
                         checked={formData?.show_watermark}
-                        onCheckedChange={(checked) => setFormData({ ...formData, show_watermark: checked })}
+                       onChange={(e) => setFormData({ ...formData, show_watermark: e?.target?.checked })}
                       />
                       <div>
                         <label className="text-sm font-medium text-foreground">Show watermark</label>

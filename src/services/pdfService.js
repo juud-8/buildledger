@@ -77,12 +77,25 @@ class PDFService {
         return this.defaultCompanyInfo;
       }
 
+      // Normalize address fields (DB uses JSONB for address)
+      const addressValue = companyData.address;
+      const addressObj = typeof addressValue === 'object' && addressValue !== null ? addressValue : null;
+      const normalizedAddress = addressObj
+        ? [addressObj.street || addressObj.line1 || addressObj.address1]
+            .filter(Boolean)
+            .join(', ')
+        : (typeof addressValue === 'string' ? addressValue : this.defaultCompanyInfo.address);
+
+      const normalizedCity = companyData.city || addressObj?.city || this.defaultCompanyInfo.city;
+      const normalizedState = companyData.state || addressObj?.state || this.defaultCompanyInfo.state;
+      const normalizedZip = companyData.zip || addressObj?.zip || addressObj?.postal_code || this.defaultCompanyInfo.zip;
+
       return {
         name: companyData.name || this.defaultCompanyInfo.name,
-        address: companyData.address || this.defaultCompanyInfo.address,
-        city: companyData.city || this.defaultCompanyInfo.city,
-        state: companyData.state || this.defaultCompanyInfo.state,
-        zip: companyData.zip || this.defaultCompanyInfo.zip,
+        address: normalizedAddress,
+        city: normalizedCity,
+        state: normalizedState,
+        zip: normalizedZip,
         phone: companyData.phone || this.defaultCompanyInfo.phone,
         email: companyData.email || this.defaultCompanyInfo.email,
         logo_url: companyData.logo_url

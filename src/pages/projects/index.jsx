@@ -22,7 +22,7 @@ const Projects = () => {
   const [sortBy, setSortBy] = useState('date');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [filters, setFilters] = useState({
-    status: 'all',
+    status: 'all', // planning | in_progress | on_hold | completed | cancelled
     client: 'all',
     dateRange: {
       from: '',
@@ -31,107 +31,32 @@ const Projects = () => {
     projectTypes: []
   });
 
-  // Mock project data
-  const mockProjects = [
-    {
-      id: 'proj-001',
-      name: 'Modern Family Home Construction',
-      client: 'Johnson Family',
-      status: 'active',
-      progress: 65,
-      budget: 450000,
-      actualCost: 298000,
-      startDate: '2024-01-15',
-      endDate: '2024-08-30',
-      type: 'residential',
-      nextMilestone: {
-        name: 'Electrical Installation',
-        dueDate: '2024-08-15'
-      }
-    },
-    {
-      id: 'proj-002',
-      name: 'Office Building Renovation',
-      client: 'Smith Enterprises',
-      status: 'active',
-      progress: 42,
-      budget: 750000,
-      actualCost: 315000,
-      startDate: '2024-02-01',
-      endDate: '2024-10-15',
-      type: 'commercial',
-      nextMilestone: {
-        name: 'HVAC System Installation',
-        dueDate: '2024-08-20'
-      }
-    },
-    {
-      id: 'proj-003',
-      name: 'Kitchen Remodel Project',
-      client: 'Brown Construction',
-      status: 'completed',
-      progress: 100,
-      budget: 85000,
-      actualCost: 82500,
-      startDate: '2024-03-01',
-      endDate: '2024-06-30',
-      type: 'renovation',
-      nextMilestone: null
-    },
-    {
-      id: 'proj-004',
-      name: 'Luxury Apartment Complex',
-      client: 'Davis Properties',
-      status: 'planning',
-      progress: 15,
-      budget: 2500000,
-      actualCost: 125000,
-      startDate: '2024-09-01',
-      endDate: '2025-06-30',
-      type: 'commercial',
-      nextMilestone: {
-        name: 'Foundation Permits',
-        dueDate: '2024-08-25'
-      }
-    },
-    {
-      id: 'proj-005',
-      name: 'Backyard Landscaping',
-      client: 'Wilson Homes',
-      status: 'on-hold',
-      progress: 25,
-      budget: 35000,
-      actualCost: 8750,
-      startDate: '2024-04-15',
-      endDate: '2024-09-15',
-      type: 'landscaping',
-      nextMilestone: {
-        name: 'Weather Assessment',
-        dueDate: '2024-08-10'
-      }
-    },
-    {
-      id: 'proj-006',
-      name: 'Warehouse Construction',
-      client: 'Johnson Family',
-      status: 'active',
-      progress: 78,
-      budget: 1200000,
-      actualCost: 936000,
-      startDate: '2024-01-01',
-      endDate: '2024-09-30',
-      type: 'commercial',
-      nextMilestone: {
-        name: 'Final Inspections',
-        dueDate: '2024-09-15'
-      }
-    }
-  ];
-
   useEffect(() => {
-    // Simulate API call
-    setProjects(mockProjects);
-    setFilteredProjects(mockProjects);
+    let mounted = true;
+    (async () => {
+      try {
+        const dbProjects = await (await import('../../services/projectsService')).projectsService.getProjects();
+        if (!mounted) return;
+        const uiProjects = (dbProjects || []).map(p => ({
+          id: p.id,
+          name: p.name,
+          client: p.client?.name || '—',
+          status: p.status, // planning | in_progress | on_hold | completed | cancelled
+          progress: p.completion_percentage || 0,
+          budget: Number(p.budget_amount || 0),
+          actualCost: Number(p.actual_cost || 0),
+          startDate: p.start_date || '',
+          endDate: p.end_date || '',
+          type: 'general',
+          nextMilestone: null,
+        }));
+        setProjects(uiProjects);
+        setFilteredProjects(uiProjects);
+      } catch (e) {
+        console.error('Failed to load projects', e);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -168,11 +93,9 @@ const Projects = () => {
       );
     }
 
-    // Project type filter
+    // Project type filter (placeholder - no type in schema)
     if (filters?.projectTypes?.length > 0) {
-      filtered = filtered?.filter(project => 
-        filters?.projectTypes?.includes(project?.type)
-      );
+      filtered = filtered?.filter(project => filters?.projectTypes?.includes(project?.type));
     }
 
     // Apply sorting

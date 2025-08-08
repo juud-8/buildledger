@@ -10,7 +10,7 @@ import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import ItemSelectionModal from '../../item-selection-modal';
 
-const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) => {
+const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '', editMode = false, quoteId = null }) => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -42,13 +42,49 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
   useEffect(() => {
     if (isOpen && user) {
       loadData();
-      generateQuoteNumber();
+      if (editMode && quoteId) {
+        loadQuoteData(quoteId);
+      } else {
+        generateQuoteNumber();
+      }
       if (initialClientId) {
         setUseCustomClient(false);
         setFormData(prev => ({ ...prev, clientId: initialClientId }));
       }
     }
-  }, [isOpen, user, initialClientId]);
+  }, [isOpen, user, initialClientId, editMode, quoteId]);
+
+  const loadQuoteData = async (id) => {
+    try {
+      const quote = await quotesService.getQuote(id);
+      if (!quote) return;
+      setFormData(prev => ({
+        ...prev,
+        clientId: quote.client_id || '',
+        projectId: quote.project_id || '',
+        quoteNumber: quote.quote_number || '',
+        title: quote.title || '',
+        description: quote.description || '',
+        taxRate: quote.tax_rate || 0,
+        validUntil: quote.valid_until ? new Date(quote.valid_until).toISOString().split('T')[0] : '',
+        notes: quote.notes || ''
+      }));
+      if (Array.isArray(quote.quote_items)) {
+        setSelectedItems(
+          quote.quote_items.map(qi => ({
+            item_id: qi.item_id,
+            name: qi.item?.name || qi.name,
+            unit_price: qi.unit_price,
+            quantity: qi.quantity,
+            total_price: qi.total_price,
+            description: qi.description || ''
+          }))
+        );
+      }
+    } catch (e) {
+      console.error('Failed to load quote for edit:', e);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -144,7 +180,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
 
-      // Create quote using service (omit unsupported DB columns)
+      // Prepare quote payload
       const quoteData = {
         client_id: useCustomClient ? null : (formData?.clientId || null),
         project_id: formData?.projectId || null,
@@ -161,7 +197,20 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
         show_summary_only: formData?.customerView === 'summary'
       };
 
-      const quote = await quotesService.createQuote(quoteData);
+      let quote;
+      if (editMode && quoteId) {
+        quote = await quotesService.updateQuote(quoteId, quoteData);
+        // Clear existing items
+        const { error: delErr } = await supabase
+          .from('quote_items')
+          .delete()
+          .eq('quote_id', quoteId);
+        if (delErr) {
+          console.error('Warning: could not remove old quote items', delErr);
+        }
+      } else {
+        quote = await quotesService.createQuote(quoteData);
+      }
 
       // Add quote items (support manual lines without item_id; include required name)
       if (selectedItems?.length > 0) {
@@ -184,7 +233,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
       resetForm();
     } catch (error) {
       console.error('Error creating quote:', error);
-      showErrorToast('Error creating quote. Please try again.');
+      showErrorToast(editMode ? 'Error updating quote. Please try again.' : 'Error creating quote. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -299,7 +348,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-card border border-border rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-foreground">Create New Quote</h2>
+          <h2 className="text-2xl font-bold text-foreground">{editMode ? 'Edit Quote' : 'Create New Quote'}</h2>
           <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -656,7 +705,7 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '' }) 
                 disabled={isLoading}
                 className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-700"
               >
-                {isLoading ? 'Creating...' : 'Create Quote'}
+                {isLoading ? (editMode ? 'Updating...' : 'Creating...') : (editMode ? 'Update Quote' : 'Create Quote')}
               </Button>
             )}
           </div>

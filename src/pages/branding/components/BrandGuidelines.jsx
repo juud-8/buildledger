@@ -331,7 +331,7 @@ export function BrandGuidelines({ branding, userId, onError }) {
               <div className="flex items-center">
                 <Checkbox
                   checked={formData?.is_enforced}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_enforced: checked })}
+                  onChange={(e) => setFormData({ ...formData, is_enforced: e?.target?.checked })}
                 />
                 <label className="ml-2 text-sm text-gray-700">
                   Enforce this guideline (automatically apply to new documents)

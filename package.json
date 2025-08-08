@@ -77,7 +77,19 @@
     "railway:start": "node deployment/serve.js",
     "deploy": "echo '🚨 USE: vercel build --prod && vercel --prod --prebuilt' && echo '❌ NEVER USE: vercel --prod' && exit 1",
     "deploy:correct": "vercel build --prod && vercel --prod --prebuilt",
-    "deploy:wrong": "echo '❌ THIS IS THE WRONG WAY - USE npm run deploy:correct' && exit 1"
+    "deploy:wrong": "echo '❌ THIS IS THE WRONG WAY - USE npm run deploy:correct' && exit 1",
+    "db:health": "node scripts/database-manager.js health",
+    "db:migrate": "node scripts/database-manager.js migrate",
+    "db:fix-client-type": "node scripts/database-manager.js fix-client-type",
+    "db:list": "node scripts/database-manager.js list",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:server": "vitest run --config server/vitest.config.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:all": "npm run test:run && npm run test:server && npm run test:e2e"
   },
   "eslintConfig": {
     "extends": [
@@ -103,6 +115,16 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.15",
     "vite": "^7.0.6",
-    "vite-tsconfig-paths": "3.6.0"
+    "vite-tsconfig-paths": "3.6.0",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/jest-dom": "^6.1.6",
+    "@testing-library/user-event": "^14.5.1",
+    "vitest": "^1.0.4",
+    "jsdom": "^23.0.1",
+    "@vitest/ui": "^1.0.4",
+    "@vitest/coverage-v8": "^1.0.4",
+    "msw": "^2.0.11",
+    "supertest": "^6.3.3",
+    "@playwright/test": "^1.40.1"
   }
 }

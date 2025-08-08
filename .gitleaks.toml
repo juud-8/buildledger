@@ -1,0 +1,62 @@
+title = "Buildledger Gitleaks Configuration"
+
+[extend]
+# Extend default gitleaks rules
+useDefault = true
+
+[[rules]]
+id = "stripe-secret-key"
+description = "Stripe Secret Key"
+regex = '''sk_(test|live)_[a-zA-Z0-9]{24,}'''
+keywords = ["sk_test", "sk_live"]
+
+[[rules]]
+id = "stripe-webhook-secret"
+description = "Stripe Webhook Secret"
+regex = '''whsec_[a-zA-Z0-9]{32,}'''
+keywords = ["whsec_"]
+
+[[rules]]
+id = "supabase-service-role-key"
+description = "Supabase Service Role Key"
+regex = '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+'''
+keywords = ["service_role"]
+
+[[rules]]
+id = "twilio-auth-token"
+description = "Twilio Auth Token"
+regex = '''[a-f0-9]{32}'''
+keywords = ["TWILIO_AUTH_TOKEN", "twilio_auth_token"]
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-proj-[a-zA-Z0-9_-]{48,}'''
+keywords = ["OPENAI_API_KEY", "sk-proj"]
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API Key"
+regex = '''sk-ant-api[0-9]{2}-[a-zA-Z0-9_-]{95,}'''
+keywords = ["ANTHROPIC_API_KEY", "sk-ant-api"]
+
+[allowlist]
+description = "Allow example/placeholder values"
+regexes = [
+  '''your_.*_key_here''',
+  '''your_.*_secret_here''',
+  '''your_.*_token_here''',
+  '''your_.*_dsn.*''',
+  '''ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx''',
+  '''whsec_your_stripe_webhook_secret_here''',
+  '''sk_test_your_stripe_secret_key_here''',
+  '''pk_test_your_stripe_publishable_key_here''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.your_.*_key_here''',
+]
+
+files = [
+  '''\.env\.example$''',
+  '''\.env\..*\.example$''',
+  '''config/\.env\.example$''',
+  '''server/\.env\.example$''',
+]

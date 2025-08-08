@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { authService } from '../services/authService';
+import { SESSION_CONFIG } from '../utils/rbac';
 
 const AuthContext = createContext({})
 
@@ -16,6 +17,12 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [lastActivity, setLastActivity] = useState(Date.now())
+  const [sessionWarning, setSessionWarning] = useState(false)
+  
+  // Refs for intervals to avoid stale closures
+  const activityCheckInterval = useRef(null)
+  const sessionRefreshInterval = useRef(null)
 
   useEffect(() => {
     // Get initial session
@@ -26,7 +33,10 @@ export const AuthProvider = ({ children }) => {
           console.error('Error getting session:', error);
         } else if (session?.user) {
           setUser(session.user);
-          await fetchUserProfile(session.user.id);
+          // Ensure we fetch profile; set a hard timeout fallback to avoid hanging UI
+          const profileFetch = fetchUserProfile(session.user.id);
+          const timeout = new Promise((resolve) => setTimeout(resolve, 10000));
+          await Promise.race([profileFetch, timeout]);
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
@@ -45,7 +55,15 @@ export const AuthProvider = ({ children }) => {
         if (session?.user) {
           console.log('Setting user state for:', session.user.email);
           setUser(session.user);
-          // await fetchUserProfile(session.user.id);
+          // Ensure profile is fetched on auth changes so RBAC reflects role/plan updates
+          // Fetch profile with timeout guard to prevent infinite loading
+          try {
+            const profileFetch = fetchUserProfile(session.user.id);
+            const timeout = new Promise((resolve) => setTimeout(resolve, 10000));
+            await Promise.race([profileFetch, timeout]);
+          } catch (e) {
+            console.error('Error fetching profile after auth change:', e);
+          }
         } else {
           console.log('Clearing user state - no session');
           setUser(null);
@@ -167,15 +185,106 @@ export const AuthProvider = ({ children }) => {
     return profile;
   };
 
+  // Session management functions
+  const updateActivity = useCallback(() => {
+    setLastActivity(Date.now());
+    setSessionWarning(false);
+  }, []);
+
+  // Check for session expiry and idle timeout
+  const checkSessionHealth = useCallback(async () => {
+    if (!user) return;
+
+    const now = Date.now();
+    const timeSinceActivity = now - lastActivity;
+
+    // Check for idle timeout
+    if (timeSinceActivity > SESSION_CONFIG.IDLE_TIMEOUT) {
+      console.log('Session expired due to inactivity');
+      await signOut();
+      return;
+    }
+
+    // Show warning before idle timeout
+    if (timeSinceActivity > SESSION_CONFIG.IDLE_TIMEOUT - SESSION_CONFIG.LOGOUT_WARNING_TIME && !sessionWarning) {
+      setSessionWarning(true);
+      console.log('Session warning: user will be logged out due to inactivity');
+    }
+
+    // Refresh session if needed
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error checking session:', error);
+        return;
+      }
+
+      if (session) {
+        const expiresAt = new Date(session.expires_at * 1000);
+        const timeUntilExpiry = expiresAt.getTime() - now;
+
+        // Refresh if within buffer time
+        if (timeUntilExpiry < SESSION_CONFIG.REFRESH_BUFFER) {
+          console.log('Refreshing session token');
+          await supabase.auth.refreshSession();
+        }
+      }
+    } catch (error) {
+      console.error('Error during session health check:', error);
+    }
+  }, [user, lastActivity, sessionWarning, signOut]);
+
+  // Set up activity tracking
+  useEffect(() => {
+    if (!user) return;
+
+    // Track user activity
+    const handleActivity = () => updateActivity();
+    
+    // Add activity listeners
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      document.addEventListener(event, handleActivity, true);
+    });
+
+    // Set up periodic session health checks
+    activityCheckInterval.current = setInterval(
+      checkSessionHealth,
+      SESSION_CONFIG.ACTIVITY_CHECK_INTERVAL
+    );
+
+    return () => {
+      // Cleanup activity listeners
+      events.forEach(event => {
+        document.removeEventListener(event, handleActivity, true);
+      });
+      
+      // Clear intervals
+      if (activityCheckInterval.current) {
+        clearInterval(activityCheckInterval.current);
+      }
+    };
+  }, [user, updateActivity, checkSessionHealth]);
+
+  // Extend session when user dismisses warning
+  const extendSession = useCallback(() => {
+    updateActivity();
+    setSessionWarning(false);
+  }, [updateActivity]);
+
   const value = {
     user,
     userProfile,
     loading,
+    lastActivity,
+    sessionWarning,
     signIn,
     signUp,
     signOut,
     updateProfile,
-    forceClearAuth
+    forceClearAuth,
+    updateActivity,
+    extendSession
   }
 
   return (

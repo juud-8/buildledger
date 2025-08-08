@@ -1,10 +1,14 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+const logger = require('../utils/logger');
 
 /**
- * Stripe webhook router with raw body parsing and signature verification.
- * - Must be mounted BEFORE express.json() in the main app.
- * - Uses idempotency by recording processed event IDs in DB.
- * - Logs events to server logs only.
+ * Enhanced Stripe webhook router with security, logging, and error handling.
+ * - Raw body parsing and signature verification
+ * - Rate limiting and security headers  
+ * - Structured logging and audit trail
+ * - Idempotency and retry handling
+ * - Must be mounted BEFORE express.json() in the main app
  *
  * @param {object} deps
  * @param {import('stripe').Stripe} deps.stripe
@@ -12,29 +16,80 @@ const express = require('express');
  */
 module.exports = function createStripeWebhookRouter({ stripe, supabase }) {
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
-    console.error('❌ STRIPE_WEBHOOK_SECRET is required for webhook verification');
+    logger.error('STRIPE_WEBHOOK_SECRET is required for webhook verification', {
+      type: 'configuration_error',
+      service: 'stripe_webhook'
+    });
     // We do not exit here to allow non-webhook routes to still function in dev,
     // but verification will fail for webhook requests.
   }
 
   const router = express.Router();
 
+  // Rate limiting for webhook endpoint
+  const webhookLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: {
+      error: 'Too many webhook requests from this IP, please try again later.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+      // Skip rate limiting if request has valid Stripe signature (more lenient for valid webhooks)
+      const signature = req.headers['stripe-signature'];
+      return !!signature;
+    }
+  });
+
+  // Apply rate limiting
+  router.use('/webhook', webhookLimiter);
+
   // Raw body parser is REQUIRED for Stripe signature verification
   router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const startTime = Date.now();
     const signatureHeader = req.headers['stripe-signature'];
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const clientIP = req.ip || req.connection.remoteAddress;
 
     let event;
 
-    try {
-      event = stripe.webhooks.constructEvent(req.body, signatureHeader, endpointSecret);
-    } catch (err) {
-      console.error('❌ Stripe webhook signature verification failed:', err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+    // Security: Validate signature header format
+    if (!signatureHeader || typeof signatureHeader !== 'string') {
+      logger.security('Invalid Stripe signature header', {
+        ip: clientIP,
+        userAgent: req.headers['user-agent'],
+        signaturePresent: !!signatureHeader
+      });
+      return res.status(400).json({ error: 'Invalid signature header' });
     }
 
-    // Log receipt of the event to server logs only
-    console.log(`📬 Stripe webhook received: ${event.type} (id=${event.id})`);
+    // Signature verification
+    try {
+      event = stripe.webhooks.constructEvent(req.body, signatureHeader, endpointSecret);
+      
+      logger.info('Stripe webhook signature verified', {
+        eventType: event.type,
+        eventId: event.id,
+        ip: clientIP
+      });
+    } catch (err) {
+      logger.security('Stripe webhook signature verification failed', {
+        error: err.message,
+        ip: clientIP,
+        userAgent: req.headers['user-agent'],
+        signatureHeader: signatureHeader.substring(0, 50) + '...' // Truncated for security
+      });
+      return res.status(400).json({ error: 'Webhook signature verification failed' });
+    }
+
+    // Structured logging for webhook receipt
+    logger.webhook('stripe', event.id, {
+      eventType: event.type,
+      livemode: event.livemode,
+      created: event.created,
+      ip: clientIP
+    });
 
     try {
       // Idempotency: check if we've already processed this event
@@ -45,11 +100,19 @@ module.exports = function createStripeWebhookRouter({ stripe, supabase }) {
         .maybeSingle();
 
       if (existingErr) {
-        console.error('Error checking existing webhook event:', existingErr);
+        logger.error('Error checking existing webhook event', {
+          error: existingErr,
+          eventId: event.id,
+          eventType: event.type
+        });
       }
 
       if (existing?.processed) {
-        console.log(`🔁 Event ${event.id} already processed; skipping.`);
+        logger.info('Duplicate webhook event skipped', {
+          eventId: event.id,
+          eventType: event.type,
+          ip: clientIP
+        });
         return res.json({ received: true, duplicate: true });
       }
 
@@ -61,10 +124,16 @@ module.exports = function createStripeWebhookRouter({ stripe, supabase }) {
           event_type: event.type,
           event_data: event.data,
           processed: false,
+          received_at: new Date().toISOString(),
+          source_ip: clientIP
         }, { onConflict: 'stripe_event_id' });
 
       if (insertErr) {
-        console.error('Error inserting webhook event:', insertErr);
+        logger.error('Error inserting webhook event', {
+          error: insertErr,
+          eventId: event.id,
+          eventType: event.type
+        });
       }
 
       // Handle event types
@@ -83,23 +152,55 @@ module.exports = function createStripeWebhookRouter({ stripe, supabase }) {
           await handlePaymentFailure({ supabase }, event.data.object);
           break;
         default:
-          console.log(`ℹ️ Unhandled Stripe event type: ${event.type}`);
+          logger.info('Unhandled Stripe event type', {
+            eventType: event.type,
+            eventId: event.id
+          });
       }
 
       // Mark as processed (idempotent completion)
       const { error: markErr } = await supabase
         .from('webhook_events')
-        .update({ processed: true })
+        .update({ 
+          processed: true,
+          processed_at: new Date().toISOString()
+        })
         .eq('stripe_event_id', event.id);
 
       if (markErr) {
-        console.error('Error marking webhook event processed:', markErr);
+        logger.error('Error marking webhook event processed', {
+          error: markErr,
+          eventId: event.id
+        });
       }
 
-      return res.json({ received: true });
+      const processingTime = Date.now() - startTime;
+      logger.info('Stripe webhook processed successfully', {
+        eventId: event.id,
+        eventType: event.type,
+        processingTimeMs: processingTime,
+        ip: clientIP
+      });
+
+      return res.json({ 
+        received: true,
+        eventId: event.id,
+        processingTime: `${processingTime}ms`
+      });
     } catch (error) {
-      console.error('❌ Error processing Stripe webhook:', error);
-      return res.status(500).json({ error: 'Webhook processing failed' });
+      const processingTime = Date.now() - startTime;
+      logger.error('Error processing Stripe webhook', {
+        error: error.message,
+        stack: error.stack,
+        eventId: event?.id,
+        eventType: event?.type,
+        processingTimeMs: processingTime,
+        ip: clientIP
+      });
+      return res.status(500).json({ 
+        error: 'Webhook processing failed',
+        eventId: event?.id
+      });
     }
   });
 

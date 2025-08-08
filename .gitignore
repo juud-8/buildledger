@@ -27,6 +27,12 @@ coverage/
 server/.env
 server/.env.production
 server/.env.development
+server/.env.*
+server/.env.*.local
+
+# Supabase environment files
+supabase/.env
+supabase/.env.*
 
 # Cursor IDE configuration (should be outside project)
 .cursor/

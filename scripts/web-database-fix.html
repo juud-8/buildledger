@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildLedger Database Fix</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .container { 
+            background: #1e293b; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        button { 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #64748b; cursor: not-allowed; }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        .code { 
+            background: #374151; 
+            padding: 15px; 
+            border-radius: 6px; 
+            font-family: 'Monaco', 'Consolas', monospace; 
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .status { 
+            padding: 15px; 
+            border-radius: 6px; 
+            margin: 15px 0;
+        }
+        .status.success { background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; }
+        .status.error { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; }
+        .status.info { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 BuildLedger Database Fix</h1>
+        <p>This tool will automatically add the missing <code>client_type</code> column to your clients table.</p>
+        
+        <div class="status info">
+            <strong>What this fixes:</strong><br>
+            • Adds client_type enum (residential, commercial, industrial, government)<br>
+            • Adds client_type column with default 'residential'<br>
+            • Adds payment_terms column with default 'net30'<br>
+            • Adds preferred_contact_method column with default 'email'<br>
+            • Creates performance index
+        </div>
+
+        <button id="checkBtn" onclick="checkDatabase()">1. Check Database Status</button>
+        <button id="fixBtn" onclick="fixDatabase()" disabled>2. Apply Database Fix</button>
+        <button id="testBtn" onclick="testClientCreation()" disabled>3. Test Client Creation</button>
+
+        <div id="results"></div>
+
+        <details style="margin-top: 30px;">
+            <summary>SQL that will be executed:</summary>
+            <div class="code">-- Create enum type for client_type
+CREATE TYPE IF NOT EXISTS public.client_type AS ENUM ('residential', 'commercial', 'industrial', 'government');
+
+-- Add client_type column
+ALTER TABLE public.clients 
+ADD COLUMN IF NOT EXISTS client_type public.client_type DEFAULT 'residential';
+
+-- Add other missing columns
+ALTER TABLE public.clients 
+ADD COLUMN IF NOT EXISTS payment_terms TEXT DEFAULT 'net30',
+ADD COLUMN IF NOT EXISTS preferred_contact_method TEXT DEFAULT 'email';
+
+-- Create index for better performance
+CREATE INDEX IF NOT EXISTS idx_clients_client_type ON public.clients(client_type);</div>
+        </details>
+    </div>
+
+    <script>
+        // Initialize Supabase client
+        const supabase = window.supabase.createClient(
+            'https://lncppcvrhdduvobirzsv.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxuY3BwY3ZyaGRkdXZvYmlyenN2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDM1NDczNiwiZXhwIjoyMDY5OTMwNzM2fQ.x3IG9nJIJSTeP42mQ9f6VcdtvafZhof31KgEjhLkr-k'
+        );
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+            results.scrollTop = results.scrollHeight;
+        }
+
+        async function checkDatabase() {
+            const btn = document.getElementById('checkBtn');
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+            
+            log('🔍 Checking database status...');
+
+            try {
+                // Check if clients table exists
+                const { data: clientsData, error: clientsError } = await supabase
+                    .from('clients')
+                    .select('id')
+                    .limit(1);
+
+                if (clientsError && clientsError.code === 'PGRST106') {
+                    log('❌ Clients table does not exist', 'error');
+                    return;
+                }
+
+                log('✅ Clients table exists');
+
+                // Check if client_type column exists
+                const { data: typeData, error: typeError } = await supabase
+                    .from('clients')
+                    .select('client_type')
+                    .limit(1);
+
+                if (typeError && typeError.code === '42703') {
+                    log('❌ client_type column is missing - needs to be added', 'error');
+                    document.getElementById('fixBtn').disabled = false;
+                } else {
+                    log('✅ client_type column already exists', 'success');
+                    document.getElementById('testBtn').disabled = false;
+                }
+
+            } catch (error) {
+                log(`❌ Error checking database: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '1. Check Database Status';
+            }
+        }
+
+        async function fixDatabase() {
+            const btn = document.getElementById('fixBtn');
+            btn.disabled = true;
+            btn.textContent = 'Fixing...';
+            
+            log('🔧 Attempting to apply database fix...');
+
+            // Since we can't run DDL through Supabase client, show manual instructions
+            log(`
+                ⚠️ <strong>Manual Action Required</strong><br><br>
+                Supabase client API doesn't support DDL operations. Please:<br><br>
+                1. Open <a href="https://supabase.com/dashboard/project/lncppcvrhdduvobirzsv/sql/" target="_blank" style="color: #3b82f6;">Supabase SQL Editor</a><br>
+                2. Copy and paste the SQL from the expandable section above<br>
+                3. Click "Run" to execute<br>
+                4. Return here and click "3. Test Client Creation"<br><br>
+                <em>This is a one-time setup that will permanently fix the issue.</em>
+            `, 'info');
+
+            btn.disabled = false;
+            btn.textContent = '2. Apply Database Fix';
+            document.getElementById('testBtn').disabled = false;
+        }
+
+        async function testClientCreation() {
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            log('🧪 Testing client creation...');
+
+            try {
+                const testClient = {
+                    name: `Test Client ${Date.now()}`,
+                    email: 'test@example.com',
+                    client_type: 'residential',
+                    payment_terms: 'net30',
+                    preferred_contact_method: 'email',
+                    is_active: true
+                };
+
+                const { data: createData, error: createError } = await supabase
+                    .from('clients')
+                    .insert(testClient)
+                    .select()
+                    .single();
+
+                if (createError) {
+                    log(`❌ Client creation failed: ${createError.message}`, 'error');
+                } else {
+                    log(`✅ Client created successfully: ${createData.name}`, 'success');
+                    
+                    // Clean up test client
+                    await supabase.from('clients').delete().eq('id', createData.id);
+                    log('🧹 Test client cleaned up', 'success');
+                    
+                    log('🎉 <strong>Database is working correctly!</strong> Client creation will now work in your app.', 'success');
+                }
+
+            } catch (error) {
+                log(`❌ Unexpected error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '3. Test Client Creation';
+            }
+        }
+
+        // Auto-check on page load
+        window.onload = () => checkDatabase();
+    </script>
+</body>
+</html>

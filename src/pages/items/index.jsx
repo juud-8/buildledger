@@ -14,6 +14,7 @@ import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import { showInfoToast } from '../../utils/toastHelper';
 import { useOnboarding } from '../../contexts/OnboardingContext';
+import { itemsService } from '../../services/itemsService';
 
 const ItemsPage = () => {
   const navigate = useNavigate();
@@ -28,203 +29,45 @@ const ItemsPage = () => {
   
   const { searchItemByBarcode, isBarcodeSupported, isLoading: isBarcodeLoading } = useBarcodeScanning();
 
-  // Mock items data
-  const mockItems = [
-    {
-      id: 1,
-      name: "Concrete Foundation Mix",
-      category: "Foundation",
-      description: "High-strength concrete mix for residential foundations",
-      unit: "cubic yard",
-      costPrice: 120.00,
-      sellingPrice: 180.00,
-      markupPercentage: 50,
-      taxCategory: "materials",
-      sku: "CFM-001",
-      barcode: "1234567890123",
-      supplier: "Metro Concrete Supply",
-      supplierContact: "(555) 123-4567",
-      lastUsed: "2024-01-15",
-      usageCount: 45,
-      inStock: true,
-      reorderLevel: 10,
-      currentStock: 25,
-      seasonalPricing: {
-        winter: 200.00,
-        summer: 160.00
-      }
-    },
-    {
-      id: 2,
-      name: "2x10 Pressure Treated Lumber",
-      category: "Framing",
-      description: "Pressure treated lumber for structural framing",
-      unit: "linear foot",
-      costPrice: 8.50,
-      sellingPrice: 12.75,
-      markupPercentage: 50,
-      taxCategory: "materials",
-      sku: "PTL-210",
-      barcode: "2345678901234",
-      supplier: "Springfield Lumber",
-      supplierContact: "(555) 234-5678",
-      lastUsed: "2024-01-18",
-      usageCount: 128,
-      inStock: true,
-      reorderLevel: 50,
-      currentStock: 150,
-      seasonalPricing: {
-        winter: 14.00,
-        summer: 11.50
-      }
-    },
-    {
-      id: 3,
-      name: "Electrical Panel 200A",
-      category: "Electrical",
-      description: "200 amp main electrical panel with breakers",
-      unit: "each",
-      costPrice: 350.00,
-      sellingPrice: 525.00,
-      markupPercentage: 50,
-      taxCategory: "materials",
-      sku: "EP-200A",
-      barcode: "3456789012345",
-      supplier: "Electric Supply Co",
-      supplierContact: "(555) 345-6789",
-      lastUsed: "2024-01-10",
-      usageCount: 12,
-      inStock: true,
-      reorderLevel: 3,
-      currentStock: 8,
-      seasonalPricing: null
-    },
-    {
-      id: 4,
-      name: "PVC Pipe 4 inch",
-      category: "Plumbing",
-      description: "4-inch PVC drainage pipe",
-      unit: "linear foot",
-      costPrice: 4.25,
-      sellingPrice: 6.38,
-      markupPercentage: 50,
-      taxCategory: "materials",
-      sku: "PVC-4IN",
-      barcode: "4567890123456",
-      supplier: "Plumbing Plus",
-      supplierContact: "(555) 456-7890",
-      lastUsed: "2024-01-12",
-      usageCount: 89,
-      inStock: true,
-      reorderLevel: 100,
-      currentStock: 300,
-      seasonalPricing: null
-    },
-    {
-      id: 5,
-      name: "HVAC Ductwork per sq ft",
-      category: "HVAC",
-      description: "Galvanized steel ductwork installation",
-      unit: "square foot",
-      costPrice: 12.00,
-      sellingPrice: 24.00,
-      markupPercentage: 100,
-      taxCategory: "materials",
-      sku: "HVAC-DUCT",
-      barcode: "5678901234567",
-      supplier: "Air Flow Systems",
-      supplierContact: "(555) 567-8901",
-      lastUsed: "2024-01-08",
-      usageCount: 67,
-      inStock: false,
-      reorderLevel: 500,
-      currentStock: 0,
-      seasonalPricing: {
-        winter: 26.00,
-        summer: 22.00
-      }
-    },
-    {
-      id: 6,
-      name: "Asphalt Shingles",
-      category: "Roofing",
-      description: "30-year architectural shingles",
-      unit: "square",
-      costPrice: 95.00,
-      sellingPrice: 142.50,
-      markupPercentage: 50,
-      taxCategory: "materials",
-      sku: "AS-30YR",
-      barcode: "6789012345678",
-      supplier: "Roofing Materials Inc",
-      supplierContact: "(555) 678-9012",
-      lastUsed: "2024-01-20",
-      usageCount: 34,
-      inStock: true,
-      reorderLevel: 20,
-      currentStock: 45,
-      seasonalPricing: {
-        winter: 160.00,
-        summer: 125.00
-      }
-    },
-    {
-      id: 7,
-      name: "Skilled Labor - Electrician",
-      category: "Labor",
-      description: "Licensed electrician hourly rate",
-      unit: "hour",
-      costPrice: 45.00,
-      sellingPrice: 85.00,
-      markupPercentage: 89,
-      taxCategory: "labor",
-      sku: "LAB-ELEC",
-      barcode: null,
-      supplier: "Internal",
-      supplierContact: null,
-      lastUsed: "2024-01-19",
-      usageCount: 156,
-      inStock: true,
-      reorderLevel: null,
-      currentStock: null,
-      seasonalPricing: null
-    },
-    {
-      id: 8,
-      name: "Equipment Rental - Excavator",
-      category: "Equipment",
-      description: "Mid-size excavator daily rental",
-      unit: "day",
-      costPrice: 280.00,
-      sellingPrice: 420.00,
-      markupPercentage: 50,
-      taxCategory: "equipment",
-      sku: "EQ-EXCAV",
-      barcode: null,
-      supplier: "Heavy Equipment Rentals",
-      supplierContact: "(555) 789-0123",
-      lastUsed: "2024-01-14",
-      usageCount: 23,
-      inStock: true,
-      reorderLevel: null,
-      currentStock: null,
-      seasonalPricing: {
-        winter: 380.00,
-        summer: 460.00
-      }
-    }
-  ];
-
-  const [items, setItems] = useState(mockItems);
-  const [filteredItems, setFilteredItems] = useState(mockItems);
+  const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
+    let mounted = true;
+    (async () => {
+      try {
+        const dbItems = await itemsService.getItems();
+        if (!mounted) return;
+        const uiItems = (dbItems || []).map(it => ({
+          id: it.id,
+          name: it.name,
+          category: it.category,
+          description: it.description || '',
+          unit: it.unit || 'each',
+          costPrice: Number(it.cost || 0),
+          sellingPrice: Number(it.unit_price || 0),
+          markupPercentage: it.profit_margin != null ? Number(it.profit_margin) : undefined,
+          taxCategory: it.category === 'labor' ? 'labor' : 'materials',
+          sku: it.sku || '',
+          barcode: it.barcode || null,
+          supplier: it.supplier || '',
+          supplierContact: it.supplier_sku || '',
+          lastUsed: it.updated_at || it.created_at,
+          usageCount: it.usage_count || 0,
+          inStock: it.current_stock ? it.current_stock > 0 : true,
+          reorderLevel: it.reorder_level || null,
+          currentStock: it.current_stock || null,
+          seasonalPricing: null,
+        }));
+        setItems(uiItems);
+        setFilteredItems(uiItems);
+      } catch (e) {
+        console.error('Failed to load items', e);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
