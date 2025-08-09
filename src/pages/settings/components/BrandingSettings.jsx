@@ -1,27 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
+import Image from '../../../components/AppImage';
 import Button from '../../../components/ui/Button';
+import { companyService } from '../../../services/companyService';
+import { brandingService } from '../../../services/brandingService';
 
 const BrandingSettings = () => {
   const [brandingData, setBrandingData] = useState(null);
+  const [companyData, setCompanyData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate loading branding data
-    const timer = setTimeout(() => {
+  const loadBrandingData = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Load company data from the same source as Company Profile
+      const company = await companyService.getCompanyForCurrentUser();
+      
+      if (company) {
+        setCompanyData(company);
+        setBrandingData({
+          hasLogo: Boolean(company?.logo_url),
+          logoUrl: company?.logo_url || null,
+          companyName: company?.name || 'Your Company',
+          primaryColor: company?.brand_colors?.primary || '#1E40AF',
+          secondaryColor: company?.brand_colors?.secondary || '#3B82F6',
+          accentColor: company?.brand_colors?.accent || '#F59E0B'
+        });
+      } else {
+        // No company data yet
+        setBrandingData({
+          hasLogo: false,
+          logoUrl: null,
+          companyName: 'Your Company',
+          primaryColor: '#1E40AF',
+          secondaryColor: '#3B82F6',
+          accentColor: '#F59E0B'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load branding data:', error);
+      // Only show fallback data, don't throw the error to prevent cascading issues
       setBrandingData({
-        hasLogo: true,
-        logoUrl: '/assets/images/company-logo.png',
-        companyName: 'ABC Construction',
+        hasLogo: false,
+        logoUrl: null,
+        companyName: 'Your Company',
         primaryColor: '#1E40AF',
         secondaryColor: '#3B82F6',
         accentColor: '#F59E0B'
       });
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
+  };
 
-    return () => clearTimeout(timer);
+  useEffect(() => {
+    loadBrandingData();
+    
+    // Listen for storage events to refresh data when company profile is updated
+    const handleStorageChange = (e) => {
+      if (e.key === 'company_data_updated') {
+        // Add a small delay to ensure database has been updated
+        setTimeout(() => loadBrandingData(), 1000);
+      }
+    };
+    
+    const handleCompanyDataUpdated = () => {
+      // Add a small delay to ensure database has been updated
+      setTimeout(() => loadBrandingData(), 1000);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('company_data_updated', handleCompanyDataUpdated);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('company_data_updated', handleCompanyDataUpdated);
+    };
   }, []);
 
   if (isLoading) {
@@ -50,21 +106,18 @@ const BrandingSettings = () => {
       <div className="bg-card border border-border rounded-lg p-6 mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center border">
-              {brandingData?.hasLogo ? (
-                <img 
-                  src={brandingData?.logoUrl} 
+            <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center border overflow-hidden">
+              {brandingData?.hasLogo && brandingData?.logoUrl ? (
+                <Image 
+                  src={brandingData.logoUrl} 
                   alt="Company Logo" 
-                  className="w-12 h-12 object-contain"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
-                  }}
+                  className="w-full h-full object-contain"
                 />
-              ) : null}
-              <div className="w-12 h-12 bg-primary rounded flex items-center justify-center" style={{display: brandingData?.hasLogo ? 'none' : 'flex'}}>
-                <Icon name="Building2" size={20} color="white" />
-              </div>
+              ) : (
+                <div className="w-12 h-12 bg-primary rounded flex items-center justify-center">
+                  <Icon name="Building2" size={20} color="white" />
+                </div>
+              )}
             </div>
             <div>
               <h3 className="font-medium text-foreground">{brandingData?.companyName}</h3>

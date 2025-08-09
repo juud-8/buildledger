@@ -47,7 +47,7 @@ const ProjectPhotos = ({ project }) => {
   return (
     <div className="space-y-6">
       {/* Header with Upload */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Project Photos</h3>
@@ -85,7 +85,7 @@ const ProjectPhotos = ({ project }) => {
         </div>
       </div>
       {/* Phase Filter */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex flex-wrap gap-2">
           {phases?.map((phase) => (
             <button
@@ -103,13 +103,13 @@ const ProjectPhotos = ({ project }) => {
         </div>
       </div>
       {/* Photo Grid */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         {filteredPhotos?.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredPhotos?.map((photo, index) => (
               <div
                 key={index}
-                className="group relative bg-background border border-border rounded-lg overflow-hidden construction-shadow-sm hover:construction-shadow-md construction-transition cursor-pointer"
+                className="group relative bg-background border border-border rounded-xl overflow-hidden construction-card-3d construction-depth-3 hover:construction-shadow-md construction-transition cursor-pointer"
                 onClick={() => setSelectedPhoto(photo)}
               >
                 <div className="aspect-square overflow-hidden">

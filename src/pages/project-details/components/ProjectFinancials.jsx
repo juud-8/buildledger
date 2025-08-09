@@ -79,7 +79,7 @@ const ProjectFinancials = ({ project }) => {
     <div className="space-y-6">
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Budget</p>
@@ -91,7 +91,7 @@ const ProjectFinancials = ({ project }) => {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Spent</p>
@@ -103,7 +103,7 @@ const ProjectFinancials = ({ project }) => {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Remaining</p>
@@ -123,7 +123,7 @@ const ProjectFinancials = ({ project }) => {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Budget Used</p>
@@ -136,7 +136,7 @@ const ProjectFinancials = ({ project }) => {
         </div>
       </div>
       {/* Budget vs Actual Chart */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-foreground">Budget vs Actual Spending</h3>
           <Button variant="outline" size="sm" iconName="Download">
@@ -164,7 +164,7 @@ const ProjectFinancials = ({ project }) => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Expense Breakdown */}
-        <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
           <h3 className="text-lg font-semibold text-foreground mb-6">Expense Breakdown</h3>
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -195,7 +195,7 @@ const ProjectFinancials = ({ project }) => {
         </div>
 
         {/* Cash Flow */}
-        <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
           <h3 className="text-lg font-semibold text-foreground mb-6">Cash Flow Trend</h3>
           <div className="w-full h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -219,7 +219,7 @@ const ProjectFinancials = ({ project }) => {
         </div>
       </div>
       {/* Change Orders */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-foreground">Change Orders</h3>
           <Button variant="default" iconName="Plus" iconPosition="left">
@@ -284,7 +284,7 @@ const ProjectFinancials = ({ project }) => {
         )}
       </div>
       {/* Payment Schedule */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <h3 className="text-lg font-semibold text-foreground mb-6">Payment Schedule</h3>
         <div className="space-y-4">
           {project?.paymentSchedule?.map((payment, index) => (

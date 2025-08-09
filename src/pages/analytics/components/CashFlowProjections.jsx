@@ -60,7 +60,7 @@ const CashFlowProjections = ({ dateRange, filters }) => {
     if (active && payload && payload?.length) {
       const data = cashFlowData?.find(d => d?.date === label);
       return (
-        <div className="bg-popover border border-border rounded-lg p-4 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-4 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground mb-2">
             {formatDate(label)}
           </p>
@@ -95,7 +95,7 @@ const CashFlowProjections = ({ dateRange, filters }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Cash Flow Projections</h3>

@@ -5,7 +5,7 @@ import Select from '../../../components/ui/Select';
 import Icon from '../../../components/AppIcon';
 import { clientsService } from '../../../services/clientsService';
 
-const CreateClientModal = ({ isOpen, onClose, onSuccess }) => {
+const CreateClientModal = ({ isOpen, onClose, onSuccess, editMode = false, initialData = null }) => {
   const [activeTab, setActiveTab] = useState('basic');
   const [formData, setFormData] = useState({
     // Basic Information
@@ -34,6 +34,31 @@ const CreateClientModal = ({ isOpen, onClose, onSuccess }) => {
   
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+
+  // Populate form when editing
+  React.useEffect(() => {
+    if (isOpen && editMode && initialData) {
+      setFormData({
+        name: initialData.name || '',
+        email: initialData.email || '',
+        phone: initialData.phone || '',
+        company_name: initialData.company_name || '',
+        contact_person: initialData.contact_person || '',
+        address: {
+          street: initialData.address?.street || '',
+          city: initialData.address?.city || '',
+          state: initialData.address?.state || '',
+          zip: initialData.address?.zip || '',
+          country: initialData.address?.country || 'USA',
+        },
+        client_type: initialData.client_type || 'residential',
+        payment_terms: initialData.payment_terms || 'net30',
+        preferred_contact_method: initialData.preferred_contact_method || 'email',
+        notes: initialData.notes || '',
+        is_active: initialData.is_active ?? true,
+      });
+    }
+  }, [isOpen, editMode, initialData]);
 
   const tabs = [
     { id: 'basic', label: 'Basic Info', icon: 'User' },
@@ -126,34 +151,38 @@ const CreateClientModal = ({ isOpen, onClose, onSuccess }) => {
     
     setIsLoading(true);
     try {
-      await clientsService.createClient(formData);
+      if (editMode && initialData?.id) {
+        await clientsService.updateClient(initialData.id, formData);
+      } else {
+        await clientsService.createClient(formData);
+        // Reset form only after creating
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          company_name: '',
+          contact_person: '',
+          address: {
+            street: '',
+            city: '',
+            state: '',
+            zip: '',
+            country: 'USA'
+          },
+          client_type: 'residential',
+          payment_terms: 'net30',
+          preferred_contact_method: 'email',
+          notes: '',
+          is_active: true
+        });
+        setErrors({});
+        setActiveTab('basic');
+      }
       onSuccess();
       onClose();
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        company_name: '',
-        contact_person: '',
-        address: {
-          street: '',
-          city: '',
-          state: '',
-          zip: '',
-          country: 'USA'
-        },
-        client_type: 'residential',
-        payment_terms: 'net30',
-        preferred_contact_method: 'email',
-        notes: '',
-        is_active: true
-      });
-      setErrors({});
-      setActiveTab('basic');
     } catch (error) {
       console.error('Error creating client:', error);
-      setErrors({ submit: 'Failed to create client. Please try again.' });
+      setErrors({ submit: editMode ? 'Failed to update client. Please try again.' : 'Failed to create client. Please try again.' });
     } finally {
       setIsLoading(false);
     }
@@ -167,9 +196,9 @@ const CreateClientModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-border">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">Add New Client</h2>
+            <h2 className="text-2xl font-bold text-foreground">{editMode ? 'Edit Client' : 'Add New Client'}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Create a new client profile for your business
+              {editMode ? 'Update client details' : 'Create a new client profile for your business'}
             </p>
           </div>
           <button
@@ -424,7 +453,7 @@ const CreateClientModal = ({ isOpen, onClose, onSuccess }) => {
               iconPosition="left"
               className={isLoading ? "animate-pulse" : ""}
             >
-              {isLoading ? 'Creating Client...' : 'Create Client'}
+              {isLoading ? (editMode ? 'Updating Client...' : 'Creating Client...') : (editMode ? 'Update Client' : 'Create Client')}
             </Button>
           </div>
         </div>

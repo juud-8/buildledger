@@ -39,7 +39,7 @@ const InvoiceToolbar = ({
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg construction-shadow-sm p-4">
+    <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3 p-4">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         {/* Left Section */}
         <div className="flex items-center space-x-4">

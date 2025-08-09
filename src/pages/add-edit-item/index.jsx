@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import BasicInformation from './components/BasicInformation';
 import PricingSection from './components/PricingSection';
 import AdvancedSection from './components/AdvancedSection';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/AppIcon';
+import { itemsService } from '../../services/itemsService';
+import { showErrorToast, showSuccessToast } from '../../utils/toastHelper';
 
 const AddEditItem = () => {
   const navigate = useNavigate();
+  const params = useParams();
   const [searchParams] = useSearchParams();
-  const itemId = searchParams?.get('id');
+  const itemId = params?.id || null;
   const duplicateId = searchParams?.get('duplicate');
   const isEditing = Boolean(itemId);
   const isDuplicating = Boolean(duplicateId);
@@ -49,51 +52,46 @@ const AddEditItem = () => {
 
   const [errors, setErrors] = useState({});
 
-  // Mock item data for editing
-  const mockItem = {
-    id: 1,
-    name: "Concrete Foundation Mix",
-    category: "Foundation",
-    description: "High-strength concrete mix for residential foundations",
-    unit: "cubic yard",
-    costPrice: 120.00,
-    sellingPrice: 180.00,
-    markupPercentage: 50,
-    taxCategory: "materials",
-    sku: "CFM-001",
-    barcode: "1234567890123",
-    supplier: {
-      name: "Metro Concrete Supply",
-      contact: "(555) 123-4567",
-      email: "orders@metroconcrete.com"
-    },
-    reorderLevel: 10,
-    currentStock: 25,
-    seasonalPricing: {
-      enabled: true,
-      winter: 200.00,
-      summer: 160.00
-    },
-    inventoryTracking: true,
-    usageNotes: "Standard mix for most residential foundations. Requires 7-day cure time.",
-    relatedItems: []
-  };
-
   useEffect(() => {
-    if (isEditing || isDuplicating) {
-      setIsLoading(true);
-      // Simulate loading item data
-      setTimeout(() => {
-        const data = { ...mockItem };
+    const loadItem = async () => {
+      if (!isEditing && !isDuplicating) return;
+      try {
+        setIsLoading(true);
+        const idToLoad = isEditing ? itemId : duplicateId;
+        const item = await itemsService.getItem(idToLoad);
+        // Map DB item to form shape
+        const data = {
+          name: item?.name || '',
+          description: item?.description || '',
+          category: item?.category || 'materials',
+          unit: item?.unit || 'each',
+          image: null,
+          costPrice: item?.cost ?? '',
+          sellingPrice: item?.unit_price ?? '',
+          markupPercentage: item?.profit_margin ?? 0,
+          taxCategory: 'materials',
+          seasonalPricing: { enabled: false, winter: '', summer: '' },
+          supplier: { name: item?.supplier || '', contact: '', email: '' },
+          sku: item?.sku || '',
+          barcode: '',
+          inventoryTracking: true,
+          reorderLevel: '',
+          currentStock: '',
+          usageNotes: '',
+          relatedItems: []
+        };
         if (isDuplicating) {
-          data.name = `Copy of ${data?.name}`;
+          data.name = `Copy of ${data.name}`;
           data.sku = '';
-          data.barcode = '';
         }
         setFormData(data);
+      } catch (err) {
+        showErrorToast('Failed to load item');
+      } finally {
         setIsLoading(false);
-      }, 1000);
-    }
+      }
+    };
+    loadItem();
   }, [isEditing, isDuplicating, itemId, duplicateId]);
 
   const tabs = [
@@ -133,12 +131,6 @@ const AddEditItem = () => {
     if (!formData?.name?.trim()) {
       newErrors.name = 'Item name is required';
     }
-    if (!formData?.category) {
-      newErrors.category = 'Category is required';
-    }
-    if (!formData?.unit) {
-      newErrors.unit = 'Unit of measurement is required';
-    }
 
     // Pricing validation
     if (!formData?.costPrice || parseFloat(formData?.costPrice) <= 0) {
@@ -151,10 +143,7 @@ const AddEditItem = () => {
       newErrors.sellingPrice = 'Selling price must be higher than cost price';
     }
 
-    // Advanced validation
-    if (!formData?.sku?.trim()) {
-      newErrors.sku = 'SKU is required';
-    }
+    // Advanced validation (SKU optional)
 
     setErrors(newErrors);
     return Object.keys(newErrors)?.length === 0;
@@ -168,23 +157,40 @@ const AddEditItem = () => {
     setIsSaving(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Saving item:', formData);
+      // Map form to DB schema
+      const payload = {
+        name: formData.name?.trim(),
+        description: formData.description || null,
+        category: (formData.category || 'materials').toLowerCase(),
+        unit: formData.unit || 'each',
+        unit_price: parseFloat(formData.sellingPrice),
+        cost: parseFloat(formData.costPrice),
+        profit_margin: parseFloat(formData.markupPercentage) || 0,
+        sku: formData.sku?.trim() || null,
+        supplier: formData.supplier?.name?.trim() || null,
+      };
+
+      let saved;
+      if (isEditing) {
+        saved = await itemsService.updateItem(itemId, payload);
+        showSuccessToast('Item updated');
+      } else {
+        saved = await itemsService.createItem(payload);
+        showSuccessToast('Item created');
+      }
       
       if (action === 'saveAndAddAnother') {
         // Reset form for new item
         setFormData({
           name: '',
           description: '',
-          category: formData?.category, // Keep category for convenience
+          category: formData?.category,
           unit: '',
           image: null,
           costPrice: '',
           sellingPrice: '',
           markupPercentage: 50,
-          taxCategory: formData?.taxCategory, // Keep tax category for convenience
+          taxCategory: formData?.taxCategory,
           seasonalPricing: {
             enabled: false,
             winter: '',
@@ -205,12 +211,13 @@ const AddEditItem = () => {
         });
         setActiveTab('basic');
       } else if (action === 'saveAndAddToQuote') {
-        navigate('/quotes', { state: { newItem: formData } });
+        navigate('/quotes', { state: { newItem: saved } });
       } else {
         navigate('/items');
       }
     } catch (error) {
       console.error('Error saving item:', error);
+      showErrorToast('Failed to save item');
     } finally {
       setIsSaving(false);
     }

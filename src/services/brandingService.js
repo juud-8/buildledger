@@ -17,7 +17,8 @@ export const brandingService = {
     const companyId = userProfile.company_id;
 
     const ext = file.name?.split('.').pop() || 'png';
-    const storagePath = `company-logos/${companyId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    // Storage policy expects path: company-logos/{auth.uid()}/<filename>
+    const storagePath = `company-logos/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from('company-assets')
       .upload(storagePath, file, { upsert: false, cacheControl: '3600' });
@@ -89,7 +90,44 @@ export const brandingService = {
 
       const companyId = userProfile.company_id;
 
-      const { data, error } = await supabase?.from('companies')?.update(brandingData)?.eq('id', companyId)?.select()?.single();
+      // Map and sanitize fields for companies table
+      const ALLOWED_FIELDS = [
+        'name',
+        'description',
+        'industry',
+        'website',
+        'phone',
+        'email',
+        'address',
+        'tax_id',
+        'logo_url',
+        'primary_color',
+        'secondary_color',
+        'accent_color',
+        'font_family',
+        'settings',
+      ];
+
+      const normalized = { ...brandingData };
+      // Map company_name -> name (UI legacy field)
+      if (normalized.company_name) {
+        normalized.name = normalized.company_name;
+        delete normalized.company_name;
+      }
+      // Remove unsupported fields
+      delete normalized.font_size_base;
+
+      // Only persist fields that exist on companies
+      const updates = Object.fromEntries(
+        Object.entries(normalized).filter(([key]) => ALLOWED_FIELDS.includes(key))
+      );
+
+      const { data, error } = await supabase
+        .from('companies')
+        .update(updates)
+        .eq('id', companyId)
+        .select()
+        .single();
       if (error) throw error;
       return data;
     } catch (error) {

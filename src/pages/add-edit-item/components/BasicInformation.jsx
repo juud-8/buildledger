@@ -8,26 +8,23 @@ const BasicInformation = ({ formData, errors, onChange }) => {
   const [imagePreview, setImagePreview] = useState(null);
 
   const categories = [
-    { value: 'Foundation', label: 'Foundation', icon: 'Building' },
-    { value: 'Framing', label: 'Framing', icon: 'Grid3X3' },
-    { value: 'Electrical', label: 'Electrical', icon: 'Zap' },
-    { value: 'Plumbing', label: 'Plumbing', icon: 'Droplets' },
-    { value: 'HVAC', label: 'HVAC', icon: 'Wind' },
-    { value: 'Roofing', label: 'Roofing', icon: 'Home' },
-    { value: 'Labor', label: 'Labor', icon: 'Users' },
-    { value: 'Equipment', label: 'Equipment', icon: 'Truck' }
+    { value: 'materials', label: 'Materials', icon: 'Package' },
+    { value: 'labor', label: 'Labor', icon: 'Users' },
+    { value: 'equipment', label: 'Equipment', icon: 'Truck' },
+    { value: 'subcontractor', label: 'Subcontractor', icon: 'Handshake' },
+    { value: 'other', label: 'Other', icon: 'MoreHorizontal' }
   ];
 
   const units = [
     { value: 'each', label: 'Each' },
-    { value: 'linear foot', label: 'Linear Foot' },
-    { value: 'square foot', label: 'Square Foot' },
-    { value: 'cubic foot', label: 'Cubic Foot' },
-    { value: 'cubic yard', label: 'Cubic Yard' },
     { value: 'hour', label: 'Hour' },
     { value: 'day', label: 'Day' },
     { value: 'week', label: 'Week' },
     { value: 'month', label: 'Month' },
+    { value: 'linear_foot', label: 'Linear Foot' },
+    { value: 'square_foot', label: 'Square Foot' },
+    { value: 'cubic_foot', label: 'Cubic Foot' },
+    { value: 'cubic_yard', label: 'Cubic Yard' },
     { value: 'square', label: 'Square (Roofing)' },
     { value: 'pound', label: 'Pound' },
     { value: 'ton', label: 'Ton' },
@@ -104,16 +101,12 @@ const BasicInformation = ({ formData, errors, onChange }) => {
                 Category *
               </label>
               <Select
+                options={categories}
                 value={formData?.category || ''}
-                onChange={(e) => onChange?.('category', e.target.value)}
-                placeholder="Select category"
-              >
-                {categories?.map((category) => (
-                  <option key={category?.value} value={category?.value}>
-                    {category?.label}
-                  </option>
-                ))}
-              </Select>
+                onChange={(val) => onChange?.('category', val)}
+                placeholder="Select category (optional)"
+                clearable
+              />
               {errors?.category && (
                 <p className="text-sm text-error mt-1">{errors?.category}</p>
               )}
@@ -125,16 +118,12 @@ const BasicInformation = ({ formData, errors, onChange }) => {
                 Unit of Measurement *
               </label>
               <Select
+                options={units}
                 value={formData?.unit || ''}
-                onChange={(e) => onChange?.('unit', e.target.value)}
-                placeholder="Select unit"
-              >
-                {units?.map((unit) => (
-                  <option key={unit?.value} value={unit?.value}>
-                    {unit?.label}
-                  </option>
-                ))}
-              </Select>
+                onChange={(val) => onChange?.('unit', val)}
+                placeholder="Select unit (optional)"
+                clearable
+              />
               {errors?.unit && (
                 <p className="text-sm text-error mt-1">{errors?.unit}</p>
               )}

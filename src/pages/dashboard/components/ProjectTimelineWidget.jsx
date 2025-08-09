@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 
 const ProjectTimelineWidget = ({ projects = [] }) => {
+  const navigate = useNavigate();
+
   // Transform projects into timeline items
   const timelineItems = projects.map((project, index) => ({
     id: project.id || index,
@@ -48,14 +51,18 @@ const ProjectTimelineWidget = ({ projects = [] }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Project Timeline</h3>
         <Icon name="Calendar" size={20} className="text-muted-foreground" />
       </div>
       <div className="space-y-4">
         {timelineItems?.map((item) => (
-          <div key={item?.id} className="flex items-start space-x-3">
+          <div 
+            key={item?.id} 
+            className="flex items-start space-x-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md construction-transition"
+            onClick={() => navigate(`/projects/${item?.id}`)}
+          >
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getStatusColor(item?.status)}`}>
               <Icon name={item?.icon} size={16} />
             </div>
@@ -71,7 +78,10 @@ const ProjectTimelineWidget = ({ projects = [] }) => {
         ))}
       </div>
       <div className="mt-6 pt-4 border-t border-border">
-        <button className="w-full text-sm text-primary hover:text-primary/80 font-medium construction-transition">
+        <button 
+          onClick={() => navigate('/projects')}
+          className="w-full text-sm text-primary hover:text-primary/80 font-medium construction-transition"
+        >
           View Full Schedule
         </button>
       </div>

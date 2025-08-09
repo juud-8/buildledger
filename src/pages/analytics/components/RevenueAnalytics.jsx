@@ -24,7 +24,7 @@ const RevenueAnalytics = ({ dateRange, filters, data: injectedData }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload?.length) {
       return (
-        <div className="bg-popover border border-border rounded-lg p-4 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-4 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground mb-2">{label}</p>
           {payload?.map((entry, index) => (
             <div key={index} className="flex items-center space-x-2 text-sm">
@@ -140,7 +140,7 @@ const RevenueAnalytics = ({ dateRange, filters, data: injectedData }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Revenue Analytics</h3>

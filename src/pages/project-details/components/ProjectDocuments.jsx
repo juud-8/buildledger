@@ -71,7 +71,7 @@ const ProjectDocuments = ({ project }) => {
   return (
     <div className="space-y-6">
       {/* Header with Upload */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Project Documents</h3>
@@ -108,7 +108,7 @@ const ProjectDocuments = ({ project }) => {
         </div>
       </div>
       {/* Category Filter */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex flex-wrap gap-2">
           {categories?.map((category) => (
             <button
@@ -126,7 +126,7 @@ const ProjectDocuments = ({ project }) => {
         </div>
       </div>
       {/* Documents List */}
-      <div className="bg-card border border-border rounded-lg construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3">
         {filteredDocuments?.length > 0 ? (
           <div className="divide-y divide-border">
             {filteredDocuments?.map((document, index) => (
@@ -236,7 +236,7 @@ const ProjectDocuments = ({ project }) => {
         )}
       </div>
       {/* Document Templates */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <h3 className="text-lg font-semibold text-foreground mb-4">Document Templates</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[

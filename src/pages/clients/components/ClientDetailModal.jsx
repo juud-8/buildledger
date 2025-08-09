@@ -34,56 +34,8 @@ const ClientDetailModal = ({ client, isOpen, onClose }) => {
     });
   };
 
-  const mockProjects = [
-    {
-      id: 1,
-      name: "Kitchen Renovation",
-      status: "In Progress",
-      startDate: "2024-01-15",
-      value: 45000,
-      completion: 65
-    },
-    {
-      id: 2,
-      name: "Bathroom Remodel",
-      status: "Completed",
-      startDate: "2023-09-10",
-      value: 28000,
-      completion: 100
-    },
-    {
-      id: 3,
-      name: "Deck Construction",
-      status: "Planning",
-      startDate: "2024-03-01",
-      value: 15000,
-      completion: 0
-    }
-  ];
-
-  const mockCommunications = [
-    {
-      id: 1,
-      type: "email",
-      subject: "Project Update - Kitchen Renovation",
-      date: "2024-01-20",
-      status: "sent"
-    },
-    {
-      id: 2,
-      type: "call",
-      subject: "Discussion about timeline changes",
-      date: "2024-01-18",
-      duration: "15 min"
-    },
-    {
-      id: 3,
-      type: "meeting",
-      subject: "Site visit and progress review",
-      date: "2024-01-15",
-      location: "Client site"
-    }
-  ];
+  const projects = [];
+  const communications = [];
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
@@ -153,7 +105,7 @@ const ClientDetailModal = ({ client, isOpen, onClose }) => {
       </div>
       
       <div className="space-y-3">
-        {mockProjects?.map((project) => (
+        {projects?.length > 0 ? projects?.map((project) => (
           <div key={project?.id} className="border border-border rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <h5 className="font-medium text-foreground">{project?.name}</h5>
@@ -177,7 +129,12 @@ const ClientDetailModal = ({ client, isOpen, onClose }) => {
               </div>
             )}
           </div>
-        ))}
+        )) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <Icon name="Building2" size={48} className="mx-auto mb-4 opacity-50" />
+            <p>No projects found for this client</p>
+          </div>
+        )}
       </div>
     </div>
   );

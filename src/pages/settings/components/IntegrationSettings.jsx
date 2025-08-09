@@ -111,7 +111,7 @@ const IntegrationSettings = () => {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border construction-shadow-sm">
+    <div className="bg-card rounded-xl border border-border construction-card-3d construction-depth-3">
       <div className="p-6 border-b border-border">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Integration Settings</h3>

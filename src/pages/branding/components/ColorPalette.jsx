@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { brandingService } from '../../../services/brandingService';
+import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Card } from '../../../components/ui/Card';
@@ -7,6 +8,7 @@ import Icon from '../../../components/AppIcon';
 import { showSuccessToast, showErrorToast } from '../../../utils/toastHelper';
 
 export function ColorPalette({ branding, onUpdate, onError }) {
+  const { user } = useAuth();
   const [colors, setColors] = useState({
     primary_color: branding?.primary_color || '#3B82F6',
     secondary_color: branding?.secondary_color || '#1E40AF',
@@ -35,7 +37,7 @@ export function ColorPalette({ branding, onUpdate, onError }) {
       setSaving(true);
       onError?.(null);
       
-      const updatedBranding = await brandingService?.updateCompanyBranding(branding?.id, colors);
+      const updatedBranding = await brandingService?.updateCompanyBranding(user?.id, colors);
       onUpdate?.(updatedBranding);
       showSuccessToast('Color palette updated successfully!');
     } catch (err) {
@@ -143,7 +145,7 @@ export function ColorPalette({ branding, onUpdate, onError }) {
                 </div>
                 
                 <div 
-                  className="w-full h-20 rounded-lg border border-border construction-shadow-sm flex items-center justify-center text-white font-semibold text-sm transition-all duration-200"
+                  className="w-full h-20 rounded-xl border border-border construction-card-3d construction-depth-3 flex items-center justify-center text-white font-semibold text-sm transition-all duration-200"
                   style={{ backgroundColor: colors?.[key] }}
                 >
                   {colors?.[key]}
@@ -191,15 +193,15 @@ export function ColorPalette({ branding, onUpdate, onError }) {
             <div key={index} className="group border border-border rounded-xl p-4 hover:construction-shadow-md transition-all duration-200 cursor-pointer" onClick={() => applyPreset(preset)}>
               <div className="flex gap-2 mb-4">
                 <div 
-                  className="w-10 h-10 rounded-lg construction-shadow-sm"
+                  className="w-10 h-10 rounded-xl construction-card-3d construction-depth-3"
                   style={{ backgroundColor: preset?.primary }}
                 />
                 <div 
-                  className="w-10 h-10 rounded-lg construction-shadow-sm"
+                  className="w-10 h-10 rounded-xl construction-card-3d construction-depth-3"
                   style={{ backgroundColor: preset?.secondary }}
                 />
                 <div 
-                  className="w-10 h-10 rounded-lg construction-shadow-sm"
+                  className="w-10 h-10 rounded-xl construction-card-3d construction-depth-3"
                   style={{ backgroundColor: preset?.accent }}
                 />
               </div>
@@ -238,7 +240,7 @@ export function ColorPalette({ branding, onUpdate, onError }) {
             className="p-8 rounded-xl text-white construction-shadow-sm"
             style={{ backgroundColor: colors?.primary_color }}
           >
-            <h2 className="text-3xl font-bold mb-2">{branding?.company_name || 'Your Company Name'}</h2>
+            <h2 className="text-3xl font-bold mb-2">{branding?.name || 'Your Company Name'}</h2>
             <p className="opacity-90 text-lg">Professional construction services and project management</p>
           </div>
           
@@ -247,19 +249,19 @@ export function ColorPalette({ branding, onUpdate, onError }) {
             <p className="text-sm font-medium text-foreground mb-3">Button Styles:</p>
             <div className="flex flex-wrap gap-4">
               <button 
-                className="px-6 py-3 rounded-lg text-white font-semibold construction-shadow-sm hover:construction-shadow-md transition-all"
+                className="px-6 py-3 rounded-xl text-white font-semibold construction-card-3d construction-depth-3 hover:construction-shadow-md transition-all"
                 style={{ backgroundColor: colors?.primary_color }}
               >
                 Primary Button
               </button>
               <button 
-                className="px-6 py-3 rounded-lg text-white font-semibold construction-shadow-sm hover:construction-shadow-md transition-all"
+                className="px-6 py-3 rounded-xl text-white font-semibold construction-card-3d construction-depth-3 hover:construction-shadow-md transition-all"
                 style={{ backgroundColor: colors?.secondary_color }}
               >
                 Secondary Button
               </button>
               <button 
-                className="px-6 py-3 rounded-lg text-white font-semibold construction-shadow-sm hover:construction-shadow-md transition-all"
+                className="px-6 py-3 rounded-xl text-white font-semibold construction-card-3d construction-depth-3 hover:construction-shadow-md transition-all"
                 style={{ backgroundColor: colors?.accent_color }}
               >
                 Accent Button
@@ -278,7 +280,7 @@ export function ColorPalette({ branding, onUpdate, onError }) {
                 <p className="text-muted-foreground">Due: {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
               </div>
               <div 
-                className="px-4 py-2 rounded-lg text-sm font-bold text-white construction-shadow-sm"
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white construction-card-3d construction-depth-3"
                 style={{ backgroundColor: colors?.accent_color }}
               >
                 PAID

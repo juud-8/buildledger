@@ -94,7 +94,7 @@ const SubscriptionStep = ({ formData, setFormData, errors, setErrors }) => {
         {plans?.map((plan) => (
           <div
             key={plan?.id}
-            className={`relative bg-card border-2 rounded-lg p-6 cursor-pointer construction-transition hover:construction-shadow-md ${
+            className={`relative bg-card border-2 rounded-xl p-6 cursor-pointer construction-transition hover:construction-depth-3 ${
               formData?.selectedPlan === plan?.id ? plan?.color : 'border-border'
             } ${plan?.popular ? 'ring-2 ring-primary ring-opacity-20' : ''}`}
             onClick={() => handlePlanSelect(plan?.id)}

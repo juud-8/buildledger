@@ -6,6 +6,16 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter }
 const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onDownloadPDF }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const formatCurrencyCompact = (value) => {
+    const num = Number(value) || 0;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      notation: 'compact',
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
   const expirationStatus = (() => {
     const today = new Date();
     const expiry = new Date(quote?.expirationDate);
@@ -26,14 +36,14 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg tracking-tight">{quote?.quoteNumber}</CardTitle>
+            <CardTitle className="text-lg tracking-tight font-data">{quote?.quoteNumber}</CardTitle>
             <CardDescription className="text-sm text-muted-foreground">{quote?.clientName}</CardDescription>
           </div>
           <div className="flex items-center space-x-2">
             <span className={`px-2 py-0.5 rounded-full text-xs font-medium border capitalize ${
               quote?.status === 'draft' ? 'bg-muted text-muted-foreground border-muted-foreground/20' :
               quote?.status === 'sent' ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' :
-              quote?.status === 'approved' ? 'bg-green-500/10 text-green-300 border-green-500/20' :
+              quote?.status === 'accepted' ? 'bg-green-500/10 text-green-300 border-green-500/20' :
               quote?.status === 'expired' ? 'bg-red-500/10 text-red-300 border-red-500/20' :
               'bg-amber-500/10 text-amber-300 border-amber-500/20'
             }`}>
@@ -91,7 +101,19 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
                       <Icon name="Download" size={16} className="mr-2" />
                       Download PDF
                     </button>
-                    {quote?.status === 'approved' && (
+                     {quote?.status !== 'accepted' && (
+                       <button
+                         onClick={() => {
+                           onSend(quote?.id, 'accepted');
+                           setIsMenuOpen(false);
+                         }}
+                         className="flex items-center w-full px-4 py-2 text-sm text-success hover:bg-muted"
+                       >
+                         <Icon name="CheckCircle" size={16} className="mr-2" />
+                         Mark as Accepted
+                       </button>
+                     )}
+                     {quote?.status === 'accepted' && (
                       <>
                         <hr className="my-1 border-border" />
                         <button
@@ -119,14 +141,24 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
           <p className="text-[13px] text-muted-foreground line-clamp-2 leading-snug">{quote?.description}</p>
         </div>
 
-        <div className="mb-3">
-          <p className="text-xl font-semibold text-foreground">${quote?.amount?.toLocaleString()}</p>
-          <p className="text-xs text-muted-foreground">{quote?.lineItemsCount} line items</p>
+        <div className="mb-3 space-y-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Icon name="DollarSign" size={14} className="text-muted-foreground" />
+              <span>Total</span>
+            </div>
+            <p className="text-xl font-semibold text-foreground font-data">{formatCurrencyCompact(quote?.amount)}</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Icon name="List" size={12} />
+            <span>{quote?.lineItemsCount} line items</span>
+          </div>
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <div>
-            <p className="text-muted-foreground">Created: {quote?.createdDate}</p>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Icon name="CalendarDays" size={14} />
+            <p>Created: {quote?.createdDate}</p>
           </div>
           <div className="text-right">
             <p className={`text-xs font-medium ${
@@ -164,7 +196,7 @@ const QuoteCard = ({ quote, onEdit, onDuplicate, onSend, onConvertToInvoice, onD
               Send
             </Button>
           )}
-          {quote?.status === 'approved' && (
+          {quote?.status === 'accepted' && (
             <Button
               variant="success"
               size="sm"

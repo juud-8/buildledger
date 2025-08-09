@@ -88,7 +88,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
   return (
     <div className="space-y-6">
       {/* Quick Actions Grid */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <h3 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {quickActions?.map((action) => {
@@ -108,7 +108,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
         </div>
       </div>
       {/* Project Stats */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <h3 className="text-lg font-semibold text-foreground mb-4">Project Stats</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -153,7 +153,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
         </div>
       </div>
       {/* Recent Updates */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <h3 className="text-lg font-semibold text-foreground mb-4">Recent Updates</h3>
         <div className="space-y-3">
           {recentUpdates?.map((update) => (
@@ -174,7 +174,7 @@ const QuickActions = ({ project, recentUpdates = [] }) => {
         </div>
       </div>
       {/* Contact Information */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <h3 className="text-lg font-semibold text-foreground mb-4">Contact Information</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">

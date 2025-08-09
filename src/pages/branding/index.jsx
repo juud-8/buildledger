@@ -43,7 +43,7 @@ export default function BrandingPage() {
     try {
       setError(null);
       const brandingData = {
-        name: userProfile?.company_name || 'My Company',
+        name: branding?.name || 'My Company',
         primary_color: '#3B82F6',
         secondary_color: '#1E40AF',
         accent_color: '#F59E0B',

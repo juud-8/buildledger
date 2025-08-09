@@ -6,7 +6,7 @@ const RevenueChart = ({ data = { labels: [], data: [] } }) => {
   const revenueData = (data.labels || []).map((month, index) => ({
     month,
     revenue: (data.data || [])[index] || 0,
-    projects: Math.floor(Math.random() * 5) + 1 // Mock project count for now
+    projects: 0 // Will be implemented with real data later
   }));
 
   // Calculate current month revenue
@@ -19,7 +19,7 @@ const RevenueChart = ({ data = { labels: [], data: [] } }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload?.length) {
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-3 construction-depth-2">
           <p className="text-sm font-medium text-popover-foreground">{`${label} 2025`}</p>
           <p className="text-sm text-primary">
             Revenue: ${payload?.[0]?.value?.toLocaleString()}
@@ -34,7 +34,7 @@ const RevenueChart = ({ data = { labels: [], data: [] } }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Monthly Revenue</h3>

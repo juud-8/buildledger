@@ -28,7 +28,7 @@ const QuickActions = () => {
       description: 'Add project documentation',
       icon: 'Camera',
       variant: 'outline',
-      onClick: () => navigate('/projects')
+      onClick: () => navigate('/projects?action=upload-photos')
     },
     {
       id: 4,
@@ -36,12 +36,12 @@ const QuickActions = () => {
       description: 'Create business analytics',
       icon: 'BarChart3',
       variant: 'outline',
-      onClick: () => navigate('/dashboard')
+      onClick: () => navigate('/analytics')
     }
   ];
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
       </div>
@@ -53,7 +53,7 @@ const QuickActions = () => {
             onClick={action?.onClick}
             iconName={action?.icon}
             iconPosition="left"
-            className="h-auto p-4 flex-col items-start text-left"
+            className="h-auto p-4 flex-col items-start text-left construction-card-3d rounded-xl construction-transition hover:construction-shadow-lg"
           >
             <div className="w-full">
               <div className="font-medium text-sm mb-1">{action?.title}</div>

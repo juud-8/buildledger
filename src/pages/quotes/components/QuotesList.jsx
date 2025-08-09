@@ -20,7 +20,7 @@ const QuotesList = ({
 
   if (quotes?.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-lg construction-shadow-sm p-12 text-center">
+      <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3 p-12 text-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
             <Icon name="FileText" size={32} className="text-muted-foreground" />
@@ -38,7 +38,7 @@ const QuotesList = ({
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-card border border-border rounded-lg construction-shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3 overflow-hidden">
         {/* Table Header */}
         <div className="bg-muted/50 border-b border-border p-4">
           <div className="grid grid-cols-12 gap-4 items-center text-sm font-medium text-muted-foreground">
@@ -88,7 +88,7 @@ const QuotesList = ({
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     quote?.status === 'draft' ? 'bg-muted text-muted-foreground' :
                     quote?.status === 'sent' ? 'bg-accent/10 text-accent' :
-                    quote?.status === 'approved' ? 'bg-success/10 text-success' :
+                    quote?.status === 'accepted' ? 'bg-success/10 text-success' :
                     quote?.status === 'expired'? 'bg-error/10 text-error' : 'bg-warning/10 text-warning'
                   }`}>
                     {quote?.status?.charAt(0)?.toUpperCase() + quote?.status?.slice(1)}

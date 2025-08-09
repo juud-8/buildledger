@@ -25,7 +25,7 @@ const ProjectGrid = ({ projects, selectedProjects, onProjectSelect, viewMode }) 
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-card border border-border rounded-lg construction-shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3 overflow-hidden">
         {/* Table Header */}
         <div className="bg-muted/30 px-6 py-3 border-b border-border">
           <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">

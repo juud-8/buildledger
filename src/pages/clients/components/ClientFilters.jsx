@@ -81,7 +81,7 @@ const ClientFilters = ({ onFiltersChange, activeFilters }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3">
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">

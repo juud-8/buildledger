@@ -54,7 +54,7 @@ const ActivityFeed = ({ activities = [] }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Recent Activity</h3>
         <Icon name="Activity" size={20} className="text-muted-foreground" />
@@ -63,7 +63,7 @@ const ActivityFeed = ({ activities = [] }) => {
         {activities?.length > 0 ? (
           activities.map((activity) => (
             <div key={activity?.id} className="flex items-start space-x-3">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getIconColor(getActivityColor(activity?.type, activity?.status))}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center construction-depth-1 ${getIconColor(getActivityColor(activity?.type, activity?.status))}`}>
                 <Icon name={getActivityIcon(activity?.type, activity?.status)} size={16} />
               </div>
               <div className="flex-1 min-w-0">

@@ -355,7 +355,7 @@ const ProjectDetails = () => {
           <div className="flex-1 lg:mr-80">
             <div className="p-4 lg:p-6">
               {/* Project Header */}
-              <div className="bg-card border border-border rounded-lg p-6 mb-6 construction-shadow-sm">
+              <div className="bg-card border border-border rounded-xl p-6 mb-6 construction-card-3d construction-depth-3">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h1 className="text-2xl font-bold text-foreground mb-2">{project?.name}</h1>
@@ -384,7 +384,7 @@ const ProjectDetails = () => {
               </div>
 
               {/* Tab Navigation */}
-              <div className="bg-card border border-border rounded-lg mb-6 construction-shadow-sm">
+              <div className="bg-card border border-border rounded-xl mb-6 construction-card-3d construction-depth-3">
                 <div className="flex overflow-x-auto">
                   {tabs?.map((tab) => (
                     <button

@@ -69,51 +69,10 @@ const MaterialsPage = () => {
         console.error('Error fetching data:', error);
         setError('Failed to load materials. Please try again.');
         
-        // Use mock data as fallback for demo purposes
-        const mockMaterials = [
-          {
-            id: 1,
-            name: "2x4 Lumber - 8ft",
-            description: "Standard construction grade lumber",
-            category: "materials",
-            unit: "each",
-            sku: "LUM-2X4-8",
-            vendor_sku: "HD-2X4-8",
-            unit_cost: 3.50,
-            unit_price: 4.25,
-            profit_margin: 21.43,
-            current_stock: 150,
-            minimum_stock: 25,
-            reorder_point: 50,
-            vendors: { id: 1, name: "Home Depot Pro", company_name: "Home Depot" },
-            is_active: true,
-            created_at: "2023-01-15",
-          },
-          {
-            id: 2,
-            name: "Concrete Mix - 80lb",
-            description: "High-strength concrete mix",
-            category: "materials",
-            unit: "bag",
-            sku: "CON-MIX-80",
-            vendor_sku: "ABC-CON80",
-            unit_cost: 4.75,
-            unit_price: 6.50,
-            profit_margin: 36.84,
-            current_stock: 85,
-            minimum_stock: 20,
-            reorder_point: 30,
-            vendors: { id: 2, name: "ABC Lumber Co", company_name: "ABC Lumber Company" },
-            is_active: true,
-            created_at: "2023-02-20",
-          }
-        ];
-        setMaterials(mockMaterials);
-        setFilteredMaterials(mockMaterials);
-        setVendors([
-          { id: 1, name: "Home Depot Pro", company_name: "Home Depot" },
-          { id: 2, name: "ABC Lumber Co", company_name: "ABC Lumber Company" }
-        ]);
+        // No fallback to mock data - keep empty state
+        setMaterials([]);
+        setFilteredMaterials([]);
+        setVendors([]);
       } finally {
         setIsLoading(false);
       }

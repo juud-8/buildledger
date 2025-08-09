@@ -87,7 +87,7 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border construction-shadow-sm">
+    <div className="bg-card rounded-xl border border-border construction-card-3d construction-depth-3">
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
@@ -107,31 +107,9 @@ const UserManagement = () => {
         </div>
       </div>
       <div className="p-6">
-        {/* Users List */}
-        <div className="space-y-4">
-          {users?.map((user) => (
-            <div key={user?.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden">
-                  <Image
-                    src={user?.avatar}
-                    alt={user?.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-medium text-foreground">{user?.name}</h4>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(user?.status)}`}>
-                      {user?.status}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <div className="flex items-center space-x-4 mt-1">
-                    <div className="p-6">
         {loading && <p>Loading users...</p>}
         {error && <p className="text-error">{error}</p>}
-        {users && !loading && (
+        {!loading && users && users.length > 0 && (
           <div className="space-y-4">
             {users.map((user) => (
               <div key={user.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
@@ -153,17 +131,10 @@ const UserManagement = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Select
-                    options={roleOptions.map(r => ({ value: r.value, label: (
-                      <div className="flex flex-col">
-                        <span className="text-sm text-foreground">{r.label}</span>
-                        <span className="text-xs text-muted-foreground">{r.description}</span>
-                      </div>
-                    ) }))}
+                    options={roleOptions.map(r => ({ value: r.value, label: r.label }))}
                     value={user?.role}
                     onChange={(value) => handleRoleChange(user?.id, value)}
                     className="w-56"
-                    searchable
-                    clearable
                   />
                   <Button
                     variant="ghost"
@@ -186,37 +157,11 @@ const UserManagement = () => {
             ))}
           </div>
         )}
-      </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Select
-                  options={roleOptions}
-                  value={user?.role}
-                  onChange={(value) => handleRoleChange(user?.id, value)}
-                  className="w-48"
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  iconName="MoreVertical"
-                  onClick={() => {}}
-                />
-                {user?.role !== "owner" && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    iconName="Trash2"
-                    onClick={() => handleRemoveUser(user?.id)}
-                    className="text-error hover:text-error"
-                  />
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        {!loading && (!users || users.length === 0) && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No users found.</p>
+          </div>
+        )}
 
         {/* Role Permissions */}
         <div className="mt-8 border-t border-border pt-6">

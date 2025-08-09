@@ -10,7 +10,10 @@ const ClientToolbar = ({
   onBulkEmail, 
   onExport, 
   selectedClients,
-  totalClients 
+  totalClients,
+  activeProjectsCount = null,
+  totalValue = null,
+  satisfactionPercent = null,
 }) => {
   const [showBulkActions, setShowBulkActions] = useState(false);
 
@@ -19,7 +22,7 @@ const ClientToolbar = ({
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg construction-shadow-sm mb-6">
+    <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3 mb-6">
       <div className="p-4">
         {/* Top Row */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
@@ -136,15 +139,21 @@ const ClientToolbar = ({
               <div className="text-xs text-muted-foreground">Total Clients</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-success">156</div>
+              <div className="text-2xl font-bold text-success">{activeProjectsCount ?? '—'}</div>
               <div className="text-xs text-muted-foreground">Active Projects</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">$2.4M</div>
+              <div className="text-2xl font-bold text-primary">
+                {typeof totalValue === 'number' 
+                  ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(totalValue)
+                  : '—'}
+              </div>
               <div className="text-xs text-muted-foreground">Total Value</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-accent">89%</div>
+              <div className="text-2xl font-bold text-accent">
+                {typeof satisfactionPercent === 'number' ? `${Math.round(satisfactionPercent)}%` : '—'}
+              </div>
               <div className="text-xs text-muted-foreground">Satisfaction</div>
             </div>
           </div>

@@ -11,7 +11,7 @@ const QuoteFilters = ({ filters, onFiltersChange, onClearFilters }) => {
     { value: 'all', label: 'All Status' },
     { value: 'draft', label: 'Draft' },
     { value: 'sent', label: 'Sent' },
-    { value: 'approved', label: 'Approved' },
+    { value: 'accepted', label: 'Accepted' },
     { value: 'expired', label: 'Expired' },
     { value: 'rejected', label: 'Rejected' }
   ];
@@ -51,7 +51,7 @@ const QuoteFilters = ({ filters, onFiltersChange, onClearFilters }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3">
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground flex items-center">

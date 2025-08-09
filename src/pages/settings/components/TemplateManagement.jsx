@@ -96,7 +96,7 @@ const TemplateManagement = () => {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border construction-shadow-sm">
+    <div className="bg-card rounded-xl border border-border construction-card-3d construction-depth-3">
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
@@ -119,7 +119,7 @@ const TemplateManagement = () => {
         {/* Template Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {templates?.map((template) => (
-            <div key={template?.id} className="border border-border rounded-lg overflow-hidden construction-shadow-sm">
+            <div key={template?.id} className="border border-border rounded-xl overflow-hidden construction-card-3d construction-depth-3">
               {/* Template Preview */}
               <div className="aspect-[3/4] bg-muted relative overflow-hidden">
                 <Image

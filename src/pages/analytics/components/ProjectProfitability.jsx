@@ -87,7 +87,7 @@ const ProjectProfitability = ({ dateRange, filters, projectsMetrics }) => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload?.length) {
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-3 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground mb-2">{label}</p>
           {payload?.map((entry, index) => (
             <div key={index} className="flex items-center justify-between space-x-4 text-sm">
@@ -113,7 +113,7 @@ const ProjectProfitability = ({ dateRange, filters, projectsMetrics }) => {
     if (active && payload && payload?.length) {
       const data = payload?.[0]?.payload;
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-3 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground">{data?.name}</p>
           <p className="text-sm text-muted-foreground">Budget: ${(data?.x * 1000)?.toLocaleString()}</p>
           <p className="text-sm text-muted-foreground">Margin: {data?.y}%</p>
@@ -183,7 +183,7 @@ const ProjectProfitability = ({ dateRange, filters, projectsMetrics }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Project Profitability Analysis</h3>

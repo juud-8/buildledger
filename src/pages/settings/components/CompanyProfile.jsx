@@ -93,6 +93,10 @@ const CompanyProfile = () => {
       setLoading(true);
       await companyService.upsertCompanyForCurrentUser(companyData);
       setIsEditing(false);
+      
+      // Notify other components that company data has been updated
+      window.dispatchEvent(new CustomEvent('company_data_updated'));
+      
       if (currentStep === 'companyInfo') {
         completeStep('companyInfo');
         showSuccessToast('Company profile updated! Ready for the next step.');
@@ -140,6 +144,10 @@ const CompanyProfile = () => {
       if (uploadError) throw uploadError;
       await companyService.setCompanyLogoPath(storagePath);
       setCompanyData(prev => ({ ...prev, logo: storagePath }));
+      
+      // Notify other components that company data has been updated
+      window.dispatchEvent(new CustomEvent('company_data_updated'));
+      
       showSuccessToast('Logo uploaded');
     } catch (error) {
       console.error('Error uploading logo:', error);
@@ -150,7 +158,7 @@ const CompanyProfile = () => {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border construction-shadow-sm">
+    <div className="bg-card rounded-xl border border-border construction-card-3d construction-depth-3">
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div>

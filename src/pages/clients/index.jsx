@@ -55,33 +55,9 @@ const ClientsPage = () => {
       } catch (error) {
         console.error('Error fetching clients:', error);
         setError('Failed to load clients. Please try again.');
-        // Use mock data as fallback for demo purposes
-        const mockClients = [
-          {
-            id: 1,
-            name: "Johnson Family",
-            email: "mike.johnson@email.com",
-            phone: "(555) 123-4567",
-            address: { street: "123 Oak Street", city: "Springfield", state: "IL", zip: "62701" },
-            client_type: "residential",
-            is_active: true,
-            payment_terms: "net30",
-            created_at: "2022-03-15",
-          },
-          {
-            id: 2,
-            name: "Springfield Commercial LLC",
-            email: "contact@springfieldcommercial.com",
-            phone: "(555) 987-6543",
-            address: { street: "456 Business Park Dr", city: "Springfield", state: "IL", zip: "62702" },
-            client_type: "commercial",
-            is_active: true,
-            payment_terms: "net45",
-            created_at: "2023-08-20",
-          }
-        ];
-        setClients(mockClients);
-        setFilteredClients(mockClients);
+        // No fallback to mock data - keep empty state
+        setClients([]);
+        setFilteredClients([]);
       } finally {
         setIsLoading(false);
       }

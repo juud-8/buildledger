@@ -50,7 +50,7 @@ const InvoiceFilters = ({ filters, onFiltersChange, onClearFilters }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3">
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-foreground flex items-center">

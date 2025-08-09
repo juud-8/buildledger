@@ -79,7 +79,7 @@ const GeographicRevenue = ({ dateRange, filters }) => {
     if (active && payload && payload?.length) {
       const region = geographicData?.find(r => r?.region?.split(' ')?.[0] === label);
       return (
-        <div className="bg-popover border border-border rounded-lg p-4 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-4 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground mb-2">{region?.region}</p>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">
@@ -107,7 +107,7 @@ const GeographicRevenue = ({ dateRange, filters }) => {
     if (active && payload && payload?.length) {
       const data = payload?.[0]?.payload;
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-3 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground">{data?.name}</p>
           <p className="text-sm text-muted-foreground">{data?.value}% market share</p>
           <p className="text-sm font-medium text-popover-foreground">
@@ -168,7 +168,7 @@ const GeographicRevenue = ({ dateRange, filters }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Geographic Revenue Distribution</h3>

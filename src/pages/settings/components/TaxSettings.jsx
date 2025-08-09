@@ -91,7 +91,7 @@ const TaxSettings = () => {
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border construction-shadow-sm">
+    <div className="bg-card rounded-xl border border-border construction-card-3d construction-depth-3">
       <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div>

@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { ChevronDown, Check, Search, X } from "lucide-react";
 import { cn } from "../../utils/cn";
-import Button from "./Button";
 import Input from "./Input";
 
 const Select = React.forwardRef(({
@@ -139,14 +138,18 @@ const Select = React.forwardRef(({
                         )}
 
                         {clearable && hasValue && !loading && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-4 w-4"
+                            <span
+                                role="button"
+                                aria-label="Clear selection"
+                                tabIndex={0}
                                 onClick={handleClear}
+                                onKeyDown={(e) => {
+                                    if (e?.key === 'Enter' || e?.key === ' ') handleClear(e);
+                                }}
+                                className="h-4 w-4 inline-flex items-center justify-center rounded hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
                             >
                                 <X className="h-3 w-3" />
-                            </Button>
+                            </span>
                         )}
 
                         <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />

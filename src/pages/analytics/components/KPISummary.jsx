@@ -61,7 +61,7 @@ const KPISummary = ({ dateRange, filters, kpiData }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {data?.map((kpi, index) => (
-        <div key={index} className="bg-card border border-border rounded-lg p-6 construction-shadow-sm hover:construction-shadow-md construction-transition">
+        <div key={index} className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3 hover:construction-shadow-md construction-transition">
           <div className="flex items-start justify-between mb-4">
             <div className={`p-3 rounded-lg ${getColorClasses(kpi?.color)}`}>
               <Icon name={kpi?.icon} size={24} />

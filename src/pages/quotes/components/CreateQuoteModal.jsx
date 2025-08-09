@@ -193,7 +193,8 @@ const CreateQuoteModal = ({ isOpen, onClose, onSuccess, initialClientId = '', ed
         total_amount: total,
         valid_until: formData?.validUntil,
         // Persist preferences and optional custom client name in notes as tags
-        notes: `${formData?.notes || ''}\n[customer_view=${formData?.customerView}]${useCustomClient && formData?.customClientName ? `\n[custom_client_name=${formData.customClientName}]` : ''}`,
+        // Persist settings internally but do not leak bracket tags to PDFs
+        notes: formData?.notes || '',
         show_summary_only: formData?.customerView === 'summary'
       };
 

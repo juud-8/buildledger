@@ -20,21 +20,24 @@ const PricingSection = ({ formData, errors, onChange, onSupplierChange, onSeason
   useEffect(() => {
     const costPrice = parseFloat(formData?.costPrice) || 0;
     const sellingPrice = parseFloat(formData?.sellingPrice) || 0;
-    
+
     if (costPrice > 0 && sellingPrice > 0) {
-      const markup = ((sellingPrice - costPrice) / costPrice) * 100;
-      onChange?.('markupPercentage', Math.round(markup * 100) / 100);
+      const next = Math.round((((sellingPrice - costPrice) / costPrice) * 100) * 100) / 100;
+      if (next !== formData?.markupPercentage) {
+        onChange?.('markupPercentage', next);
+      }
     }
-  }, [formData?.costPrice, formData?.sellingPrice, onChange]);
+  }, [formData?.costPrice, formData?.sellingPrice]);
 
   // Update selling price when cost price or markup changes
   const handleCostPriceChange = (value) => {
     onChange?.('costPrice', value);
-    
+
     const costPrice = parseFloat(value) || 0;
     const markup = parseFloat(formData?.markupPercentage) || 0;
-    
-    if (costPrice > 0 && markup > 0) {
+
+    // Only update selling when user hasn't manually set it yet (empty) or markup exists
+    if ((formData?.sellingPrice === '' || formData?.sellingPrice == null) && costPrice > 0 && markup > 0) {
       const sellingPrice = costPrice * (1 + markup / 100);
       onChange?.('sellingPrice', sellingPrice?.toFixed(2));
     }
@@ -42,17 +45,21 @@ const PricingSection = ({ formData, errors, onChange, onSupplierChange, onSeason
 
   const handleMarkupChange = (value) => {
     onChange?.('markupPercentage', value);
-    
+
     const costPrice = parseFloat(formData?.costPrice) || 0;
     const markup = parseFloat(value) || 0;
-    
+
     if (costPrice > 0) {
       const sellingPrice = costPrice * (1 + markup / 100);
-      onChange?.('sellingPrice', sellingPrice?.toFixed(2));
+      // Avoid infinite loop by only updating when different
+      if (parseFloat(formData?.sellingPrice) !== parseFloat(sellingPrice?.toFixed(2))) {
+        onChange?.('sellingPrice', sellingPrice?.toFixed(2));
+      }
     }
   };
 
   const handleSeasonalPricingToggle = (enabled) => {
+    if (enabled === showSeasonalPricing) return;
     setShowSeasonalPricing(enabled);
     onSeasonalPricingChange?.({ 
       ...formData?.seasonalPricing, 

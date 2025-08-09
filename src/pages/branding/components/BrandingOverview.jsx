@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { brandingService } from '../../../services/brandingService';
+import { useAuth } from '../../../contexts/AuthContext';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
@@ -8,9 +9,10 @@ import Icon from '../../../components/AppIcon';
 import { showSuccessToast, showErrorToast } from '../../../utils/toastHelper';
 
 export function BrandingOverview({ branding, onUpdate, onError }) {
+  const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    company_name: branding?.company_name || '',
+    name: branding?.name || '',
     primary_color: branding?.primary_color || '#3B82F6',
     secondary_color: branding?.secondary_color || '#1E40AF',
     accent_color: branding?.accent_color || '#F59E0B',
@@ -34,7 +36,7 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
       onError?.(null);
       
       const updates = { ...formData };
-      const updatedBranding = await brandingService?.updateCompanyBranding(branding?.id, updates);
+      const updatedBranding = await brandingService?.updateCompanyBranding(user?.id, updates);
       
       onUpdate?.(updatedBranding);
       setEditing(false);
@@ -49,7 +51,7 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
 
   const handleCancel = () => {
     setFormData({
-      company_name: branding?.company_name || '',
+      name: branding?.name || '',
       primary_color: branding?.primary_color || '#3B82F6',
       secondary_color: branding?.secondary_color || '#1E40AF',
       accent_color: branding?.accent_color || '#F59E0B',
@@ -92,13 +94,13 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
             </label>
             {editing ? (
               <Input
-                value={formData?.company_name}
-                onChange={(e) => setFormData({ ...formData, company_name: e?.target?.value })}
+                value={formData?.name}
+                onChange={(e) => setFormData({ ...formData, name: e?.target?.value })}
                 placeholder="Enter company name"
               />
             ) : (
               <div className="p-3 bg-muted/50 rounded-md border">
-                <p className="text-foreground font-medium">{branding?.company_name || 'Not set'}</p>
+                <p className="text-foreground font-medium">{branding?.name || 'Not set'}</p>
               </div>
             )}
           </div>
@@ -293,7 +295,7 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
         </div>
 
         <div 
-          className="space-y-6 p-6 bg-background border border-border rounded-lg construction-shadow-sm" 
+          className="space-y-6 p-6 bg-background border border-border rounded-xl construction-card-3d construction-depth-3" 
           style={{ fontFamily: editing ? formData?.font_family : branding?.font_family }}
         >
           {/* Company Header Preview */}
@@ -302,7 +304,7 @@ export function BrandingOverview({ branding, onUpdate, onError }) {
               className="text-4xl font-bold"
               style={{ color: (editing ? formData?.primary_color : branding?.primary_color) || '#3B82F6' }}
             >
-              {editing ? formData?.company_name || 'Your Company Name' : branding?.company_name || 'Your Company Name'}
+              {editing ? formData?.name || 'Your Company Name' : branding?.name || 'Your Company Name'}
             </h1>
             <p className="text-lg text-muted-foreground">
               Professional construction services and project management

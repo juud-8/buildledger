@@ -89,7 +89,9 @@
     "test:server": "vitest run --config server/vitest.config.js",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:all": "npm run test:run && npm run test:server && npm run test:e2e"
+    "test:all": "npm run test:run && npm run test:server && npm run test:e2e",
+    "demo:seed": "node scripts/seed-demo-nailedit.js",
+    "demo:reset": "node scripts/seed-demo-nailedit.js --reset"
   },
   "eslintConfig": {
     "extends": [
@@ -110,21 +112,21 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.1",
+    "@testing-library/jest-dom": "^6.1.6",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
     "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^1.0.4",
+    "@vitest/ui": "^1.0.4",
     "autoprefixer": "10.4.2",
+    "jsdom": "^23.0.1",
+    "msw": "^2.0.11",
     "postcss": "^8.5.6",
+    "supertest": "^6.3.3",
     "tailwindcss": "^3.4.15",
     "vite": "^7.0.6",
     "vite-tsconfig-paths": "3.6.0",
-    "@testing-library/react": "^14.1.2",
-    "@testing-library/jest-dom": "^6.1.6",
-    "@testing-library/user-event": "^14.5.1",
-    "vitest": "^1.0.4",
-    "jsdom": "^23.0.1",
-    "@vitest/ui": "^1.0.4",
-    "@vitest/coverage-v8": "^1.0.4",
-    "msw": "^2.0.11",
-    "supertest": "^6.3.3",
-    "@playwright/test": "^1.40.1"
+    "vitest": "^3.2.4"
   }
 }

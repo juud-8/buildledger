@@ -42,7 +42,7 @@ const InvoicesList = ({
 
   if (invoices?.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-lg construction-shadow-sm p-12 text-center">
+      <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3 p-12 text-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
             <Icon name="Receipt" size={32} className="text-muted-foreground" />
@@ -60,7 +60,7 @@ const InvoicesList = ({
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-card border border-border rounded-lg construction-shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3 overflow-hidden">
         {/* Table Header */}
         <div className="bg-muted/50 border-b border-border p-4">
           <div className="grid grid-cols-12 gap-4 items-center text-sm font-medium text-muted-foreground">

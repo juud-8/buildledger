@@ -7,17 +7,21 @@ import QuoteFilters from './components/QuoteFilters';
 import QuoteToolbar from './components/QuoteToolbar';
 import QuotesList from './components/QuotesList';
 import { quotesService } from '../../services/quotesService';
+import { useNavigate } from 'react-router-dom';
 import CreateQuoteModal from './components/CreateQuoteModal';
 import { pdfService } from '../../services/pdfService';
 
 const QuotesPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [quotes, setQuotes] = useState([]);
   const [filteredQuotes, setFilteredQuotes] = useState([]);
   const [selectedQuotes, setSelectedQuotes] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('date-desc');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingQuoteId, setEditingQuoteId] = useState(null);
   
   const [filters, setFilters] = useState({
     status: 'all',
@@ -194,8 +198,8 @@ const QuotesPage = () => {
   };
 
   const handleEdit = (quoteId) => {
-    console.log('Edit quote:', quoteId);
-    // Navigate to edit page or open edit modal
+    setEditingQuoteId(quoteId);
+    setIsEditModalOpen(true);
   };
 
   const handleDuplicate = (quoteId) => {
@@ -213,17 +217,24 @@ const QuotesPage = () => {
     }
   };
 
-  const handleSend = (quoteId) => {
+  const handleSend = (quoteId, nextStatus = 'sent') => {
     setQuotes(prev => prev?.map(quote => 
       quote?.id === quoteId 
-        ? { ...quote, status: 'sent' }
+        ? { ...quote, status: nextStatus }
         : quote
     ));
+    // Persist status change (best-effort)
+    quotesService.updateQuote(quoteId, { status: nextStatus }).catch(() => {});
   };
 
-  const handleConvertToInvoice = (quoteId) => {
-    console.log('Convert to invoice:', quoteId);
-    // Navigate to invoice creation with quote data
+  const handleConvertToInvoice = async (quoteId) => {
+    try {
+      const invoice = await quotesService.convertQuoteToInvoice(quoteId);
+      // Navigate to invoices page and optionally highlight the new invoice
+      navigate('/invoices', { state: { createdInvoiceId: invoice.id } });
+    } catch (e) {
+      console.error('Convert to invoice failed', e);
+    }
   };
 
   const handleDownloadPDF = async (quoteId) => {
@@ -298,6 +309,32 @@ const QuotesPage = () => {
           onClose={() => setIsCreateModalOpen(false)}
           onSuccess={handleCreateQuote}
           initialClientId={location?.state?.clientId || ''}
+        />
+        <CreateQuoteModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={(updated) => {
+            if (updated) {
+              // Refresh the list (simplest approach: reload quotes)
+              setQuotes(prev => prev.map(q => q.id === updated.id ? {
+                id: updated.id,
+                quoteNumber: updated.quote_number,
+                clientName: updated.client?.name || q.clientName,
+                projectName: updated.project?.name || q.projectName,
+                description: updated.description || '',
+                amount: Number(updated.total_amount || 0),
+                lineItemsCount: updated.quote_items?.length || q.lineItemsCount,
+                status: updated.status || q.status,
+                createdDate: new Date(updated.created_at).toLocaleDateString(),
+                expirationDate: updated.valid_until ? new Date(updated.valid_until).toLocaleDateString() : q.expirationDate,
+                projectType: updated.project?.type || q.projectType
+              } : q));
+            }
+            setIsEditModalOpen(false);
+            setEditingQuoteId(null);
+          }}
+          editMode
+          quoteId={editingQuoteId}
         />
       </div>
     </>

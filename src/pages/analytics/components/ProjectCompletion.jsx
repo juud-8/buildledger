@@ -80,7 +80,7 @@ const ProjectCompletion = ({ dateRange, filters }) => {
         (p?.project?.split(' ')?.[0] + ' ' + p?.project?.split(' ')?.[1]) === label
       );
       return (
-        <div className="bg-popover border border-border rounded-lg p-4 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-4 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground mb-2">{project?.project}</p>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">
@@ -108,7 +108,7 @@ const ProjectCompletion = ({ dateRange, filters }) => {
     if (active && payload && payload?.length) {
       const data = payload?.[0]?.payload;
       return (
-        <div className="bg-popover border border-border rounded-lg p-3 construction-shadow-md">
+        <div className="bg-popover border border-border rounded-xl p-3 construction-depth-3">
           <p className="text-sm font-medium text-popover-foreground">{data?.name}</p>
           <p className="text-sm text-muted-foreground">Type: {data?.type}</p>
           <p className="text-sm text-muted-foreground">Planned: {data?.x} days</p>
@@ -121,7 +121,7 @@ const ProjectCompletion = ({ dateRange, filters }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-foreground">Project Completion Analysis</h3>

@@ -37,7 +37,7 @@ const ProjectTimeline = ({ project }) => {
   return (
     <div className="space-y-6">
       {/* Timeline Header */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Project Timeline</h3>
@@ -64,7 +64,7 @@ const ProjectTimeline = ({ project }) => {
         </div>
       </div>
       {/* Timeline View */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         {/* Desktop Timeline */}
         <div className="hidden lg:block">
           <div className="relative">
@@ -82,7 +82,7 @@ const ProjectTimeline = ({ project }) => {
                   
                   {/* Content */}
                   <div className="ml-6 flex-1">
-                    <div className="bg-background border border-border rounded-lg p-4 construction-shadow-sm">
+                    <div className="bg-background border border-border rounded-xl p-4 construction-card-3d construction-depth-3">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
@@ -162,7 +162,7 @@ const ProjectTimeline = ({ project }) => {
         {/* Mobile Timeline */}
         <div className="lg:hidden space-y-4">
           {project?.timeline?.map((item, index) => (
-            <div key={index} className="bg-background border border-border rounded-lg p-4 construction-shadow-sm">
+            <div key={index} className="bg-background border border-border rounded-xl p-4 construction-card-3d construction-depth-3">
               <div className="flex items-start space-x-3">
                 <div className={`w-3 h-3 rounded-full mt-1 ${getStatusColor(item?.status)?.replace('border-', 'bg-')}`}></div>
                 <div className="flex-1">
@@ -189,7 +189,7 @@ const ProjectTimeline = ({ project }) => {
       </div>
       {/* Weather Delays Section */}
       {project?.weatherDelays && project?.weatherDelays?.length > 0 && (
-        <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
           <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
             <Icon name="Cloud" size={20} className="mr-2 text-blue-500" />
             Weather Delays

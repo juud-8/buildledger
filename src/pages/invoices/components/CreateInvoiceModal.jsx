@@ -239,7 +239,8 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, editMode = false, invo
         tax_amount: totals.taxAmount,
         total_amount: totals.total,
         due_date: formData.dueDate || null,
-        notes: `${formData.notes || ''}\n[customer_view=${formData.customerView}]`,
+        // Do not embed bracketed tags in notes for PDFs
+        notes: formData.notes || '',
         show_summary_only: formData.customerView === 'summary',
         status: 'draft'
       };

@@ -46,35 +46,9 @@ const VendorsPage = () => {
       } catch (error) {
         console.error('Error fetching vendors:', error);
         setError('Failed to load vendors. Please try again.');
-        // Use mock data as fallback for demo purposes
-        const mockVendors = [
-          {
-            id: 1,
-            name: "Home Depot Pro",
-            email: "pro@homedepot.com",
-            phone: "(555) 123-4567",
-            address: { street: "1000 Main St", city: "Springfield", state: "IL", zip: "62701" },
-            company_name: "Home Depot",
-            contact_person: "Sarah Johnson",
-            payment_terms: "Net 30",
-            is_active: true,
-            created_at: "2023-01-15",
-          },
-          {
-            id: 2,
-            name: "ABC Lumber Co",
-            email: "orders@abclumber.com",
-            phone: "(555) 987-6543",
-            address: { street: "456 Industrial Blvd", city: "Springfield", state: "IL", zip: "62702" },
-            company_name: "ABC Lumber Company",
-            contact_person: "Mike Wilson",
-            payment_terms: "Net 15",
-            is_active: true,
-            created_at: "2023-02-20",
-          }
-        ];
-        setVendors(mockVendors);
-        setFilteredVendors(mockVendors);
+        // No fallback to mock data - keep empty state
+        setVendors([]);
+        setFilteredVendors([]);
       } finally {
         setIsLoading(false);
       }

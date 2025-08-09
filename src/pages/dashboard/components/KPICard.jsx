@@ -9,11 +9,28 @@ const KPICard = ({ title, value, change, changeType, icon, color = 'primary' }) 
     return 'text-muted-foreground';
   };
 
+  const getIconBgColor = () => {
+    switch (color) {
+      case 'primary':
+        return 'bg-primary text-primary-foreground';
+      case 'construction':
+        return 'bg-construction text-construction-foreground';
+      case 'warning':
+        return 'bg-warning text-warning-foreground';
+      case 'success':
+        return 'bg-success text-success-foreground';
+      case 'error':
+        return 'bg-error text-error-foreground';
+      default:
+        return 'bg-primary text-primary-foreground';
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-${color} text-${color}-foreground`}>
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${getIconBgColor()}`}>
           <Icon name={icon} size={24} />
         </div>
       </CardHeader>

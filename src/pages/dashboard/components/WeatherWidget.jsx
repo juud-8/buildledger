@@ -39,13 +39,13 @@ const WeatherWidget = () => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Weather Impact</h3>
         <Icon name="CloudSun" size={20} className="text-muted-foreground" />
       </div>
       {/* Current Weather */}
-      <div className="flex items-center justify-between mb-6 p-4 bg-muted/50 rounded-lg">
+      <div className="flex items-center justify-between mb-6 p-4 bg-muted/50 rounded-xl construction-depth-1">
         <div className="flex items-center space-x-3">
           <Icon name={weatherData?.current?.icon} size={32} className="text-primary" />
           <div>
@@ -62,7 +62,7 @@ const WeatherWidget = () => {
       {weatherData?.alerts?.length > 0 && (
         <div className="mb-6">
           {weatherData?.alerts?.map((alert) => (
-            <div key={alert.id} className={`p-3 rounded-lg border ${getSeverityColor(alert.severity)}`}>
+            <div key={alert.id} className={`p-3 rounded-xl border construction-depth-2 ${getSeverityColor(alert.severity)}`}>
               <div className="flex items-start space-x-2">
                 <Icon name="AlertTriangle" size={16} className="mt-0.5" />
                 <div className="flex-1">

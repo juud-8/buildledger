@@ -55,7 +55,7 @@ const ProjectFilters = ({ filters, onFiltersChange, onClearFilters }) => {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg construction-shadow-sm">
+    <div className="bg-card border border-border rounded-xl construction-card-3d construction-depth-3">
       {/* Mobile Filter Toggle */}
       <div className="lg:hidden">
         <Button

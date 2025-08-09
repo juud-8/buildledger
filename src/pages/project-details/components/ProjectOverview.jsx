@@ -34,7 +34,7 @@ const ProjectOverview = ({ project }) => {
   return (
     <div className="space-y-6">
       {/* Project Summary Card */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
           {/* Left Section - Project Info */}
           <div className="flex-1 space-y-4">
@@ -160,7 +160,7 @@ const ProjectOverview = ({ project }) => {
         </div>
       </div>
       {/* Recent Activity Feed */}
-      <div className="bg-card border border-border rounded-lg p-6 construction-shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 construction-card-3d construction-depth-3">
         <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center">
           <Icon name="Activity" size={20} className="mr-2" />
           Recent Activity

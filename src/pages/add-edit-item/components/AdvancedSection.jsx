@@ -29,10 +29,10 @@ const AdvancedSection = ({ formData, errors, onChange }) => {
   // Mock barcode scanner functionality
   const startBarcodeScanner = () => {
     setShowBarcodeScanner(true);
-    // Simulate barcode scan after 2 seconds
+    // Simulate barcode scan after 2 seconds (demo functionality)
     setTimeout(() => {
-      const mockBarcode = Math.floor(Math.random() * 9000000000000) + 1000000000000;
-      handleBarcodeInput(mockBarcode?.toString());
+      const demoBarcode = Math.floor(Math.random() * 9000000000000) + 1000000000000;
+      handleBarcodeInput(demoBarcode?.toString());
     }, 2000);
   };
 

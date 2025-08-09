@@ -33,6 +33,21 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
 
   const remainingAmount = invoice?.amount - invoice?.paidAmount;
 
+  // Derive a stable Tailwind class set for status badge (avoid dynamic class names)
+  const paymentStatusClasses = (() => {
+    if (invoice?.paymentStatus === 'paid') {
+      return 'bg-success/10 text-success border-success/20';
+    }
+    if (invoice?.paymentStatus !== 'paid' && invoice?.agingDays > 0) {
+      return 'bg-error/10 text-error border-error/20';
+    }
+    if (invoice?.paymentStatus === 'partial') {
+      return 'bg-warning/10 text-warning border-warning/20';
+    }
+    // pending or fallback
+    return 'bg-muted text-muted-foreground border-muted-foreground/20';
+  })();
+
   const handleRecordPayment = () => {
     if (paymentAmount && parseFloat(paymentAmount) > 0) {
       onRecordPayment(invoice?.id, {
@@ -46,12 +61,12 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
   };
 
   return (
-    <Card className={agingPriority?.color}>
-      <CardHeader>
+    <Card className={`${agingPriority?.color} border-border/60 hover:border-border construction-transition shadow-sm hover:shadow-md`}>
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle>{invoice?.invoiceNumber}</CardTitle>
-            <CardDescription>{invoice?.clientName}</CardDescription>
+            <CardTitle className="text-lg tracking-tight font-data">{invoice?.invoiceNumber}</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">{invoice?.clientName}</CardDescription>
             {invoice?.projectReference && (
               <p className="text-xs text-muted-foreground mt-1">
                 Project: {invoice?.projectReference}
@@ -59,7 +74,7 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium bg-${invoice?.paymentStatus}/10 text-${invoice?.paymentStatus} border border-${invoice?.paymentStatus}/20`}>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${paymentStatusClasses}`}>
               {invoice?.paymentStatus?.charAt(0)?.toUpperCase() + invoice?.paymentStatus?.slice(1)}
             </span>
             <div className="relative">
@@ -133,8 +148,11 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
 
         <div className="mb-4 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Total Amount:</span>
-            <span className="text-xl font-bold text-foreground">${invoice?.amount?.toLocaleString()}</span>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Icon name="DollarSign" size={14} className="text-muted-foreground" />
+              <span>Total</span>
+            </div>
+            <span className="text-xl font-bold text-foreground font-data">${invoice?.amount?.toLocaleString()}</span>
           </div>
           {invoice?.paymentStatus === 'partial' && (
             <>
@@ -164,9 +182,15 @@ const InvoiceCard = ({ invoice, onEdit, onSendReminder, onRecordPayment, onDownl
         </div>
 
         <div className="flex items-center justify-between text-sm mb-4">
-          <div>
-            <p className="text-muted-foreground">Issued: {invoice?.issuedDate}</p>
-            <p className="text-muted-foreground">Due: {invoice?.dueDate}</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Icon name="CalendarDays" size={14} />
+              <p>Issued: {invoice?.issuedDate}</p>
+            </div>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Icon name="Clock" size={14} />
+              <p>Due: {invoice?.dueDate}</p>
+            </div>
           </div>
           <div className="text-right">
             {invoice?.paymentStatus === 'paid' ? (
