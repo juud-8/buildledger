@@ -13,6 +13,7 @@ export function BrandGuidelines({ branding, userId, onError }) {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingGuideline, setEditingGuideline] = useState(null);
+  const [tableNotFound, setTableNotFound] = useState(false);
   const [formData, setFormData] = useState({
     guideline_type: 'color_palette',
     title: '',
@@ -39,11 +40,21 @@ export function BrandGuidelines({ branding, userId, onError }) {
   const loadGuidelines = async () => {
     try {
       setLoading(true);
+      setTableNotFound(false);
       onError?.(null);
       const data = await brandingService?.getBrandGuidelines(userId);
       setGuidelines(data || []);
     } catch (err) {
-      onError?.('Failed to load brand guidelines');
+      console.error('Brand guidelines error:', err);
+      if (err?.message?.includes('relation "brand_guidelines" does not exist') || 
+          err?.code === 'PGRST106' || 
+          err?.message?.includes('table') ||
+          err?.message?.includes('relation')) {
+        setTableNotFound(true);
+        onError?.(null); // Don't show error, show setup message instead
+      } else {
+        onError?.('Failed to load brand guidelines');
+      }
     } finally {
       setLoading(false);
     }
@@ -141,6 +152,43 @@ export function BrandGuidelines({ branding, userId, onError }) {
           <p className="text-muted-foreground">Loading guidelines...</p>
         </div>
       </Card>
+    );
+  }
+
+  // Show table setup message if table doesn't exist
+  if (tableNotFound) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-6 bg-card border border-border construction-shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center">
+                <Icon name="Book" size={24} className="text-warning" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">Brand Guidelines</h2>
+                <p className="text-muted-foreground">Define and enforce your brand standards across all materials</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+        
+        <Card className="p-8 text-center">
+          <div className="w-16 h-16 bg-construction-orange/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="Settings" size={32} className="text-construction-orange" />
+          </div>
+          <h3 className="text-xl font-semibold text-foreground mb-2">Setup Required</h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            The Brand Guidelines feature requires database setup. Please contact your administrator to enable this feature.
+          </p>
+          <div className="bg-muted/50 rounded-lg p-4 text-left max-w-2xl mx-auto">
+            <p className="text-sm text-muted-foreground mb-2 font-medium">Administrator Instructions:</p>
+            <p className="text-sm text-muted-foreground">
+              Run the SQL script found in <code className="bg-background px-2 py-1 rounded text-foreground">scripts/create-brand-guidelines-table.js</code> or contact support for assistance.
+            </p>
+          </div>
+        </Card>
+      </div>
     );
   }
 

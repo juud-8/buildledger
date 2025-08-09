@@ -4,6 +4,7 @@ import { ENV_CONFIG } from '../lib/env';
 class AIProxyClient {
   constructor() {
     this.baseURL = ENV_CONFIG.API_BASE_URL || 'http://localhost:3001';
+    this.isEnabled = ENV_CONFIG.ENVIRONMENT === 'development' || ENV_CONFIG.USE_PRODUCTION_AI === true;
     this.endpoints = {
       chat: '/api/ai/chat',
       openai: '/api/ai/openai/chat',
@@ -27,13 +28,25 @@ class AIProxyClient {
   }
 
   async makeRequest(endpoint, body) {
+    if (!this.isEnabled) {
+      throw new Error('AI features are currently disabled. Please contact support for assistance.');
+    }
+
     try {
       const headers = await this.getAuthHeaders();
+      
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${this.baseURL}${endpoint}`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -42,7 +55,18 @@ class AIProxyClient {
 
       return await response.json();
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.error('AI request timed out');
+        throw new Error('AI service request timed out. Please try again.');
+      }
+      
       console.error(`AI Proxy request failed for ${endpoint}:`, error);
+      
+      // Handle CORS errors gracefully
+      if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+        throw new Error('AI service temporarily unavailable. Please try again later.');
+      }
+      
       throw error;
     }
   }
@@ -76,6 +100,10 @@ class AIProxyClient {
   }
 
   async generateStreamingResponse(messages, options = {}, onChunk = null) {
+    if (!this.isEnabled) {
+      throw new Error('AI features are currently disabled. Please contact support for assistance.');
+    }
+
     try {
       const headers = await this.getAuthHeaders();
       const body = {
@@ -86,11 +114,18 @@ class AIProxyClient {
         stream: true
       };
 
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for streaming
+
       const response = await fetch(`${this.baseURL}${this.endpoints.stream}`, {
         method: 'POST',
         headers,
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -130,7 +165,18 @@ class AIProxyClient {
 
       return fullResponse;
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.error('AI streaming request timed out');
+        throw new Error('AI streaming service request timed out. Please try again.');
+      }
+      
       console.error('Streaming request failed:', error);
+      
+      // Handle CORS errors gracefully
+      if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+        throw new Error('AI streaming service temporarily unavailable. Please try again later.');
+      }
+      
       throw error;
     }
   }

@@ -308,16 +308,77 @@ export const brandingService = {
         .single();
       
       if (profileError || !userProfile?.company_id) {
-        throw new Error('User profile or company not found');
+        console.log('No user profile or company found for brand guidelines');
+        return [];
       }
 
       const companyId = userProfile.company_id;
 
-      const { data, error } = await supabase?.from('document_templates')?.select('*')?.eq('company_id', companyId)?.eq('document_type', 'brand_guidelines')?.order('created_at', { ascending: false });
-      if (error) throw error;
+      // Check if brand_guidelines table exists, if not return empty array
+      const { data, error } = await supabase
+        .from('brand_guidelines')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.log('Brand guidelines table not found or error:', error);
+        return [];
+      }
       return data || [];
     } catch (error) {
       console.error('Error fetching brand guidelines:', error);
+      return []; // Return empty array instead of throwing
+    }
+  },
+
+  // Create brand guideline
+  async createBrandGuideline(guidelineData) {
+    try {
+      const { data, error } = await supabase
+        .from('brand_guidelines')
+        .insert(guidelineData)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating brand guideline:', error);
+      throw error;
+    }
+  },
+
+  // Update brand guideline
+  async updateBrandGuideline(guidelineId, updates) {
+    try {
+      const { data, error } = await supabase
+        .from('brand_guidelines')
+        .update(updates)
+        .eq('id', guidelineId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating brand guideline:', error);
+      throw error;
+    }
+  },
+
+  // Delete brand guideline
+  async deleteBrandGuideline(guidelineId) {
+    try {
+      const { error } = await supabase
+        .from('brand_guidelines')
+        .delete()
+        .eq('id', guidelineId);
+      
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error deleting brand guideline:', error);
       throw error;
     }
   },
