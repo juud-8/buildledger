@@ -17,6 +17,7 @@ coverage/
 .env.local
 .env.development
 .env.production
+vercel.dev.env
 .env.cursor
 .env.development.local
 .env.test.local
