@@ -1,8 +1,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+const ALLOWED_ORIGIN = Deno.env.get('APP_ORIGIN') || '*'
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -141,6 +142,7 @@ async function handleWebhook(req: Request, supabase: any) {
 
   const { From, Body, MessageSid, To } = webhookData
 
+  // TODO: Validate Twilio signature in front of function using gateway/reverse proxy if available
   // Find client by phone number
   const { data: clients, error: clientError } = await supabase
     .from('clients')

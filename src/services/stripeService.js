@@ -4,6 +4,11 @@ import { getStripe, STRIPE_CONFIG, formatStripeAmount, formatStripeAmountFromCen
 // Get API base URL from environment or fallback to localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
+async function getAuthHeader() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+}
+
 export const stripeService = {
   // Create a Stripe customer
   async createCustomer(userId, email, name) {
@@ -12,9 +17,9 @@ export const stripeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await getAuthHeader())
         },
         body: JSON.stringify({
-          userId,
           email,
           name
         })
@@ -43,6 +48,7 @@ export const stripeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await getAuthHeader())
         },
         body: JSON.stringify({
           customerId,
@@ -67,6 +73,7 @@ export const stripeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await getAuthHeader())
         },
         body: JSON.stringify({
           invoiceId,
@@ -107,23 +114,19 @@ export const stripeService = {
       );
 
       // Confirm payment
-      const { error } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: paymentMethodId
-      });
+      const result = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethodId });
+      if (result.error) throw result.error;
+      const paymentIntentId = result.paymentIntent?.id;
 
-      if (error) throw error;
-
-      // Update invoice status
+      // Prefer webhook to update invoice status. If needed, store the payment intent id only.
       await supabase
         .from('invoices')
         .update({
-          status: 'paid',
-          paid_date: new Date().toISOString(),
-          stripe_payment_intent_id: clientSecret
+          stripe_payment_intent_id: paymentIntentId || null
         })
         .eq('id', invoiceId);
 
-      return { success: true };
+      return { success: true, paymentIntentId };
     } catch (error) {
       console.error('Error processing payment:', error);
       throw error;
@@ -133,7 +136,11 @@ export const stripeService = {
   // Get subscription details
   async getSubscription(subscriptionId) {
     try {
-      const response = await fetch(`/api/stripe/subscription/${subscriptionId}`);
+      const response = await fetch(`${API_BASE_URL}/api/stripe/subscription/${subscriptionId}`, {
+        headers: {
+          ...(await getAuthHeader())
+        }
+      });
       const data = await response.json();
       
       if (!response.ok) throw new Error(data.error);
@@ -152,6 +159,7 @@ export const stripeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await getAuthHeader())
         },
         body: JSON.stringify({ subscriptionId })
       });
@@ -173,6 +181,7 @@ export const stripeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await getAuthHeader())
         },
         body: JSON.stringify({
           subscriptionId,
@@ -197,6 +206,7 @@ export const stripeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await getAuthHeader())
         },
         body: JSON.stringify({
           customerId,
@@ -217,7 +227,11 @@ export const stripeService = {
   // Get payment methods for customer
   async getPaymentMethods(customerId) {
     try {
-      const response = await fetch(`/api/stripe/payment-methods/${customerId}`);
+      const response = await fetch(`${API_BASE_URL}/api/stripe/payment-methods/${customerId}`, {
+        headers: {
+          ...(await getAuthHeader())
+        }
+      });
       const data = await response.json();
       
       if (!response.ok) throw new Error(data.error);
@@ -236,6 +250,7 @@ export const stripeService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(await getAuthHeader())
         },
         body: JSON.stringify({
           customerId,

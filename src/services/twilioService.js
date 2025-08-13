@@ -2,12 +2,7 @@ import { supabase } from '../lib/supabase';
 import { showSuccessToast, showErrorToast } from '../utils/toastHelper';
 
 class TwilioService {
-  constructor() {
-    this.accountSid = import.meta.env.VITE_TWILIO_ACCOUNT_SID;
-    this.authToken = import.meta.env.VITE_TWILIO_AUTH_TOKEN;
-    this.fromNumber = import.meta.env.VITE_TWILIO_PHONE_NUMBER;
-    this.webhookUrl = import.meta.env.VITE_TWILIO_WEBHOOK_URL;
-  }
+  constructor() {}
 
   /**
    * Send SMS message via Twilio API

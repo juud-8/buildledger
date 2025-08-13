@@ -117,9 +117,10 @@ class AIProxyService {
       });
 
       if (stream) {
-        res.setHeader('Content-Type', 'text/stream');
+        res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
 
         for await (const chunk of response) {
           const content = chunk.choices[0]?.delta?.content || '';

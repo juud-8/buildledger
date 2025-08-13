@@ -16,8 +16,12 @@ const adminSupabase = createClient(
 // Regular client for user operations
 const userSupabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-  process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxuY3BwY3ZyaGRkdXZvYmlyenN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzNTQ3MzYsImV4cCI6MjA2OTkzMDczNn0.bc3_2fWJOfHR_w4aATIljLGwG0NlQ25S8hyoFeVL_pY'
+  process.env.VITE_SUPABASE_ANON_KEY
 );
+if (!process.env.VITE_SUPABASE_ANON_KEY) {
+  console.error('Missing VITE_SUPABASE_ANON_KEY');
+  process.exit(1);
+}
 
 const newUsers = [
   {

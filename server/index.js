@@ -1,6 +1,7 @@
 // Ensure CommonJS in case the platform tries ESM/deno
 try { require('dotenv').config(); } catch (e) { /* ignore if not available */ }
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const helmet = require('helmet');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -11,8 +12,16 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Security middleware
+const isProd = process.env.NODE_ENV === 'production';
 app.use(helmet({
-  contentSecurityPolicy: {
+  contentSecurityPolicy: isProd ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  } : {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
@@ -86,10 +95,42 @@ app.use((req, res, next) => {
 // Mount AI proxy routes
 app.use('/api/ai', aiProxy.createRouter(express));
 
-// Create customer
-app.post('/api/stripe/create-customer', async (req, res) => {
+// Shared auth middleware for API routes (uses Supabase token)
+async function authenticateUser(req, res, next) {
   try {
-    const { userId, email, name } = req.body;
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error } = await req.supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Authentication failed' });
+  }
+}
+
+// Rate limit for Stripe API endpoints (non-webhook)
+const stripeApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Secure Stripe API router (separate from webhook router)
+const secureStripeRouter = express.Router();
+secureStripeRouter.use(stripeApiLimiter, authenticateUser);
+
+// Create customer
+secureStripeRouter.post('/create-customer', async (req, res) => {
+  try {
+    const { email, name } = req.body;
+    const userId = req.user.id;
 
     const customer = await stripe.customers.create({
       email,
@@ -107,7 +148,7 @@ app.post('/api/stripe/create-customer', async (req, res) => {
 });
 
 // Create subscription
-app.post('/api/stripe/create-subscription', async (req, res) => {
+secureStripeRouter.post('/create-subscription', async (req, res) => {
   try {
     const { customerId, priceId } = req.body;
 
@@ -147,7 +188,7 @@ app.post('/api/stripe/create-subscription', async (req, res) => {
 });
 
 // Create payment intent
-app.post('/api/stripe/create-payment-intent', async (req, res) => {
+secureStripeRouter.post('/create-payment-intent', async (req, res) => {
   try {
     const { invoiceId, amount, customerId } = req.body;
 
@@ -168,7 +209,7 @@ app.post('/api/stripe/create-payment-intent', async (req, res) => {
 });
 
 // Get subscription
-app.get('/api/stripe/subscription/:id', async (req, res) => {
+secureStripeRouter.get('/subscription/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const subscription = await stripe.subscriptions.retrieve(id);
@@ -180,7 +221,7 @@ app.get('/api/stripe/subscription/:id', async (req, res) => {
 });
 
 // Cancel subscription
-app.post('/api/stripe/cancel-subscription', async (req, res) => {
+secureStripeRouter.post('/cancel-subscription', async (req, res) => {
   try {
     const { subscriptionId } = req.body;
     const subscription = await stripe.subscriptions.update(subscriptionId, {
@@ -201,7 +242,7 @@ app.post('/api/stripe/cancel-subscription', async (req, res) => {
 });
 
 // Update subscription
-app.post('/api/stripe/update-subscription', async (req, res) => {
+secureStripeRouter.post('/update-subscription', async (req, res) => {
   try {
     const { subscriptionId, newPriceId } = req.body;
     
@@ -222,7 +263,7 @@ app.post('/api/stripe/update-subscription', async (req, res) => {
 });
 
 // Create customer portal session
-app.post('/api/stripe/create-portal-session', async (req, res) => {
+secureStripeRouter.post('/create-portal-session', async (req, res) => {
   try {
     const { customerId, returnUrl } = req.body;
 
@@ -239,7 +280,7 @@ app.post('/api/stripe/create-portal-session', async (req, res) => {
 });
 
 // Get payment methods
-app.get('/api/stripe/payment-methods/:customerId', async (req, res) => {
+secureStripeRouter.get('/payment-methods/:customerId', async (req, res) => {
   try {
     const { customerId } = req.params;
     const paymentMethods = await stripe.paymentMethods.list({
@@ -255,7 +296,7 @@ app.get('/api/stripe/payment-methods/:customerId', async (req, res) => {
 });
 
 // Attach payment method
-app.post('/api/stripe/attach-payment-method', async (req, res) => {
+secureStripeRouter.post('/attach-payment-method', async (req, res) => {
   try {
     const { customerId, paymentMethodId } = req.body;
 
@@ -269,6 +310,9 @@ app.post('/api/stripe/attach-payment-method', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Mount secure Stripe API routes (non-webhook)
+app.use('/api/stripe', secureStripeRouter);
 
 app.listen(PORT, () => {
   logger.info('Server started successfully', {
